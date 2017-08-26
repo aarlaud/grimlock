@@ -101,8 +101,6 @@ object Shared {
     import ctx.implicits.matrix._
     import ctx.implicits.position._
 
-    implicit val c = ctx
-
     (data.names(Over(_1), Default()) ++ data.names(Over(_2), Default()) ++ data.names(Over(_3), Default()))
       .saveAsText(ctx, s"./tmp.${tool}/nm0.out", Position.toString(verbose = true), Default())
       .toUnit
@@ -133,8 +131,6 @@ object Shared {
   ): Unit = {
     import ctx.implicits.environment._
     import ctx.implicits.matrix._
-
-    implicit val c = ctx
 
     (
       data.types(Over(_1), Default())(false) ++
@@ -786,8 +782,6 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    implicit val c = ctx
-
     case class HashSample() extends Sampler[_3] {
       def select(cell: Cell[_3]): Boolean = (cell.position(_1).toString.hashCode % 25) == 0
     }
@@ -1043,8 +1037,6 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    implicit val c = ctx
-
     val (dictionary, _) = Dictionary.load(Source.fromFile(path + "/dict.txt"))
 
     ctx
@@ -1067,8 +1059,6 @@ object Shared {
     ev3: Matrix.SizeTuner[C#U, Default[NoParameters]]
   ): Unit = {
     import ctx.implicits.matrix._
-
-    implicit val c = ctx
 
     data
       .shape(Default())
@@ -1102,8 +1092,6 @@ object Shared {
     ev2: Matrix.SlideTuner[C#U, Default[NoParameters]]
   ): Unit = {
     import ctx.implicits.matrix._
-
-    implicit val c = ctx
 
     val (data, _) = ctx.loadText(path + "/numericInputfile.txt", Cell.parse2D())
 
@@ -1153,8 +1141,6 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    implicit val c = ctx
-
     val (data, _) = ctx.loadText(path + "/somePairwise.txt", Cell.parse2D())
 
     case class DiffSquared() extends Operator[_2, _2] {
@@ -1194,8 +1180,6 @@ object Shared {
     ev2: Persist.SaveAsTextTuner[C#U, Default[NoParameters]]
   ): Unit = {
     import ctx.implicits.matrix._
-
-    implicit val c = ctx
 
     // see http://www.mathsisfun.com/data/correlation.html for data
 
@@ -1241,8 +1225,6 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    implicit val c = ctx
-
     // see http://www.eecs.harvard.edu/cs286r/courses/fall10/papers/Chapter2.pdf example 2.2.1 for data
 
     def locate[P <: Nat] = (l: Position[P], r: Position[P]) => Option(
@@ -1276,8 +1258,6 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    implicit val c = ctx
-
     val (left, _) = ctx.loadText(path + "/algebraInputfile1.txt", Cell.parse2D())
     val (right, _) = ctx.loadText(path + "/algebraInputfile2.txt", Cell.parse2D())
 
@@ -1302,8 +1282,6 @@ object Shared {
     ev2: Matrix.SlideTuner[C#U, Default[NoParameters]]
   ): Unit = {
     import ctx.implicits.matrix._
-
-    implicit val c = ctx
 
     // http://www.statisticshowto.com/moving-average/
 
@@ -1503,8 +1481,6 @@ object Shared {
     import ctx.implicits.environment._
     import ctx.implicits.matrix._
 
-    implicit val c = ctx
-
     val (data, errors) = ctx.loadText(path + "/badInputfile.txt", Cell.parse3D(third = DateCodec()))
 
     data
@@ -1692,7 +1668,7 @@ object Shared {
       values.map(_.map(_.content.value.toShortString).getOrElse("")).mkString("|")
     )
 
-    val (result, errors) = data
+    val (_, errors) = data
       .streamByPosition(Over(_1))("sh ./parrot.sh", List("parrot.sh"), writer, Cell.parse1D(), 5)
 
     errors

@@ -29,7 +29,7 @@ lazy val all = Project(
 
 lazy val core = Project(
   id = "grimlock-core",
-  base = file("core"),
+  base = file("grimlock-core"),
   settings = Seq(
     libraryDependencies ++= noDerby(
       Seq(
@@ -73,7 +73,7 @@ lazy val core = Project(
 
 lazy val examples = Project(
   id = "grimlock-examples",
-  base = file("examples"),
+  base = file("grimlock-examples"),
   settings = standardSettings ++ assemblySettings
 ).dependsOn(core % "test->test;compile->compile")
 
@@ -97,8 +97,18 @@ addArtifact(artifact in (Compile, assembly), assembly)
 
 lazy val compilerSettings = Seq(
   scalaVersion := "2.11.8",
-  scalacOptions ++= Seq("-Xfatal-warnings", "-deprecation", "-unchecked", "-Xlint", "-feature", "-language:_"),
-  scalacOptions in (Compile, console) ~= (_.filterNot(Set("-Xfatal-warnings"))),
+  scalacOptions ++= Seq(
+    "-Xfatal-warnings",
+    "-Ywarn-unused-import",
+    "-Ywarn-unused",
+    "-Ywarn-dead-code",
+    "-deprecation",
+    "-unchecked",
+    "-Xlint",
+    "-feature",
+    "-language:_"
+  ),
+  scalacOptions in (Compile, console) ~= (_.filterNot(Set("-Xfatal-warnings", "-Ywarn-unused-import"))),
   scalacOptions in (Compile, doc) ~= (_.filterNot(Set("-Xfatal-warnings"))),
   scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value,
   javacOptions ++= Seq("-Xlint:unchecked", "-source", jvmVersion, "-target", jvmVersion)

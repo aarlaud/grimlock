@@ -31,7 +31,7 @@ if [ ${DO_BUILD} = "true" ]
 then
   rm -f ${JAR}
   cd ${BASE_DIR}; ./sbt clean assembly; cd -
-  cp ${BASE_DIR}/examples/target/scala-2.11/grimlock*.jar ${JAR}
+  cp ${BASE_DIR}/grimlock-examples/target/scala-2.11/grimlock*.jar ${JAR}
 fi
 
 if [ ${DO_DEMO} = "true" ]
