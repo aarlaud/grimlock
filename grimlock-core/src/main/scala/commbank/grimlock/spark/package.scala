@@ -24,7 +24,6 @@ import commbank.grimlock.framework.distribution.ApproximateDistribution.{
   TDigestQuantilesTuner,
   UniformQuantilesTuner
 }
-import commbank.grimlock.framework.encoding.Value
 import commbank.grimlock.framework.environment.tuner.{
   Binary,
   Default,
@@ -634,354 +633,342 @@ package object environment {
     ev: GT[P, _1]
   ): MultiDimensionMatrix[P] = ctx.implicits.matrix.listToMultiDimensionMatrix(data)
 
-  /** Conversion from `List[(Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, Content)]` to a `Matrix`. */
   implicit def tuple1ToRDDMatrix[
-    V <% Value
+    V1
   ](
-    list: List[(V, Content)]
+    list: List[(V1, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_1] = ctx.implicits.matrix.tuple1ToMatrix(list)
 
-  /** Conversion from `List[(Value, Content)]` to a `Matrix1D`. */
+  /** Conversion from `List[(V1, Content)]` to a `Matrix1D`. */
   implicit def tuple1ToRDDMatrix1D[
-    V <% Value
+    V1
   ](
-    list: List[(V, Content)]
+    list: List[(V1, Content)]
   )(implicit
     ctx: Context
   ): Matrix1D = ctx.implicits.matrix.tuple1ToMatrix1D(list)
 
-  /** Conversion from `List[(Value, Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, V2, Content)]` to a `Matrix`. */
   implicit def tuple2ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value
+    V1,
+    V2
   ](
     list: List[(V1, V2, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_2] = ctx.implicits.matrix.tuple2ToMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Content)]` to a `Matrix2D`. */
+  /** Conversion from `List[(V1, V2, Content)]` to a `Matrix2D`. */
   implicit def tuple2ToRDDMatrix2D[
-    V1 <% Value,
-    V2 <% Value
+    V1,
+    V2
   ](
     list: List[(V1, V2, Content)]
   )(implicit
     ctx: Context
   ): Matrix2D = ctx.implicits.matrix.tuple2ToMatrix2D(list)
 
-  /** Conversion from `List[(Value, Value, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(V1, V2, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple2ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value
+    V1,
+    V2
   ](
     list: List[(V1, V2, Content)]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_2] = ctx.implicits.matrix.tuple2ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, V2, V3, Content)]` to a `Matrix`. */
   implicit def tuple3ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    V1,
+    V2,
+    V3
   ](
     list: List[(V1, V2, V3, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_3] = ctx.implicits.matrix.tuple3ToMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Content)]` to a `Matrix3D`. */
+  /** Conversion from `List[(V1, V2, V3, Content)]` to a `Matrix3D`. */
   implicit def tuple3ToRDDMatrix3D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    V1,
+    V2,
+    V3
   ](
     list: List[(V1, V2, V3, Content)]
   )(implicit
     ctx: Context
   ): Matrix3D = ctx.implicits.matrix.tuple3ToMatrix3D(list)
 
-  /** Conversion from `List[(Value, Value, Value, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(V1, V2, V3, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple3ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    V1,
+    V2,
+    V3
   ](
     list: List[(V1, V2, V3, Content)]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_3] = ctx.implicits.matrix.tuple3ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `Matrix`. */
   implicit def tuple4ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    V1,
+    V2,
+    V3,
+    V4
   ](
     list: List[(V1, V2, V3, V4, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_4] = ctx.implicits.matrix.tuple4ToMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Content)]` to a `Matrix4D`. */
+  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `Matrix4D`. */
   implicit def tuple4ToRDDMatrix4D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    V1,
+    V2,
+    V3,
+    V4
   ](
     list: List[(V1, V2, V3, V4, Content)]
   )(implicit
     ctx: Context
   ): Matrix4D = ctx.implicits.matrix.tuple4ToMatrix4D(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple4ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    V1,
+    V2,
+    V3,
+    V4
   ](
     list: List[(V1, V2, V3, V4, Content)]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_4] = ctx.implicits.matrix.tuple4ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `Matrix`. */
   implicit def tuple5ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5
   ](
     list: List[(V1, V2, V3, V4, V5, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_5] = ctx.implicits.matrix.tuple5ToMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Content)]` to a `Matrix5D`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `Matrix5D`. */
   implicit def tuple5ToRDDMatrix5D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5
   ](
     list: List[(V1, V2, V3, V4, V5, Content)]
   )(implicit
     ctx: Context
   ): Matrix5D = ctx.implicits.matrix.tuple5ToMatrix5D(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple5ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5
   ](
     list: List[(V1, V2, V3, V4, V5, Content)]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_5] = ctx.implicits.matrix.tuple5ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `Matrix`. */
   implicit def tuple6ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6
   ](
     list: List[(V1, V2, V3, V4, V5, V6, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_6] = ctx.implicits.matrix.tuple6ToMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix6D`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `Matrix6D`. */
   implicit def tuple6ToRDDMatrix6D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6
   ](
     list: List[(V1, V2, V3, V4, V5, V6, Content)]
   )(implicit
     ctx: Context
   ): Matrix6D = ctx.implicits.matrix.tuple6ToMatrix6D(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Value, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple6ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6
   ](
     list: List[(V1, V2, V3, V4, V5, V6, Content)]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_6] = ctx.implicits.matrix.tuple6ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `Matrix`. */
   implicit def tuple7ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_7] = ctx.implicits.matrix.tuple7ToMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix7D`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `Matrix7D`. */
   implicit def tuple7ToRDDMatrix7D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
   )(implicit
     ctx: Context
   ): Matrix7D = ctx.implicits.matrix.tuple7ToMatrix7D(list)
 
-  /**
-   * Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Content)]` to a `MultiDimensionMatrix`.
-   */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple7ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_7] = ctx.implicits.matrix.tuple7ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `Matrix`. */
   implicit def tuple8ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_8] = ctx.implicits.matrix.tuple8ToMatrix(list)
 
-  /** Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix8D`. */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `Matrix8D`. */
   implicit def tuple8ToRDDMatrix8D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
   )(implicit
     ctx: Context
   ): Matrix8D = ctx.implicits.matrix.tuple8ToMatrix8D(list)
 
-  /**
-   * Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Value, Content)]` to a
-   * `MultiDimensionMatrix`.
-   */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple8ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_8] = ctx.implicits.matrix.tuple8ToMultiDimensionMatrix(list)
 
-  /**
-   * Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix`.
-   */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `Matrix`. */
   implicit def tuple9ToRDDMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8,
+    V9
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
   )(implicit
     ctx: Context
   ): Matrix[_9] = ctx.implicits.matrix.tuple9ToMatrix(list)
 
-  /**
-   * Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Value, Value, Content)]` to a `Matrix9D`.
-   */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `Matrix9D`. */
   implicit def tuple9ToRDDMatrix9D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8,
+    V9
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
   )(implicit
     ctx: Context
   ): Matrix9D = ctx.implicits.matrix.tuple9ToMatrix9D(list)
 
-  /**
-   * Conversion from `List[(Value, Value, Value, Value, Value, Value, Value, Value, Value, Content)]` to a
-   * `MultiDimensionMatrix`.
-   */
+  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple9ToRDDMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8,
+    V9
   ](
     list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
   )(implicit
@@ -1007,18 +994,18 @@ package object environment {
     ctx: Context
   ): Partitions[P, I] = ctx.implicits.partition.toPartitions(data)
 
-  /** Converts a `Value` to a `RDD[Position[_1]]`. */
+  /** Converts a `V` to a `RDD[Position[_1]]`. */
   implicit def valueToRDD[
-    V <% Value
+    V
   ](
     v: V
   )(implicit
     ctx: Context
   ): Context.U[Position[_1]] = ctx.implicits.position.valueToU(v)
 
-  /** Converts a `List[Value]` to a `RDD[Position[_1]]`. */
+  /** Converts a `List[V]` to a `RDD[Position[_1]]`. */
   implicit def listValueToRDD[
-    V <% Value
+    V
   ](
     l: List[V]
   )(implicit

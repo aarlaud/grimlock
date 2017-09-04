@@ -20,33 +20,27 @@ import java.util.Date
 
 import scala.util.matching.Regex
 
-/** Trait for representing strutured data. */
-trait Structured
-
 /** Trait for variable values. */
-trait Value { self =>
-  /** Type of the value. */
-  type D
-
+trait Value[D] {
   /** The encapsulated value. */
   val value: D
 
   /** The codec used to encode/decode this value. */
-  val codec: Codec { type D = self.D }
+  val codec: Codec[D]
 
   /**
    * Check for equality with `that`.
    *
    * @param that Value to compare against.
    */
-  def equ(that: Value): Boolean = evaluate(that, Equal)
+  def equ[T](that: Value[T]): Boolean = evaluate(that, Equal)
 
   /**
    * Check for in-equality with `that`.
    *
    * @param that Value to compare against.
    */
-  def neq(that: Value): Boolean = !(this equ that)
+  def neq[T](that: Value[T]): Boolean = !(this equ that)
 
   /**
    * Check for for match with `that` regular expression.
@@ -68,7 +62,7 @@ trait Value { self =>
    *
    * @note If `that` is of a different type than `this`, then the result is always `false`.
    */
-  def lss(that: Value): Boolean = evaluate(that, Less)
+  def lss[T](that: Value[T]): Boolean = evaluate(that, Less)
 
   /**
    * Check if `this` is less or equal to `that`.
@@ -77,7 +71,7 @@ trait Value { self =>
    *
    * @note If `that` is of a different type than `this`, then the result is always `false`.
    */
-  def leq(that: Value): Boolean = evaluate(that, LessEqual)
+  def leq[T](that: Value[T]): Boolean = evaluate(that, LessEqual)
 
   /**
    * Check if `this` is greater than `that`.
@@ -86,7 +80,7 @@ trait Value { self =>
    *
    * @note If `that` is of a different type than `this`, then the result is always `false`.
    */
-  def gtr(that: Value): Boolean = evaluate(that, Greater)
+  def gtr[T](that: Value[T]): Boolean = evaluate(that, Greater)
 
   /**
    * Check if `this` is greater or equal to `that`.
@@ -95,7 +89,7 @@ trait Value { self =>
    *
    * @note If `that` is of a different type than `this`, then the result is always `false`.
    */
-  def geq(that: Value): Boolean = evaluate(that, GreaterEqual)
+  def geq[T](that: Value[T]): Boolean = evaluate(that, GreaterEqual)
 
   /** Return value as `java.util.Date`. */
   def asDate: Option[Date] = None
@@ -115,13 +109,14 @@ trait Value { self =>
   /** Return value as `Type`. */
   def asType: Option[Type] = None
 
-  /** Return value as event. */
-  def asStructured: Option[Structured] = None
+  // TODO: can toShortString and as* be removed?
 
   /** Return a consise (terse) string representation of a value. */
-  def toShortString(): String = codec.encode(value)
+  def toShortString: String = codec.encode(value)
 
-  private def evaluate(that: Value, op: CompareResult): Boolean = codec.compare(this, that) match {
+  protected def compare[T](that: Value[T]): Option[Int]
+
+  private def evaluate[T](that: Value[T], op: CompareResult): Boolean = compare(that) match {
     case Some(0) => (op == Equal) || (op == GreaterEqual) || (op == LessEqual)
     case Some(x) if (x > 0) => (op == Greater) || (op == GreaterEqual)
     case Some(x) if (x < 0) => (op == Less) || (op == LessEqual)
@@ -131,6 +126,8 @@ trait Value { self =>
 
 /** Compantion object to the `Value` trait. */
 object Value {
+  // TODO: can concatenate and fromShortString be removed?
+
   /**
    * Concatenates the string representation of two values.
    *
@@ -138,26 +135,18 @@ object Value {
    *
    * @return A function that concatenates values as a string.
    */
-  def concatenate(separator: String): (Value, Value) => Value = (left: Value, right: Value) =>
+  def concatenate(separator: String): (Value[_], Value[_]) => StringValue = (left: Value[_], right: Value[_]) =>
     left.toShortString + separator + right.toShortString
 
   /**
    * Parse a value from string.
    *
-   * @param str The string to parse.
-   * @param cdc The codec to decode with.
+   * @param codec The codec to decode with.
+   * @param str   The string to parse.
    *
    * @return A `Some[Value]` if successful, `None` otherwise.
    */
-  def fromShortString(str: String, cdc: Codec): Option[cdc.V] = cdc.decode(str)
-
-  /** Define an ordering between 2 values. Only use with values of the same type. */
-  val ordering: Ordering[Value] = new Ordering[Value] {
-    def compare(x: Value, y: Value): Int = x
-      .codec
-      .compare(x, y)
-      .getOrElse(throw new Exception("unable to compare different values."))
-  }
+  def fromShortString[D](codec: Codec[D], str: String): Option[codec.V] = codec.decode(str).map(codec.box(_))
 
   /** Converts a `String` to a `Value`. */
   implicit def stringToValue(t: String): StringValue = StringValue(t)
@@ -184,10 +173,10 @@ object Value {
  * @param value A `java.util.Date`.
  * @param codec The codec used for encoding/decoding `value`.
  */
-case class DateValue(value: Date, codec: Codec { type D = Date } = DateCodec()) extends Value {
-  type D = Date
-
+case class DateValue(value: Date, codec: Codec[Date] = DateCodec()) extends Value[Date] {
   override def asDate: Option[Date] = Option(value)
+
+  protected def compare[T](that: Value[T]): Option[Int] = that.asDate.map(d => codec.compare(value, d))
 }
 
 /** Companion object to `DateValue` case class. */
@@ -202,10 +191,10 @@ object DateValue {
  * @param value A `String`.
  * @param codec The codec used for encoding/decoding `value`.
  */
-case class StringValue(value: String, codec: Codec { type D = String } = StringCodec) extends Value {
-  type D = String
-
+case class StringValue(value: String, codec: Codec[String] = StringCodec) extends Value[String] {
   override def asString: Option[String] = Option(value)
+
+  protected def compare[T](that: Value[T]): Option[Int] = that.asString.map(s => codec.compare(value, s))
 }
 
 /**
@@ -214,10 +203,10 @@ case class StringValue(value: String, codec: Codec { type D = String } = StringC
  * @param value A `Double`.
  * @param codec The codec used for encoding/decoding `value`.
  */
-case class DoubleValue(value: Double, codec: Codec { type D = Double } = DoubleCodec) extends Value {
-  type D = Double
-
+case class DoubleValue(value: Double, codec: Codec[Double] = DoubleCodec) extends Value[Double] {
   override def asDouble: Option[Double] = Option(value)
+
+  protected def compare[T](that: Value[T]): Option[Int] = that.asDouble.map(d => codec.compare(value, d))
 }
 
 /**
@@ -226,11 +215,15 @@ case class DoubleValue(value: Double, codec: Codec { type D = Double } = DoubleC
  * @param value A `Long`.
  * @param codec The codec used for encoding/decoding `value`.
  */
-case class LongValue(value: Long, codec: Codec { type D = Long } = LongCodec) extends Value {
-  type D = Long
-
+case class LongValue(value: Long, codec: Codec[Long] = LongCodec) extends Value[Long] {
   override def asDouble: Option[Double] = Option(value)
   override def asLong: Option[Long] = Option(value)
+
+  protected def compare[T](that: Value[T]): Option[Int] = that match {
+    case LongValue(l, _) => Option(codec.compare(value, l))
+    case DoubleValue(d, c) => Option(c.compare(value, d))
+    case _ => None
+  }
 }
 
 /**
@@ -239,12 +232,12 @@ case class LongValue(value: Long, codec: Codec { type D = Long } = LongCodec) ex
  * @param value A `Boolean`.
  * @param codec The codec used for encoding/decoding `value`.
  */
-case class BooleanValue(value: Boolean, codec: Codec { type D = Boolean } = BooleanCodec) extends Value {
-  type D = Boolean
-
+case class BooleanValue(value: Boolean, codec: Codec[Boolean] = BooleanCodec) extends Value[Boolean] {
   override def asDouble: Option[Double] = Option(if (value) 1 else 0)
   override def asLong: Option[Long] = Option(if (value) 1 else 0)
   override def asBoolean: Option[Boolean] = Option(value)
+
+  protected def compare[T](that: Value[T]): Option[Int] = that.asBoolean.map(b => codec.compare(value, b))
 }
 
 /**
@@ -253,22 +246,10 @@ case class BooleanValue(value: Boolean, codec: Codec { type D = Boolean } = Bool
  * @param value A `Type`.
  * @param codec The codec used for encoding/decoding `value`.
  */
-case class TypeValue(value: Type, codec: Codec { type D = Type } = TypeCodec) extends Value {
-  type D = Type
-
+case class TypeValue(value: Type, codec: Codec[Type] = TypeCodec) extends Value[Type] {
   override def asType: Option[Type] = Option(value)
-}
 
-/**
- * Value for when the data is an event type.
- *
- * @param value An event.
- * @param codec The codec used for encoding/decoding `value`.
- */
-case class StructuredValue[U <: Structured, C <: StructuredCodec { type D = U }](value: U, codec: C) extends Value {
-  type D = U
-
-  override def asStructured: Option[Structured] = Option(value)
+  protected def compare[T](that: Value[T]): Option[Int] = that.asType.map(t => codec.compare(value, t))
 }
 
 /** Hetrogeneous comparison results. */
