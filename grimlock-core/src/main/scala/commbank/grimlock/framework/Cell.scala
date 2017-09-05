@@ -28,7 +28,7 @@ import play.api.libs.json.{ JsError, JsObject, Json, JsResult, JsSuccess, JsValu
 
 import scala.util.Try
 
-import shapeless.{ Nat, Sized }
+import shapeless.{ HList, Nat, Sized }
 import shapeless.nat.{ _1, _2, _3, _4, _5, _6, _7, _8, _9 }
 import shapeless.ops.nat.{ LTEq, ToInt }
 import shapeless.syntax.sized._
@@ -39,13 +39,13 @@ import shapeless.syntax.sized._
  * @param position The position of the cell in the matri.
  * @param content  The contents of the cell.
  */
-case class Cell[P <: Nat](position: Position[P], content: Content) {
+case class Cell[P <: HList](position: Position[P], content: Content[_]) {
   /**
    * Relocate this cell.
    *
    * @param relocator Function that returns the new position for this cell.
    */
-  def relocate[X <: Nat](relocator: (Cell[P]) => Position[X]): Cell[X] = Cell(relocator(this), content)
+  def relocate[X <: HList](relocator: (Cell[P]) => Position[X]): Cell[X] = Cell(relocator(this), content)
 
   /**
    * Mutate the content of this cell.

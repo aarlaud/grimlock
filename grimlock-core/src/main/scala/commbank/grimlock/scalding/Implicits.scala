@@ -76,12 +76,12 @@ case class CellImplicits() extends FwCellImplicits[Context] {
 
 /** Implements all content implicits. */
 case class ContentImplicits() extends FwContentImplicits[Context] {
-  implicit def toContents(data: Context.U[Content]): Contents = Contents(data)
+  implicit def toContents(data: Context.U[Content[_]]): Contents = Contents(data)
 
   implicit def toIndexed[
     P <: Nat
   ](
-    data: Context.U[(Position[P], Content)]
+    data: Context.U[(Position[P], Content[_])]
   ): IndexedContents[P] = IndexedContents(data)
 }
 
@@ -162,44 +162,44 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): MultiDimensionMatrix[P] = MultiDimensionMatrix(IterablePipe(data))
 
   implicit def tuple1ToMatrix[
-    V <% Value
+    V1
   ](
-    list: List[(V, Content)]
+    list: List[(V1, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_1] = Matrix(IterablePipe(list.map { case (v, c) => Cell(Position(v), c) }))
 
   implicit def tuple1ToMatrix1D[
-    V <% Value
+    V1
   ](
-    list: List[(V, Content)]
+    list: List[(V1, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix1D = Matrix1D(IterablePipe(list.map { case (v, c) => Cell(Position(v), c) }))
 
   implicit def tuple2ToMatrix[
-    V1 <% Value,
-    V2 <% Value
+    V1,
+    V2
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(V1, V2, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_2] = Matrix(IterablePipe(list.map { case (v1, v2, c) => Cell(Position(v1, v2), c) }))
 
   implicit def tuple2ToMatrix2D[
-    V1 <% Value,
-    V2 <% Value
+    V1,
+    V2
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(V1, V2, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix2D = Matrix2D(IterablePipe(list.map { case (v1, v2, c) => Cell(Position(v1, v2), c) }))
 
   implicit def tuple2ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value
+    V1,
+    V2
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(V1, V2, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_2] = MultiDimensionMatrix(
@@ -207,31 +207,31 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple3ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    V1,
+    V2,
+    V3
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(V1, V2, V3, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_3] = Matrix(IterablePipe(list.map { case (v1, v2, v3, c) => Cell(Position(v1, v2, v3), c) }))
 
   implicit def tuple3ToMatrix3D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    V1,
+    V2,
+    V3
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(V1, V2, V3, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix3D = Matrix3D(IterablePipe(list.map { case (v1, v2, v3, c) => Cell(Position(v1, v2, v3), c) }))
 
   implicit def tuple3ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    V1,
+    V2,
+    V3
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(V1, V2, V3, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_3] = MultiDimensionMatrix(
@@ -239,34 +239,34 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple4ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    V1,
+    V2,
+    V3,
+    V4
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(V1, V2, V3, V4, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_4] = Matrix(IterablePipe(list.map { case (v1, v2, v3, v4, c) => Cell(Position(v1, v2, v3, v4), c) }))
 
   implicit def tuple4ToMatrix4D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    V1,
+    V2,
+    V3,
+    V4
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(V1, V2, V3, V4, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix4D = Matrix4D(IterablePipe(list.map { case (v1, v2, v3, v4, c) => Cell(Position(v1, v2, v3, v4), c) }))
 
   implicit def tuple4ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    V1,
+    V2,
+    V3,
+    V4
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(V1, V2, V3, V4, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_4] = MultiDimensionMatrix(
@@ -274,13 +274,13 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple5ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(V1, V2, V3, V4, V5, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_5] = Matrix(
@@ -288,13 +288,13 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple5ToMatrix5D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(V1, V2, V3, V4, V5, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix5D = Matrix5D(
@@ -302,13 +302,13 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple5ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(V1, V2, V3, V4, V5, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_5] = MultiDimensionMatrix(
@@ -316,14 +316,14 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple6ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_6] = Matrix(
@@ -331,14 +331,14 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple6ToMatrix6D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix6D = Matrix6D(
@@ -346,14 +346,14 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple6ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_6] = MultiDimensionMatrix(
@@ -361,15 +361,15 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple7ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_7] = Matrix(
@@ -377,15 +377,15 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple7ToMatrix7D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix7D = Matrix7D(
@@ -393,15 +393,15 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple7ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_7] = MultiDimensionMatrix(
@@ -409,16 +409,16 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple8ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_8] = Matrix(
@@ -428,16 +428,16 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple8ToMatrix8D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix8D = Matrix8D(
@@ -447,16 +447,16 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple8ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_8] = MultiDimensionMatrix(
@@ -466,17 +466,17 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple9ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8,
+    V9
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix[_9] = Matrix(
@@ -486,17 +486,17 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple9ToMatrix9D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8,
+    V9
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content[_])]
   )(implicit
     ctx: Context
   ): Matrix9D = Matrix9D(
@@ -506,17 +506,17 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   )
 
   implicit def tuple9ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    V1,
+    V2,
+    V3,
+    V4,
+    V5,
+    V6,
+    V7,
+    V8,
+    V9
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content[_])]
   )(implicit
     ctx: Context
   ): MultiDimensionMatrix[_9] = MultiDimensionMatrix(
@@ -539,7 +539,7 @@ case class PartitionImplicits() extends FwPartitionImplicits[Context] {
 /** Implements all position implicits. */
 case class PositionImplicits() extends FwPositionImplicits[Context] {
   implicit def valueToU[
-    V <% Value
+    V
   ](
     v: V
   )(implicit
@@ -547,7 +547,7 @@ case class PositionImplicits() extends FwPositionImplicits[Context] {
   ): Context.U[Position[_1]] = IterablePipe(List(Position(v)))
 
   implicit def listValueToU[
-    V <% Value
+    V
   ](
     l: List[V]
   )(implicit

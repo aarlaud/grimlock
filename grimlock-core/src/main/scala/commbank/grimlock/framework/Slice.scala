@@ -14,28 +14,24 @@
 
 package commbank.grimlock.framework.position
 
-import shapeless.Nat
-import shapeless.nat._1
-import shapeless.ops.nat.{ LTEq, Pred, ToInt }
+import shapeless.{ ::, HList, HNil, Nat }
+import shapeless.ops.hlist.{ At, IsHCons, Prepend, Split }
 
 /** Trait that encapsulates dimension on which to operate. */
-sealed trait Slice[P <: Nat] {
+sealed trait Slice[P <: HList] {
   /**
    * Return type of the `selected` method; a position of dimension less than `P`.
    *
    * @note `S` and `R` together make `P`.
    */
-  type S <: Nat
+  type S <: HList
 
   /**
    * Return type of the `remainder` method; a position of dimension less than `P`.
    *
    * @note `S` and `R` together make `P`.
    */
-  type R <: Nat
-
-  /** The dimension of this slice. */
-  val dimension: Nat
+  type R <: HList
 
   /** Returns the selected coordinate(s) for the given `pos`. */
   def selected(pos: Position[P]): Position[S]
@@ -46,22 +42,28 @@ sealed trait Slice[P <: Nat] {
 
 /**
  * Indicates that the selected coordinate is indexed by `dimension`. In other words, when a groupBy is performed,
- * it is performed using a `Position[_1]` consisting of the coordinate at index `dimension`.
+ * it is performed using a `Position[Val :: HNil]` consisting of the coordinate at index `dimension`.
  *
  * @param dimension Dimension of the selected coordinate.
  */
 case class Over[
-  L <: Nat,
-  P <: Nat,
-  D <: Nat : ToInt
+  P <: HList,
+  D <: Nat,
+  Val,
+  Pre <: HList,
+  Suf <: HList,
+  Tai <: HList,
+  Out <: HList
 ](
   dimension: D
 )(implicit
-  ev1: Pred.Aux[P, L],
-  ev2: LTEq[D, P]
+  ev1: At.Aux[P, D, Val],
+  ev2: Split.Aux[P, D, Pre, Suf],
+  ev3: IsHCons.Aux[Suf, _, Tai],
+  ev4: Prepend.Aux[Pre, Tai, Out]
 ) extends Slice[P] {
-  type S = _1
-  type R = L
+  type S = Val :: HNil
+  type R = Out
 
   def selected(pos: Position[P]): Position[S] = Position(pos(dimension))
   def remainder(pos: Position[P]): Position[R] = pos.remove(dimension)
@@ -69,23 +71,29 @@ case class Over[
 
 /**
  * Indicates that the selected coordinates are all except the one indexed by `dimension`. In other words, when a
- * groupBy is performed, it is performed using a `Position[L]` consisting of all coordinates except that at index
+ * groupBy is performed, it is performed using a `Position[Out]` consisting of all coordinates except that at index
  * `dimension`.
  *
  * @param dimension Dimension of the coordinate to exclude.
  */
 case class Along[
-  L <: Nat,
-  P <: Nat,
-  D <: Nat : ToInt
+  P <: HList,
+  D <: Nat,
+  Val,
+  Pre <: HList,
+  Suf <: HList,
+  Tai <: HList,
+  Out <: HList
 ](
   dimension: D
 )(implicit
-  ev1: Pred.Aux[P, L],
-  ev2: LTEq[D, P]
+  ev1: At.Aux[P, D, Val],
+  ev2: Split.Aux[P, D, Pre, Suf],
+  ev3: IsHCons.Aux[Suf, _, Tai],
+  ev4: Prepend.Aux[Pre, Tai, Out]
 ) extends Slice[P] {
-  type S = L
-  type R = _1
+  type S = Out
+  type R = Val :: HNil
 
   def selected(pos: Position[P]): Position[S] = pos.remove(dimension)
   def remainder(pos: Position[P]): Position[R] = Position(pos(dimension))
