@@ -37,6 +37,8 @@ import shapeless.ops.coproduct.Inject
  * @param value  The value of the variable.
  */
 case class Content[D](codec: Codec[D], schema: Schema[D], value: D) {
+  def asValue: Value[D] = codec.box(value)
+
   /**
    * Converts the content to a consise (terse) string.
    *

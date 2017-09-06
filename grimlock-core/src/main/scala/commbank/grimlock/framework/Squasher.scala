@@ -19,23 +19,26 @@ import commbank.grimlock.framework.content.Content
 
 import scala.reflect.ClassTag
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.{ LTEq, ToInt }
 
 /** Trait for squashing a dimension. */
-trait Squasher[P <: Nat] extends SquasherWithValue[P] {
+trait Squasher[P <: HList] extends SquasherWithValue[P] {
   type V = Any
 
   def prepareWithValue[
-    D <: Nat : ToInt
+    D <: Nat : ToInt,
+    L <: Nat
   ](
     cell: Cell[P],
     dim: D,
     ext: V
   )(implicit
-    ev: LTEq[D, P]
+    ev1: Length.Aux[P, L],
+    ev2: LTEq[D, L]
   ): Option[T] = prepare(cell, dim)
-  def presentWithValue(t: T, ext: V): Option[Content] = present(t)
+  def presentWithValue[D](t: T, ext: V): Option[Content[D]] = present(t)
 
   /**
    * Prepare for squashing.
@@ -45,7 +48,16 @@ trait Squasher[P <: Nat] extends SquasherWithValue[P] {
    *
    * @return State to reduce.
    */
-  def prepare[D <: Nat : ToInt](cell: Cell[P], dim: D)(implicit ev: LTEq[D, P]): Option[T]
+  def prepare[
+    D <: Nat : ToInt,
+    L <: Nat
+  ](
+    cell: Cell[P],
+    dim: D
+  )(implicit
+    ev1: Length.Aux[P, L],
+    ev2: LTEq[D, L]
+  ): Option[T]
 
   /**
    * Present the squashed content.
@@ -54,11 +66,11 @@ trait Squasher[P <: Nat] extends SquasherWithValue[P] {
    *
    * @return The squashed content.
    */
-  def present(t: T): Option[Content]
+  def present[D](t: T): Option[Content[D]]
 }
 
 /** Trait for squashing a dimension with a user provided value. */
-trait SquasherWithValue[P <: Nat] extends java.io.Serializable {
+trait SquasherWithValue[P <: HList] extends java.io.Serializable {
   /** Type of the state being squashed. */
   type T
 
@@ -77,7 +89,17 @@ trait SquasherWithValue[P <: Nat] extends java.io.Serializable {
    *
    * @return State to reduce.
    */
-  def prepareWithValue[D <: Nat : ToInt](cell: Cell[P], dim: D, ext: V)(implicit ev: LTEq[D, P]): Option[T]
+  def prepareWithValue[
+    D <: Nat : ToInt,
+    L <: Nat
+  ](
+    cell: Cell[P],
+    dim: D,
+    ext: V
+  )(implicit
+    ev1: Length.Aux[P, L],
+    ev2: LTEq[D, L]
+  ): Option[T]
 
   /**
    * Standard reduce method.
@@ -95,6 +117,6 @@ trait SquasherWithValue[P <: Nat] extends java.io.Serializable {
    *
    * @return The squashed content.
    */
-  def presentWithValue(t: T, ext: V): Option[Content]
+  def presentWithValue[D](t: T, ext: V): Option[Content[D]]
 }
 

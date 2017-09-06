@@ -22,10 +22,10 @@ import commbank.grimlock.framework.position.Slice
 
 import com.twitter.algebird.Moments
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for computing common statistics from a matrix. */
-trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
+trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
   /**
    * Compute counts.
    *
@@ -68,7 +68,7 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P],
     tuner: T
   )(
-    predicate: (Content) => Boolean
+    predicate: (Content[_]) => Boolean
   )(implicit
     ev: Statistics.PredicateCountsTuner[C#U, T]
   ): C#U[Cell[slice.S]]

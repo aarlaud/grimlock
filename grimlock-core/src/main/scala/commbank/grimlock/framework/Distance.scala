@@ -16,15 +16,16 @@ package commbank.grimlock.framework.distance
 
 import commbank.grimlock.framework.{ Cell, Locate, MultiDimensionMatrix }
 import commbank.grimlock.framework.content.Content
+import commbank.grimlock.framework.encoding.DoubleCodec
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.Tuner
 import commbank.grimlock.framework.metadata.{ CategoricalType, ContinuousSchema, NumericType }
 import commbank.grimlock.framework.position.{ Position, Slice }
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for computing pairwise distances from a matrix. */
-trait PairwiseDistance[P <: Nat, C <: Context[C]] { self: MultiDimensionMatrix[P, C] =>
+trait PairwiseDistance[P <: HList, C <: Context[C]] { self: MultiDimensionMatrix[P, C] =>
   /**
    * Compute correlations.
    *
@@ -38,7 +39,7 @@ trait PairwiseDistance[P <: Nat, C <: Context[C]] { self: MultiDimensionMatrix[P
    * @return A `C#U[Cell[Q]]` with all pairwise correlations.
    */
   def correlation[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -63,7 +64,7 @@ trait PairwiseDistance[P <: Nat, C <: Context[C]] { self: MultiDimensionMatrix[P
    * @return A `C#U[Cell[Q]]` with all pairwise mutual information values.
    */
   def mutualInformation[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -86,7 +87,7 @@ object PairwiseDistance {
   trait MutualInformationTuner[U[_], T <: Tuner] extends java.io.Serializable
 
   private[grimlock] def prepareCorrelation[
-    P <: Nat
+    P <: HList
   ](
     slice: Slice[P],
     cell: Cell[P],
@@ -94,7 +95,7 @@ object PairwiseDistance {
     strict: Boolean
   ): Option[(Position[slice.S], Position[slice.R], Double)] = {
     if (!filter || cell.content.schema.classification.isOfType(NumericType)) {
-      val value = cell.content.value.asDouble
+      val value = cell.content.asValue.asDouble
       val double = if (strict) value.orElse(Option(Double.NaN)) else value
 
       double.map { case d => (slice.selected(cell.position), slice.remainder(cell.position), d) }
@@ -103,8 +104,8 @@ object PairwiseDistance {
   }
 
   private[grimlock] def presentCorrelation[
-    S <: Nat,
-    Q <: Nat
+    S <: HList,
+    Q <: HList
   ](
     lsel: Position[S],
     lval: Double,
@@ -112,30 +113,33 @@ object PairwiseDistance {
     rval: Double,
     name: Locate.FromPairwisePositions[S, Q]
   ): Option[Cell[Q]] = name(lsel, rsel)
-    .map { case pos => Cell(pos, Content(ContinuousSchema[Double](), lval / rval)) }
+    .map { case pos => Cell(pos, Content(DoubleCodec, ContinuousSchema[Double](), lval / rval)) }
 
   private[grimlock] def prepareMutualInformation[
-    P <: Nat
+    P <: HList
   ](
     slice: Slice[P],
     cell: Cell[P],
     filter: Boolean
   ): Option[(Position[slice.S], Position[slice.R], String)] = {
     if (!filter || cell.content.schema.classification.isOfType(CategoricalType))
-      Option((slice.selected(cell.position), slice.remainder(cell.position), cell.content.value.toShortString))
+      Option(
+        (slice.selected(cell.position), slice.remainder(cell.position), cell.content.codec.encode(cell.content.value))
+      )
     else
       None
   }
 
   private[grimlock] def presentMutualInformation[
-    S <: Nat,
-    Q <: Nat
+    S <: HList,
+    Q <: HList
   ](
     lsel: Position[S],
     rsel: Position[S],
     mi: Double,
     name: Locate.FromPairwisePositions[S, Q]
-  ): Option[Cell[Q]] = name(lsel, rsel).map { case pos => Cell(pos, Content(ContinuousSchema[Double](), mi)) }
+  ): Option[Cell[Q]] = name(lsel, rsel)
+    .map { case pos => Cell(pos, Content(DoubleCodec, ContinuousSchema[Double](), mi)) }
 
   private[grimlock] def partialEntropy(count: Long, total: Long, log: (Double) => Double, negate: Boolean): Double = {
     val pe = (count.toDouble / total) * log(count.toDouble / total)
@@ -143,7 +147,7 @@ object PairwiseDistance {
     if (negate) - pe else pe
   }
 
-  private[grimlock] def upper[V, S <: Nat] = (l: (Position[S], V), r: (Position[S], V)) => l._1.compare(r._1) > 0
-  private[grimlock] def keyedUpper[K, V, S <: Nat] = (k: K, l: (Position[S], V), r: (Position[S], V)) => upper(l, r)
+  private[grimlock] def upper[V, S <: HList] = (l: (Position[S], V), r: (Position[S], V)) => l._1.compare(r._1) > 0
+  private[grimlock] def keyedUpper[K, V, S <: HList] = (k: K, l: (Position[S], V), r: (Position[S], V)) => upper(l, r)
 }
 

@@ -37,7 +37,7 @@ import commbank.grimlock.framework.position.{ Position, Positions }
 
 import scala.reflect.ClassTag
 
-import shapeless.{ ::, =:!=, HList, HNil }
+import shapeless.{ ::, =:!=, HList, HNil, Nat }
 import shapeless.nat.{ _1, _2, _3, _4, _5, _6, _7, _8, _9 }
 import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT

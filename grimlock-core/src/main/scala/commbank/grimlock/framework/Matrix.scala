@@ -18,7 +18,6 @@ import commbank.grimlock.framework.aggregate.{ Aggregator, AggregatorWithValue }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.distance.PairwiseDistance
 import commbank.grimlock.framework.distribution.ApproximateDistribution
-import commbank.grimlock.framework.encoding.Value
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.{ Reducers, Tuner }
 import commbank.grimlock.framework.pairwise.{ Comparer, Operator, OperatorWithValue }
@@ -33,12 +32,12 @@ import commbank.grimlock.framework.window.{ Window, WindowWithValue }
 
 import org.apache.hadoop.io.Writable
 
-import shapeless.{ ::, =:!=, HNil, IsDistinctConstraint, Nat }
+import shapeless.{ ::, =:!=, HList, HNil, IsDistinctConstraint, Nat }
 import shapeless.nat.{ _0, _1, _2, _3, _4, _5, _6, _7, _8, _9 }
 import shapeless.ops.nat.{ LTEq, GT, GTEq, Pred, ToInt }
 
 /** Trait for common matrix operations. */
-trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
+trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   with ApproximateDistribution[P, C]
   with Statistics[P, C] {
   /**
@@ -59,7 +58,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
     tuner: T
   )(
     positions: C#U[Position[slice.S]],
-    schema: Content.Parser,
+    schema: Content.Parser[Content[_]],
     writer: Persist.TextWriter[Cell[P]] = Cell.toString()
   )(implicit
     ev: Matrix.ChangeTuner[C#U, T]
@@ -68,11 +67,11 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
   /**
    * Compacts a matrix to a `Map`.
    *
-   * @return A `C#E[Map[Position[P], Content]]` containing the Map representation of this matrix.
+   * @return A `C#E[Map[Position[P], Content[_]]]` containing the Map representation of this matrix.
    *
    * @note Avoid using this for very large matrices.
    */
-  def compact(): C#E[Map[Position[P], Content]]
+  def compact(): C#E[Map[Position[P], Content[_]]]
 
   /**
    * Compact a matrix to a `Map`.
@@ -87,7 +86,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    */
   def compact[
     T <: Tuner,
-    V[_ <: Nat]
+    V[_ <: HList]
   ](
     slice: Slice[P],
     tuner: T
@@ -147,7 +146,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwise[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -173,7 +172,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwiseWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -201,7 +200,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwiseBetween[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -229,7 +228,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwiseBetweenWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -253,7 +252,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[Cell[Q]]` where the cells have been relocated.
    */
-  def relocate[Q <: Nat](locate: Locate.FromCell[P, Q])(implicit ev: GTEq[Q, P]): C#U[Cell[Q]]
+  def relocate[Q <: HList](locate: Locate.FromCell[P, Q])(implicit ev: GTEq[Q, P]): C#U[Cell[Q]]
 
   /**
    * Relocate the coordinates of the cells using user a suplied value.
@@ -264,7 +263,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the cells have been relocated.
    */
   def relocateWithValue[
-    Q <: Nat,
+    Q <: HList,
     W
   ](
     value: C#E[W],
@@ -370,7 +369,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the derived data.
    */
   def slide[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -396,7 +395,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the derived data.
    */
   def slideWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -448,7 +447,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @note The `command` must be installed on each node of the cluster.
    */
   def stream[
-    Q <: Nat
+    Q <: HList
   ](
     command: String,
     files: List[String],
@@ -475,7 +474,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *       values for a given slice fit into memory.
    */
   def streamByPosition[
-    Q <: Nat
+    Q <: HList
   ](
     slice: Slice[P]
   )(
@@ -518,7 +517,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the aggregates.
    */
   def summarise[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -542,7 +541,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the aggregates.
    */
   def summariseWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -582,7 +581,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[CellPosition[_1]]]` where all coordinates have been merged into a single position.
    */
-  def toVector(melt: (List[Value]) => Value): C#U[Cell[_1]]
+  def toVector[V](melt: (P) => V): C#U[Cell[V :: HNil]]
 
   /**
    * Transform the content of a matrix.
@@ -591,7 +590,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[Cell[Q]]` with the transformed cells.
    */
-  def transform[Q <: Nat](transformers: Transformer[P, Q]*)(implicit ev: GTEq[Q, P]): C#U[Cell[Q]]
+  def transform[Q <: HList](transformers: Transformer[P, Q]*)(implicit ev: GTEq[Q, P]): C#U[Cell[Q]]
 
   /**
    * Transform the content of a matrix using a user supplied value.
@@ -602,7 +601,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the transformed cells.
    */
   def transformWithValue[
-    Q <: Nat,
+    Q <: HList,
     W
   ](
     value: C#E[W],
@@ -639,7 +638,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @note Comparison is performed based on the string representation of the `Content`.
    */
-  def unique[T <: Tuner](tuner: T)(implicit ev: Matrix.UniqueTuner[C#U, T]): C#U[Content]
+  def unique[T <: Tuner](tuner: T)(implicit ev: Matrix.UniqueTuner[C#U, T]): C#U[Content[_]]
 
   /**
    * Return the unique (distinct) contents along a dimension.
@@ -659,7 +658,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
   )(implicit
     ev1: slice.S =:!= _0,
     ev2: Matrix.UniqueTuner[C#U, T]
-  ): C#U[(Position[slice.S], Content)]
+  ): C#U[(Position[slice.S], Content[_])]
 
   /**
    * Query the contents of a matrix and return the positions of those that match the predicate.
@@ -768,7 +767,7 @@ object Matrix {
 }
 
 /** Trait for matrix operations on matrices with more than 1 dimension. */
-trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P, C] {
+trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance[P, C] {
   /**
    * Join two matrices.
    *
@@ -805,11 +804,14 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
   def melt[
     D <: Nat : ToInt,
     I <: Nat : ToInt,
-    Q <: Nat
+    V,
+    W,
+    X,
+    Q <: HList
   ](
     dim: D,
     into: I,
-    merge: (Value, Value) => Value
+    merge: (V, W) => X
   )(implicit
     ev1: LTEq[D, P],
     ev2: LTEq[I, P],
@@ -829,11 +831,12 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    */
   def reshape[
     D <: Nat : ToInt,
-    Q <: Nat,
+    V,
+    Q <: HList,
     T <: Tuner
   ](
     dim: D,
-    coordinate: Value,
+    coordinate: V,
     locate: Locate.FromCellAndOptionalValue[P, Q],
     tuner: T
   )(implicit
@@ -854,7 +857,7 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    */
   def squash[
     D <: Nat : ToInt,
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     dim: D,
@@ -878,7 +881,7 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    */
   def squashWithValue[
     D <: Nat : ToInt,
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -894,7 +897,7 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
 }
 
 /** Trait for matrix methods that depend on the number of dimensions. */
-trait SetDimensionMatrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C] {
+trait SetDimensionMatrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C] {
   /**
    * Return all possible positions of a matrix.
    *
@@ -937,7 +940,7 @@ trait SetDimensionMatrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C] 
   def fillHomogeneous[
     T <: Tuner
   ](
-    value: Content,
+    value: Content[_],
     tuner: T
   )(implicit
     ev: Matrix.FillHomogeneousTuner[C#U, T]
@@ -1418,5 +1421,5 @@ trait Matrix9D[C <: Context[C]] extends SetDimensionMatrix[_9, C] {
  * @param data   The parsed matrix.
  * @param errors Any parse errors.
  */
-case class MatrixWithParseErrors[P <: Nat, U[_]](data: U[Cell[P]], errors: U[String])
+case class MatrixWithParseErrors[P <: HList, U[_]](data: U[Cell[P]], errors: U[String])
 

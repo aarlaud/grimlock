@@ -185,6 +185,8 @@ case class DiscreteSchema[D : Integral] private (range: Option[(D, D)], step: Op
   val classification = DiscreteType
 
   def validate(codec: Codec[D], value: D): Boolean = {
+    val ev = implicitly[Integral[D]]
+
     import ev._
 
     // TODO: use codec?

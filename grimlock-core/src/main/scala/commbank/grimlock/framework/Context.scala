@@ -23,7 +23,7 @@ import org.apache.hadoop.io.Writable
 
 import scala.reflect.ClassTag
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for capturing all operating context related state. */
 trait Context[C <: Context[C]] {
@@ -39,7 +39,7 @@ trait Context[C <: Context[C]] {
    * @param file   The text file to read from.
    * @param parser The parser that converts a single line to a cell.
    */
-  def loadText[P <: Nat](file: String, parser: Cell.TextParser[P]): (U[Cell[P]], U[String])
+  def loadText[P <: HList](file: String, parser: Cell.TextParser[P]): (U[Cell[P]], U[String])
 
   /**
    * Read binary key-value (sequence) matrix data into a `U[Cell[P]]`.
@@ -50,7 +50,7 @@ trait Context[C <: Context[C]] {
   def loadSequence[
     K <: Writable : Manifest,
     V <: Writable : Manifest,
-    P <: Nat
+    P <: HList
   ](
     file: String,
     parser: Cell.SequenceParser[K, V, P]
@@ -64,7 +64,7 @@ trait Context[C <: Context[C]] {
    */
   def loadParquet[
     T <: ThriftStruct : Manifest,
-    P <: Nat
+    P <: HList
   ](
     file: String,
     parser: Cell.ParquetParser[T, P]

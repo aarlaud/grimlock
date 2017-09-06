@@ -20,10 +20,10 @@ import commbank.grimlock.framework.environment.tuner.Tuner
 
 import scala.reflect.ClassTag
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for partitioners. */
-trait Partitioner[P <: Nat, I] extends PartitionerWithValue[P, I] {
+trait Partitioner[P <: HList, I] extends PartitionerWithValue[P, I] {
   type V = Any
 
   def assignWithValue(cell: Cell[P], ext: V): TraversableOnce[I] = assign(cell)
@@ -41,23 +41,23 @@ trait Partitioner[P <: Nat, I] extends PartitionerWithValue[P, I] {
 /** Companion object for the `Partitioner` trait. */
 object Partitioner {
   /** Converts a `(Cell[P]) => I` to a `Partitioner[P, S]`. */
-  implicit def funcToPartitioner[P <: Nat, I](func: (Cell[P]) => I) = new Partitioner[P, I] {
+  implicit def funcToPartitioner[P <: HList, I](func: (Cell[P]) => I) = new Partitioner[P, I] {
     def assign(cell: Cell[P]): TraversableOnce[I] = List(func(cell))
   }
 
   /** Converts a `(Cell[P]) => List[S]` to a `Partitioner[P, I]`. */
-  implicit def funcListToPartitioner[P <: Nat, I](func: (Cell[P]) => List[I]) = new Partitioner[P, I] {
+  implicit def funcListToPartitioner[P <: HList, I](func: (Cell[P]) => List[I]) = new Partitioner[P, I] {
     def assign(cell: Cell[P]): TraversableOnce[I] = func(cell)
   }
 
   /** Converts a `List[Partitioner[P, I]]` to a single `Partitioner[P, I]`. */
-  implicit def listToPartitioner[P <: Nat, I](partitioners: List[Partitioner[P, I]]) = new Partitioner[P, I] {
+  implicit def listToPartitioner[P <: HList, I](partitioners: List[Partitioner[P, I]]) = new Partitioner[P, I] {
     def assign(cell: Cell[P]): TraversableOnce[I] = partitioners.flatMap(_.assign(cell))
   }
 }
 
 /** Trait for partitioners that use a user supplied value. */
-trait PartitionerWithValue[P <: Nat, I] {
+trait PartitionerWithValue[P <: HList, I] {
   /** Type of the external value. */
   type V
 
@@ -75,7 +75,7 @@ trait PartitionerWithValue[P <: Nat, I] {
 /** Companion object for the `PartitionerWithValue` trait. */
 object PartitionerWithValue {
   /** Converts a `(Cell[P], W) => I` to a `PartitionerWithValue[P, S] { type V >: W }`. */
-  implicit def funcToPartitionerWithValue[P <: Nat, I, W](func: (Cell[P], W) => I) = new PartitionerWithValue[P, I] {
+  implicit def funcToPartitionerWithValue[P <: HList, I, W](func: (Cell[P], W) => I) = new PartitionerWithValue[P, I] {
     type V = W
 
     def assignWithValue(cell: Cell[P], ext: W): TraversableOnce[I] = List(func(cell, ext))
@@ -83,7 +83,7 @@ object PartitionerWithValue {
 
   /** Converts a `(Cell[P], W) => List[I]` to a `PartitionerWithValue[P, I] { type V >: W }`. */
   implicit def funcListToPartitionerWithValue[
-    P <: Nat,
+    P <: HList,
     I,
     W
   ](
@@ -99,7 +99,7 @@ object PartitionerWithValue {
    * `PartitionerWithValue[P, I] { type V >: W }`.
    */
   implicit def listToPartitionerWithValue[
-    P <: Nat,
+    P <: HList,
     I,
     W
   ](
@@ -113,7 +113,7 @@ object PartitionerWithValue {
 }
 
 /** Trait that represents the partitions of matrices */
-trait Partitions[P <: Nat, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] {
+trait Partitions[P <: HList, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] {
   /**
    * Add a partition.
    *
@@ -138,7 +138,7 @@ trait Partitions[P <: Nat, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] 
    *       available to keep all (distinct) partition ids in memory.
    */
   def forAll[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     context: C,
@@ -158,7 +158,7 @@ trait Partitions[P <: Nat, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] 
    *
    * @return A `C#U[(I, Cell[Q])]` containing the paritions with `fn` applied to them.
    */
-  def forEach[Q <: Nat](ids: List[I], fn: (I, C#U[Cell[P]]) => C#U[Cell[Q]]): C#U[(I, Cell[Q])]
+  def forEach[Q <: HList](ids: List[I], fn: (I, C#U[Cell[P]]) => C#U[Cell[Q]]): C#U[(I, Cell[Q])]
 
   /**
    * Return the data for the partition `id`.
@@ -233,7 +233,7 @@ object Partitions {
    */
   def toString[
     I,
-    P <: Nat
+    P <: HList
   ](
     verbose: Boolean = false,
     separator: String = "|",
@@ -252,7 +252,7 @@ object Partitions {
    */
   def toJSON[
     I,
-    P <: Nat
+    P <: HList
   ](
     pretty: Boolean = false,
     separator: String = ",",

@@ -17,12 +17,10 @@ package commbank.grimlock.framework.extract
 import commbank.grimlock.framework.Cell
 import commbank.grimlock.framework.position.{ Position, Slice }
 
-import shapeless.{ Nat, Witness }
-import shapeless.nat._1
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.{ HList, HNil, Nat }
 
 /** Trait for extracting data from a user provided value given a cell. */
-trait Extract[P <: Nat, V, T] extends java.io.Serializable { self =>
+trait Extract[P <: HList, V, T] extends java.io.Serializable { self =>
   /**
    * Extract value for the given cell.
    *
@@ -48,95 +46,113 @@ trait Extract[P <: Nat, V, T] extends java.io.Serializable { self =>
 /** Companion object for the `Extract` trait. */
 object Extract {
   /** Converts a `(Cell[P], V) => Option[T]` to a `Extract[P, V, T]`. */
-  implicit def funcToExtract[P <: Nat, V, T](e: (Cell[P], V) => Option[T]): Extract[P, V, T] = new Extract[P, V, T] {
+  implicit def funcToExtract[P <: HList, V, T](e: (Cell[P], V) => Option[T]): Extract[P, V, T] = new Extract[P, V, T] {
     def extract(cell: Cell[P], ext: V): Option[T] = e(cell, ext)
   }
 }
 
 /**
- * Extract from a `Map[Position[_1], T]` using the provided key.
+ * Extract from a `Map[Position[V :: HNil], T]` using the provided key.
  *
  * @param The key used for extracting from the map.
  */
-case class ExtractWithKey[P <: Nat, T](key: Position[_1]) extends Extract[P, Map[Position[_1], T], T] {
-  def extract(cell: Cell[P], ext: Map[Position[_1], T]): Option[T] = ext.get(key)
+case class ExtractWithKey[
+  P <: HList,
+  V,
+  T
+](
+  key: Position[V :: HNil]
+) extends Extract[P, Map[Position[V :: HNil], T], T] {
+  def extract(cell: Cell[P], ext: Map[Position[V :: HNil], T]): Option[T] = ext.get(key)
 }
 
-/** Extract from a `Map[Position[_1], T]` using a dimension from the cell. */
-trait ExtractWithDimension[P <: Nat, T] extends Extract[P, Map[Position[_1], T], T] { }
+/** Extract from a `Map[Position[V :: HNil], T]` using a dimension from the cell. */
+trait ExtractWithDimension[P <: HList, V, T] extends Extract[P, Map[Position[V :: HNil], T], T] { }
 
 /** Companion object to `ExtractWithDimension`. */
 object ExtractWithDimension {
   /**
-   * Extract from a `Map[Position[_1], T]` using a dimension from the cell.
+   * Extract from a `Map[Position[V :: HNil], T]` using a dimension from the cell.
    *
    * @param dim Dimension used for extracting from the map.
    */
   def apply[
-    P <: Nat,
+    P <: HList,
+    D <: Nat,
+    V,
     T
   ](
-    dimension: Nat
+    dimension: D
   )(implicit
-    ev1: LTEq[dimension.N, P],
-    ev2: ToInt[dimension.N],
-    ev3: Witness.Aux[dimension.N]
+    ev: At.Aux[P, D, V]
   ): ExtractWithDimension[P, T] = new ExtractWithDimension[P, T] {
-    def extract(cell: Cell[P], ext: Map[Position[_1], T]): Option[T] = ext.get(Position(cell.position(ev3.value)))
+    def extract(cell: Cell[P], ext: Map[Position[V :: HNil], T]): Option[T] = ext
+      .get(Position(cell.position(dimensino)))
   }
 }
 
-/** Extract from a `Map[Position[_1], Map[Position[_1], T]]` using a dimension from the cell and the provided key. */
-trait ExtractWithDimensionAndKey[P <: Nat, T] extends Extract[P, Map[Position[_1], Map[Position[_1], T]], T] { }
+/**
+ * Extract from a `Map[Position[V :: HNil], Map[Position[W :: HNil], T]]` using a dimension from the cell
+ * and the provided key.
+ */
+trait ExtractWithDimensionAndKey[
+  P <: HList,
+  V,
+  W,
+  T
+] extends Extract[P, Map[Position[V :: HNil], Map[Position[W :: HNil], T]], T] { }
 
 /** Companion object to `ExtractWithDimensionAndKey`. */
 object ExtractWithDimensionAndKey {
   /**
-   * Extract from a `Map[Position[_1], Map[Position[_1], T]]` using a dimension from the cell and the provided key.
+   * Extract from a `Map[Position[V :: HNil], Map[Position[W :: HNil], T]]` using a dimension from the cell
+   * and the provided key.
    *
    * @param dim Dimension used for extracting from the outer map.
    * @param key The key used for extracting from the inner map.
    */
   def apply[
-    P <: Nat,
+    P <: HList,
+    D <: Nat,
+    V,
+    W,
     T
   ](
-    dimension: Nat,
-    key: Position[_1]
+    dimension: D,
+    key: Position[W :: HNil]
   )(implicit
-    ev1: LTEq[dimension.N, P],
-    ev2: ToInt[dimension.N],
-    ev3: Witness.Aux[dimension.N]
+    ev: At.Aux[P, D, V]
   ): ExtractWithDimensionAndKey[P, T] = new ExtractWithDimensionAndKey[P, T] {
-    def extract(cell: Cell[P], ext: Map[Position[_1], Map[Position[_1], T]]): Option[T] = ext
-      .get(Position(cell.position(ev3.value)))
+    def extract(cell: Cell[P], ext: Map[Position[V :: HNil], Map[Position[W :: HNil], T]]): Option[T] = ext
+      .get(Position(cell.position(dimension)))
       .flatMap(_.get(key))
   }
 }
 
 /** Extract from a `Map[Position[P], T]` using the position of the cell. */
-case class ExtractWithPosition[P <: Nat, T]() extends Extract[P, Map[Position[P], T], T] {
+case class ExtractWithPosition[P <: HList, T]() extends Extract[P, Map[Position[P], T], T] {
   def extract(cell: Cell[P], ext: Map[Position[P], T]): Option[T] = ext.get(cell.position)
 }
 
 /**
- * Extract from a `Map[Position[P], Map[Position[_1], T]]` using the position of the cell and the provided key.
+ * Extract from a `Map[Position[P], Map[Position[V :: HNil], T]]` using the position of the cell and the provided key.
  *
  * @param key The key used for extracting from the inner map.
  */
 case class ExtractWithPositionAndKey[
-  P <: Nat,
+  P <: HList,
+  V,
   T
 ](
-  key: Position[_1]
-) extends Extract[P, Map[Position[P], Map[Position[_1], T]], T] {
-  def extract(cell: Cell[P], ext: Map[Position[P], Map[Position[_1], T]]): Option[T] = ext
+  key: Position[V :: HNil]
+) extends Extract[P, Map[Position[P], Map[Position[V :: HNil], T]], T] {
+  def extract(cell: Cell[P], ext: Map[Position[P], Map[Position[V :: HNil], T]]): Option[T] = ext
     .get(cell.position)
     .flatMap(_.get(key))
 }
 
 /** Extract from a `Map[Position[S], T]` using the selected position(s) of the cell. */
-trait ExtractWithSelected[P <: Nat, S <: Nat, T] extends Extract[P, Map[Position[S], T], T] { }
+trait ExtractWithSelected[P <: HList, S <: HList, T] extends Extract[P, Map[Position[S], T], T] { }
 
 /** Companion object to `ExtractWithSelected`. */
 object ExtractWithSelected {
@@ -147,7 +163,7 @@ object ExtractWithSelected {
    *              into the map.
    */
   def apply[
-    P <: Nat,
+    P <: HList,
     T
   ](
     slice: Slice[P]
@@ -157,33 +173,35 @@ object ExtractWithSelected {
 }
 
 /**
- * Extract from a `Map[Position[S], Map[Position[_1], T]]` using the selected position(s) of the cell and
+ * Extract from a `Map[Position[S], Map[Position[V :: HNil], T]]` using the selected position(s) of the cell and
  * the provided key.
  */
 trait ExtractWithSelectedAndKey[
-  P <: Nat,
-  S <: Nat,
+  P <: HList,
+  S <: HList,
+  V,
   T
-] extends Extract[P, Map[Position[S], Map[Position[_1], T]], T] { }
+] extends Extract[P, Map[Position[S], Map[Position[V :: HNil], T]], T] { }
 
 /** Companion object to `ExtractWithSelectedAndKey`. */
 object ExtractWithSelectedAndKey {
   /**
-   * Extract from a `Map[Position[slice.S], Map[Position[_1], T]]` using the selected position(s) of the cell and
-   * the provided key.
+   * Extract from a `Map[Position[slice.S], Map[Position[V :: HNil], T]]` using the selected position(s) of the
+   * cell and the provided key.
    *
    * @param slice The slice used to extract the selected position(s) from the cell which are used as the key
    *              into the map.
    * @param key   The key used for extracting from the inner map.
    */
   def apply[
-    P <: Nat,
+    P <: HList,
+    V,
     T
   ](
     slice: Slice[P],
-    key: Position[_1]
+    key: Position[V :: HNil]
   ): ExtractWithSelectedAndKey[P, slice.S, T] = new ExtractWithSelectedAndKey[P, slice.S, T] {
-    def extract(cell: Cell[P], ext: Map[Position[slice.S], Map[Position[_1], T]]): Option[T] = ext
+    def extract(cell: Cell[P], ext: Map[Position[slice.S], Map[Position[V :: HNil], T]]): Option[T] = ext
       .get(slice.selected(cell.position))
       .flatMap(_.get(key))
   }
@@ -191,9 +209,9 @@ object ExtractWithSelectedAndKey {
 
 /** Extract from a `Map[Position[S], Map[Position[R], T]]` using the selected and remainder position(s) of the cell. */
 trait ExtractWithSlice[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
+  P <: HList,
+  S <: HList,
+  R <: HList,
   T
 ] extends Extract[P, Map[Position[S], Map[Position[R], T]], T] { }
 
@@ -207,7 +225,7 @@ object ExtractWithSlice {
    *              as the keys into the outer and inner maps.
    */
   def apply[
-    P <: Nat,
+    P <: HList,
     T
   ](
     slice: Slice[P]

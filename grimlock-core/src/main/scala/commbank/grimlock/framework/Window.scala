@@ -18,7 +18,8 @@ import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.position.Position
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GTEq
 
 /**
@@ -33,7 +34,7 @@ import shapeless.ops.nat.GTEq
  * the present method returns cells for the output values. Note that the running state can be used to create derived
  * features of different window sizes.
  */
-trait Window[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends WindowWithValue[P, S, R, Q] { self =>
+trait Window[P <: HList, S <: HList, R <: HList, Q <: HList] extends WindowWithValue[P, S, R, Q] { self =>
   type V = Any
 
   def prepareWithValue(cell: Cell[P], ext: V): I = prepare(cell)
@@ -65,7 +66,7 @@ trait Window[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends WindowWithValue[P, 
    *
    * @return A windowed function that prepares the content and then runs `this`.
    */
-  override def withPrepare(preparer: (Cell[P]) => Content) = new Window[P, S, R, Q] {
+  override def withPrepare[D](preparer: (Cell[P]) => Content[D]) = new Window[P, S, R, Q] {
     type I = self.I
     type T = self.T
     type O = self.O
@@ -83,7 +84,7 @@ trait Window[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends WindowWithValue[P, 
    *
    * @return A windowed function that runs `this` and then updates the resulting contents.
    */
-  override def andThenMutate(mutator: (Cell[Q]) => Content) = new Window[P, S, R, Q] {
+  override def andThenMutate[D](mutator: (Cell[Q]) => Content[D]) = new Window[P, S, R, Q] {
     type I = self.I
     type T = self.T
     type O = self.O
@@ -102,11 +103,15 @@ trait Window[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends WindowWithValue[P, 
    * @return A windowed function that runs `this` and then relocates the contents.
    */
   override def andThenRelocate[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new Window[P, S, R, X] {
     type I = self.I
     type T = self.T
@@ -125,10 +130,10 @@ trait Window[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends WindowWithValue[P, 
 object Window {
   /** Converts a `List[Window[P, S, R, Q]]` to a single `Window[P, S, R, Q]`. */
   implicit def listToWindow[
-    P <: Nat,
-    S <: Nat,
-    R <: Nat,
-    Q <: Nat
+    P <: HList,
+    S <: HList,
+    R <: HList,
+    Q <: HList
   ](
     windows: List[Window[P, S, R, Q]]
   ) = new Window[P, S, R, Q] {
@@ -172,7 +177,7 @@ object Window {
  * the present method returns cells for the output values. Note that the running state can be used to create derived
  * features of different window sizes.
  */
-trait WindowWithValue[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends java.io.Serializable { self =>
+trait WindowWithValue[P <: HList, S <: HList, R <: HList, Q <: HList] extends java.io.Serializable { self =>
   /** Type of the external value. */
   type V
 
@@ -234,7 +239,7 @@ trait WindowWithValue[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends java.io.Se
    *
    * @return A windowed function that prepares the content and then runs `this`.
    */
-  def withPrepare(preparer: (Cell[P]) => Content) = new WindowWithValue[P, S, R, Q] {
+  def withPrepare[D](preparer: (Cell[P]) => Content[D]) = new WindowWithValue[P, S, R, Q] {
     type V = self.V
     type I = self.I
     type T = self.T
@@ -254,7 +259,7 @@ trait WindowWithValue[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends java.io.Se
    *
    * @return A windowed function that runs `this` and then updates the resulting contents.
    */
-  def andThenMutate(mutator: (Cell[Q]) => Content) = new WindowWithValue[P, S, R, Q] {
+  def andThenMutate[D](mutator: (Cell[Q]) => Content[D]) = new WindowWithValue[P, S, R, Q] {
     type V = self.V
     type I = self.I
     type T = self.T
@@ -276,11 +281,15 @@ trait WindowWithValue[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends java.io.Se
    * @return A windowed function that runs `this` and then relocates the contents.
    */
   def andThenRelocate[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new WindowWithValue[P, S, R, X] {
     type V = self.V
     type I = self.I
@@ -302,7 +311,7 @@ trait WindowWithValue[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends java.io.Se
    *
    * @return A windowed function that prepares the content and then runs `this`.
    */
-  def withPrepareWithValue(preparer: (Cell[P], V) => Content) = new WindowWithValue[P, S, R, Q] {
+  def withPrepareWithValue[D](preparer: (Cell[P], V) => Content[D]) = new WindowWithValue[P, S, R, Q] {
     type V = self.V
     type I = self.I
     type T = self.T
@@ -323,7 +332,7 @@ trait WindowWithValue[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends java.io.Se
    *
    * @return A windowed function that runs `this` and then updates the resulting contents.
    */
-  def andThenMutateWithValue(mutator: (Cell[Q], V) => Content) = new WindowWithValue[P, S, R, Q] {
+  def andThenMutateWithValue[D](mutator: (Cell[Q], V) => Content[D]) = new WindowWithValue[P, S, R, Q] {
     type V = self.V
     type I = self.I
     type T = self.T
@@ -345,11 +354,15 @@ trait WindowWithValue[P <: Nat, S <: Nat, R <: Nat, Q <: Nat] extends java.io.Se
    * @return A windowed function that runs `this` and then relocates the contents.
    */
   def andThenRelocateWithValue[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     locator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new WindowWithValue[P, S, R, X] {
     type V = self.V
     type I = self.I
@@ -372,10 +385,10 @@ object WindowWithValue {
    * `WindowWithValue[S, R, Q] { type V >: W }`.
    */
   implicit def listToWindowWithValue[
-    P <: Nat,
-    S <: Nat,
-    R <: Nat,
-    Q <: Nat,
+    P <: HList,
+    S <: HList,
+    R <: HList,
+    Q <: HList,
     W
   ](
     t: List[WindowWithValue[P, S, R, Q] { type V >: W }]

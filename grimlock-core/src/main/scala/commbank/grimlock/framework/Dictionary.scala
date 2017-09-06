@@ -16,9 +16,13 @@ package commbank.grimlock.framework.metadata
 
 import commbank.grimlock.framework.content.Content
 
+import java.util.Date
 import java.util.regex.Pattern
 
 import scala.io.Source
+
+import shapeless.Coproduct
+import shapeless.ops.coproduct.Inject
 
 object Dictionary {
   /**
@@ -32,13 +36,22 @@ object Dictionary {
    *
    * @return A tuple consisting of the dictionary object and an iterator containing parse errors.
    */
-  def load(
+  def load[
+    C <: Coproduct
+  ](
     source: Source,
     separator: String = "|",
     key: Int = 0,
     encoding: Int = 1,
     schema: Int = 2
-  ): (Map[String, Content.Parser], Iterator[String]) = {
+  )(implicit
+    ev1: Inject[C, Content[Boolean]],
+    ev2: Inject[C, Content[Date]],
+    ev3: Inject[C, Content[Double]],
+    ev4: Inject[C, Content[Long]],
+    ev5: Inject[C, Content[String]],
+    ev6: Inject[C, Content[Type]]
+  ): (Map[String, Content.Parser[C]], Iterator[String]) = {
     val result = source
       .getLines()
       .map { case line =>

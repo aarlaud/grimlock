@@ -17,11 +17,12 @@ package commbank.grimlock.framework.transform
 import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GTEq
 
 /** Trait for transformations from `P` to `Q`. */
-trait Transformer[P <: Nat, Q <: Nat] extends TransformerWithValue[P, Q] { self =>
+trait Transformer[P <: HList, Q <: HList] extends TransformerWithValue[P, Q] { self =>
   type V = Any
 
   def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[Q]] = present(cell)
@@ -42,7 +43,7 @@ trait Transformer[P <: Nat, Q <: Nat] extends TransformerWithValue[P, Q] { self 
    *
    * @return A transformer that runs `this` and then `that`.
    */
-  def andThen[X <: Nat](that: Transformer[Q, X]) = new Transformer[P, X] {
+  def andThen[X <: HList](that: Transformer[Q, X]) = new Transformer[P, X] {
     def present(cell: Cell[P]): TraversableOnce[Cell[X]] = self.present(cell).flatMap(that.present(_))
   }
 
@@ -53,7 +54,7 @@ trait Transformer[P <: Nat, Q <: Nat] extends TransformerWithValue[P, Q] { self 
    *
    * @return A transformer that prepares the content and then runs `this`.
    */
-  override def withPrepare(preparer: (Cell[P]) => Content) = new Transformer[P, Q] {
+  override def withPrepare[D](preparer: (Cell[P]) => Content[D]) = new Transformer[P, Q] {
     def present(cell: Cell[P]): TraversableOnce[Cell[Q]] = self.present(cell.mutate(preparer))
   }
 
@@ -64,7 +65,7 @@ trait Transformer[P <: Nat, Q <: Nat] extends TransformerWithValue[P, Q] { self 
    *
    * @return A transformer that runs `this` and then updates the resulting contents.
    */
-  override def andThenMutate(mutator: (Cell[Q]) => Content) = new Transformer[P, Q] {
+  override def andThenMutate[D](mutator: (Cell[Q]) => Content[D]) = new Transformer[P, Q] {
     def present(cell: Cell[P]): TraversableOnce[Cell[Q]] = self.present(cell).map(_.mutate(mutator))
   }
 
@@ -76,11 +77,15 @@ trait Transformer[P <: Nat, Q <: Nat] extends TransformerWithValue[P, Q] { self 
    * @return A transformer that runs `this` and then relocates the contents.
    */
   override def andThenRelocate[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new Transformer[P, X] {
     def present(cell: Cell[P]): TraversableOnce[Cell[X]] = self
       .present(cell)
@@ -91,23 +96,28 @@ trait Transformer[P <: Nat, Q <: Nat] extends TransformerWithValue[P, Q] { self 
 /** Companion object for the `Transformer` type class. */
 object Transformer {
   /** Converts a `(Cell[P]) => Cell[Q]` to a `Transformer[P, Q]`. */
-  implicit def funcToTransformer[P <: Nat, Q <: Nat](func: (Cell[P]) => Cell[Q]) = new Transformer[P, Q] {
+  implicit def funcToTransformer[P <: HList, Q <: HList](func: (Cell[P]) => Cell[Q]) = new Transformer[P, Q] {
     def present(cell: Cell[P]): TraversableOnce[Cell[Q]] = List(func(cell))
   }
 
   /** Converts a `(Cell[P]) => List[Cell[Q]]` to a `Transformer[P, Q]`. */
-  implicit def funcListToTransformer[P <: Nat, Q <: Nat](func: (Cell[P]) => List[Cell[Q]]) = new Transformer[P, Q] {
+  implicit def funcListToTransformer[P <: HList, Q <: HList](func: (Cell[P]) => List[Cell[Q]]) = new Transformer[P, Q] {
     def present(cell: Cell[P]): TraversableOnce[Cell[Q]] = func(cell)
   }
 
   /** Converts a `List[Transformer[P, Q]]` to a single `Transformer[P, Q]`. */
-  implicit def listToTransformer[P <: Nat, Q <: Nat](transformers: List[Transformer[P, Q]]) = new Transformer[P, Q] {
+  implicit def listToTransformer[
+    P <: HList,
+    Q <: HList
+  ](
+    transformers: List[Transformer[P, Q]]
+  ) = new Transformer[P, Q] {
     def present(cell: Cell[P]): TraversableOnce[Cell[Q]] = transformers.flatMap(_.present(cell))
   }
 }
 
 /** Trait for transformations from `P` to `Q` that use a user supplied value. */
-trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { self =>
+trait TransformerWithValue[P <: HList, Q <: HList] extends java.io.Serializable { self =>
   /** Type of the external value. */
   type V
 
@@ -129,7 +139,7 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
    * @return A transformer that runs `this` and then `that`.
    */
   def andThenWithValue[
-    X <: Nat
+    X <: HList
   ](
     that: TransformerWithValue[Q, X] { type V >: self.V }
   ) = new TransformerWithValue[P, X] {
@@ -147,7 +157,7 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
    *
    * @return A transformer that prepares the content and then runs `this`.
    */
-  def withPrepare(preparer: (Cell[P]) => Content) = new TransformerWithValue[P, Q] {
+  def withPrepare[D](preparer: (Cell[P]) => Content[D]) = new TransformerWithValue[P, Q] {
     type V = self.V
 
     def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[Q]] = self
@@ -161,7 +171,7 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
    *
    * @return A transformer that runs `this` and then updates the resulting contents.
    */
-  def andThenMutate(mutator: (Cell[Q]) => Content) = new TransformerWithValue[P, Q] {
+  def andThenMutate[D](mutator: (Cell[Q]) => Content[D]) = new TransformerWithValue[P, Q] {
     type V = self.V
 
     def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[Q]] = self
@@ -177,11 +187,15 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
    * @return A transformer that runs `this` and then relocates the contents.
    */
   def andThenRelocate[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new TransformerWithValue[P, X] {
     type V = self.V
 
@@ -197,7 +211,7 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
    *
    * @return A transformer that prepares the content and then runs `this`.
    */
-  def withPrepareWithValue(preparer: (Cell[P], V) => Content) = new TransformerWithValue[P, Q] {
+  def withPrepareWithValue[D](preparer: (Cell[P], V) => Content[D]) = new TransformerWithValue[P, Q] {
     type V = self.V
 
     def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[Q]] = self
@@ -211,7 +225,7 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
    *
    * @return A transformer that runs `this` and then updates the resulting contents.
    */
-  def andThenMutateWithValue(mutator: (Cell[Q], V) => Content) = new TransformerWithValue[P, Q] {
+  def andThenMutateWithValue[D](mutator: (Cell[Q], V) => Content[D]) = new TransformerWithValue[P, Q] {
     type V = self.V
 
     def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[Q]] = self
@@ -227,11 +241,15 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
    * @return A transformer that runs `this` and then relocates the contents.
    */
   def andThenRelocateWithValue[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     locator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new TransformerWithValue[P, X] {
     type V = self.V
 
@@ -245,8 +263,8 @@ trait TransformerWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { se
 object TransformerWithValue {
   /** Converts a `(Cell[P], W) => Cell[Q]` to a `TransformerWithValue[P, Q] { type V >: W }`. */
   implicit def funcToTransformerWithValue[
-    P <: Nat,
-    Q <: Nat,
+    P <: HList,
+    Q <: HList,
     W
   ](
     func: (Cell[P], W) => Cell[Q]
@@ -258,8 +276,8 @@ object TransformerWithValue {
 
   /** Converts a `(Cell[P], W) => List[Cell[Q]]` to a `TransformerWithValue[P, Q] { type V >: W }`. */
   implicit def funcListToTransformerWithValue[
-    P <: Nat,
-    Q <: Nat,
+    P <: HList,
+    Q <: HList,
     W
   ](
     func: (Cell[P], W) => List[Cell[Q]]
@@ -274,8 +292,8 @@ object TransformerWithValue {
    * `TransformerWithValue[P, Q] { type V >: W }`.
    */
   implicit def listToTransformerWithValue[
-    P <: Nat,
-    Q <: Nat,
+    P <: HList,
+    Q <: HList,
     W
   ](
     transformers: List[TransformerWithValue[P, Q] { type V >: W }]
