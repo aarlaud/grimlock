@@ -26,15 +26,15 @@ import commbank.grimlock.scalding.Persist
 
 import com.twitter.algebird.{ Moments, Monoid }
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for computing pairwise distances from a matrix. */
 trait PairwiseDistance[
-  P <: Nat
+  P <: HList
 ] extends FwPairwiseDistance[P, Context]
   with Persist[Cell[P]] { self: FwMultiDimensionMatrix[P, Context] =>
   def correlation[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -83,7 +83,7 @@ trait PairwiseDistance[
   }
 
   def mutualInformation[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],

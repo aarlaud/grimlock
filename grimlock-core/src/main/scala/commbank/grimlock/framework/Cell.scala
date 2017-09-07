@@ -28,8 +28,8 @@ import play.api.libs.json.{ JsError, JsObject, Json, JsResult, JsSuccess, JsValu
 
 import scala.util.Try
 
-import shapeless.{ ::, HList, LUBConstraint, Nat, Sized }
-import shapeless.nat.{ _1, _2, _3, _4, _5, _6, _7, _8, _9 }
+import shapeless.{ ::, HList, HNil, LUBConstraint, Nat, Sized }
+import shapeless.nat.{ _1, _2 }
 import shapeless.ops.hlist.{ Mapper, ToTraversable, Zip }
 import shapeless.ops.nat.{ LTEq, ToInt }
 import shapeless.syntax.sized._

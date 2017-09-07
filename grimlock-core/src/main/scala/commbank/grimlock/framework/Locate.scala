@@ -15,46 +15,47 @@
 package commbank.grimlock.framework
 
 import commbank.grimlock.framework.content.Content
-import commbank.grimlock.framework.encoding.Value
 import commbank.grimlock.framework.position.{ Position, Slice }
 
-import shapeless.{ Nat, Succ }
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.{ ::, HList, HNil, Nat }
+import shapeless.ops.hlist.{ At, Prepend, ReplaceAt }
+
+// TODO: Remove calls of Object.toString
 
 object Locate {
   /** Extract position. */
-  type FromPosition[P <: Nat, Q <: Nat] = (Position[P]) => Option[Position[Q]]
+  type FromPosition[P <: HList, Q <: HList] = (Position[P]) => Option[Position[Q]]
 
   /** Extract position for left and right positions. */
-  type FromPairwisePositions[P <: Nat, Q <: Nat] = (Position[P], Position[P]) => Option[Position[Q]]
+  type FromPairwisePositions[P <: HList, Q <: HList] = (Position[P], Position[P]) => Option[Position[Q]]
 
   /** Extract position from cell. */
-  type FromCell[P <: Nat, Q <: Nat] = (Cell[P]) => Option[Position[Q]]
+  type FromCell[P <: HList, Q <: HList] = (Cell[P]) => Option[Position[Q]]
 
   /** Extract position from cell with user provided value. */
-  type FromCellWithValue[P <: Nat, Q <: Nat, V] = (Cell[P], V) => Option[Position[Q]]
+  type FromCellWithValue[P <: HList, Q <: HList, V] = (Cell[P], V) => Option[Position[Q]]
 
   /** Extract position from cell and an optional value. */
-  type FromCellAndOptionalValue[P <: Nat, Q <: Nat] = (Cell[P], Option[Value]) => Option[Position[Q]]
+  type FromCellAndOptionalValue[P <: HList, Q <: HList, V] = (Cell[P], Option[V]) => Option[Position[Q]]
 
   /** Extract position for left and right cells. */
-  type FromPairwiseCells[P <: Nat, Q <: Nat] = (Cell[P], Cell[P]) => Option[Position[Q]]
+  type FromPairwiseCells[P <: HList, Q <: HList] = (Cell[P], Cell[P]) => Option[Position[Q]]
 
   /** Extract position for the selected cell and its remainder. */
-  type FromSelectedAndRemainder[S <: Nat, R <: Nat, Q <: Nat] = (Position[S], Position[R]) => Option[Position[Q]]
+  type FromSelectedAndRemainder[S <: HList, R <: HList, Q <: HList] = (Position[S], Position[R]) => Option[Position[Q]]
 
   /** Extract position for the selected cell and its current and prior remainder. */
   type FromSelectedAndPairwiseRemainder[
-    S <: Nat,
-    R <: Nat,
-    Q <: Nat
+    S <: HList,
+    R <: HList,
+    Q <: HList
   ] = (Position[S], Position[R], Position[R]) => Option[Position[Q]]
 
   /** Extract position from selected position and a value. */
-  type FromSelectedAndOutput[S <: Nat, T, Q <: Nat] = (Position[S], T) => Option[Position[Q]]
+  type FromSelectedAndOutput[S <: HList, T, Q <: HList] = (Position[S], T) => Option[Position[Q]]
 
   /** Extract position from selected position and a content. */
-  type FromSelectedAndContent[S <: Nat, Q <: Nat] = (Position[S], Content) => Option[Position[Q]]
+  type FromSelectedAndContent[S <: HList, Q <: HList] = (Position[S], Content) => Option[Position[Q]]
 
   /**
    * Rename a dimension.
@@ -63,16 +64,20 @@ object Locate {
    * @param name The rename pattern. Use `%1$``s` for the coordinate.
    */
   def RenameDimension[
-    P <: Nat,
-    D <: Nat : ToInt
+    P <: HList,
+    D <: Nat,
+    V,
+    Old,
+    Out <: HList
   ](
     dim: D,
     name: String
   )(implicit
-    ev: LTEq[D, P]
-  ): FromCell[P, P] = (cell: Cell[P]) => cell
+    ev1: At.Aux[P, D, V],
+    ev2: ReplaceAt.Aux[P, D, String, (Old, Out)]
+  ): FromCell[P, Out] = (cell: Cell[P]) => cell
     .position
-    .update(dim, name.format(cell.position(dim).toShortString))
+    .update(dim, name.format(cell.position(dim).toString))
     .toOption
 
   /**
@@ -83,16 +88,20 @@ object Locate {
    *             representations of the coordinate, and the content.
    */
   def RenameDimensionWithContent[
-    P <: Nat,
-    D <: Nat : ToInt
+    P <: HList,
+    D <: Nat,
+    V,
+    Old,
+    Out <: HList
   ](
     dim: D,
     name: String = "%1$s=%2$s"
   )(implicit
-    ev: LTEq[D, P]
-  ): FromCell[P, P] = (cell: Cell[P]) => cell
+    ev1: At.Aux[P, D, V],
+    ev2: ReplaceAt.Aux[P, D, String, (Old, Out)]
+  ): FromCell[P, Out] = (cell: Cell[P]) => cell
     .position
-    .update(dim, name.format(cell.position(dim).toShortString, cell.content.value.toShortString))
+    .update(dim, name.format(cell.position(dim).toString, cell.content.value.toString))
     .toOption
 
   /**
@@ -100,7 +109,15 @@ object Locate {
    *
    * @param name The coordinate to append to the outcome cell.
    */
-  def AppendValue[P <: Nat](name: Value): FromCell[P, Succ[P]] = (cell: Cell[P]) => cell.position.append(name).toOption
+  def AppendValue[
+    P <: HList,
+    V,
+    Out <: HList
+  ](
+    name: V
+  )(implicit
+    ev: Prepend.Aux[P, V :: HNil, Out]
+  ): FromCell[P, Out] = (cell: Cell[P]) => cell.position.append(name).toOption
 
   /**
    * Extract position use a name pattern.
@@ -115,13 +132,13 @@ object Locate {
    * @note If a position is returned then it's always right cell's remainder with an additional coordinate prepended.
    */
   def PrependPairwiseSelectedStringToRemainder[
-    P <: Nat
+    P <: HList
   ](
     slice: Slice[P],
     pattern: String,
     all: Boolean = false,
     separator: String = "|"
-  ): FromPairwiseCells[P, Succ[slice.R]] = (left: Cell[P], right: Cell[P]) => {
+  ): FromPairwiseCells[P, String :: P] = (left: Cell[P], right: Cell[P]) => {
     val reml = slice.remainder(left.position)
     val remr = slice.remainder(right.position)
 
@@ -144,14 +161,17 @@ object Locate {
    * @param dim The dimension (out of `rem`) to append to the cell's position.
    */
   def AppendRemainderDimension[
-    S <: Nat,
-    R <: Nat,
-    D <: Nat : ToInt
+    S <: HList,
+    R <: HList,
+    D <: Nat,
+    V,
+    Out <: HList
   ](
     dim: D
   )(implicit
-    ev: LTEq[D, R]
-  ): FromSelectedAndRemainder[S, R, Succ[S]] = (sel: Position[S], rem: Position[R]) => sel.append(rem(dim)).toOption
+    ev1: At.Aux[R, D, V],
+    ev2: Prepend.Aux[S, V :: HNil, Out]
+  ): FromSelectedAndRemainder[S, R, Out] = (sel: Position[S], rem: Position[R]) => sel.append(rem(dim)).toOption
 
   /**
    * Extract position using string of `rem`.
@@ -159,11 +179,14 @@ object Locate {
    * @param separator The separator to use for the appended coordinate.
    */
   def AppendRemainderString[
-    S <: Nat,
-    R <: Nat
+    S <: HList,
+    R <: HList,
+    Out <: HList
   ](
     separator: String = "|"
-  ): FromSelectedAndRemainder[S, R, Succ[S]] = (sel: Position[S], rem: Position[R]) => sel
+  )(implicit
+    ev: Prepend.Aux[S, String :: HNil, Out]
+  ): FromSelectedAndRemainder[S, R, Out] = (sel: Position[S], rem: Position[R]) => sel
     .append(rem.toShortString(separator))
     .toOption
 
@@ -175,12 +198,15 @@ object Locate {
    * @param separator The separator to use for the appended coordinate.
    */
   def AppendPairwiseString[
-    S <: Nat,
-    R <: Nat
+    S <: HList,
+    R <: HList,
+    Out <: HList
   ](
     pattern: String,
     separator: String = "|"
-  ): FromSelectedAndPairwiseRemainder[S, R, Succ[S]] = (sel: Position[S], curr: Position[R], prev: Position[R]) => sel
+  )(implicit
+    ev: Prepend.Aux[S, String :: HNil, Out]
+  ): FromSelectedAndPairwiseRemainder[S, R, Out] = (sel: Position[S], curr: Position[R], prev: Position[R]) => sel
     .append(pattern.format(prev.toShortString(separator), curr.toShortString(separator)))
     .toOption
 
@@ -190,16 +216,25 @@ object Locate {
    * @param name The name pattern. Use `%1$``s` for the output pattern.
    */
   def AppendDoubleString[
-    S <: Nat
+    S <: HList,
+    Out <: HList
   ](
     name: String = "%1$f%%"
-  ): FromSelectedAndOutput[S, Double, Succ[S]] = (sel: Position[S], value: Double) => sel
+  )(implicit
+    ev: Prepend.Aux[S, String :: HNil, Out]
+  ): FromSelectedAndOutput[S, Double, Out] = (sel: Position[S], value: Double) => sel
     .append(name.format(value))
     .toOption
 
   /** Append the content string to the position. */
-  def AppendContentString[S <: Nat](): FromSelectedAndContent[S, Succ[S]] = (sel: Position[S], con: Content) => sel
-    .append(con.value.toShortString)
+  def AppendContentString[
+    S <: HList,
+    Out <: HList
+  ](
+  )(implicit
+    ev: Prepend.Aux[S, String :: HNil, Out]
+  ): FromSelectedAndContent[S, Out] = (sel: Position[S], con: Content[_]) => sel
+    .append(con.value.toString)
     .toOption
 
   /**
@@ -210,15 +245,18 @@ object Locate {
    *             representations of the coordinate, and the content.
    */
   def AppendDimensionAndContentString[
-    S <: Nat,
-    D <: Nat : ToInt
+    S <: HList,
+    D <: Nat,
+    V,
+    Out <: HList
   ](
     dim: D,
     name: String = "%1$s=%2$s"
   )(implicit
-    ev: LTEq[D, S]
-  ): FromSelectedAndContent[S, Succ[S]] = (sel: Position[S], con: Content) => sel
-    .append(name.format(sel(dim).toShortString, con.value.toShortString))
+    ev1: At.Aux[S, D, V],
+    ev2: Prepend.Aux[S, String :: HNil, Out]
+  ): FromSelectedAndContent[S, Out] = (sel: Position[S], con: Content[_]) => sel
+    .append(name.format(sel(dim).toString, con.value.toString))
     .toOption
 }
 

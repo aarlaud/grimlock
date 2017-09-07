@@ -32,7 +32,7 @@ import org.apache.hadoop.io.Writable
 
 import scala.reflect.ClassTag
 
-import shapeless.Nat
+import shapeless.HList
 
 /**
  * Scalding operating context state.
@@ -46,7 +46,7 @@ case class Context(flow: FlowDef, mode: Mode, config: Config) extends FwContext[
 
   type U[A] = Context.U[A]
 
-  def loadText[P <: Nat](file: String, parser: Cell.TextParser[P]): (Context.U[Cell[P]], Context.U[String]) = {
+  def loadText[P <: HList](file: String, parser: Cell.TextParser[P]): (Context.U[Cell[P]], Context.U[String]) = {
     val pipe = TypedPipe.from(TextLine(file)).flatMap { parser(_) }
 
     (pipe.collect { case Right(c) => c }, pipe.collect { case Left(e) => e })
@@ -55,7 +55,7 @@ case class Context(flow: FlowDef, mode: Mode, config: Config) extends FwContext[
   def loadSequence[
     K <: Writable : Manifest,
     V <: Writable : Manifest,
-    P <: Nat
+    P <: HList
   ](
     file: String,
     parser: Cell.SequenceParser[K, V, P]
@@ -67,7 +67,7 @@ case class Context(flow: FlowDef, mode: Mode, config: Config) extends FwContext[
 
   def loadParquet[
     T <: ThriftStruct : Manifest,
-    P <: Nat
+    P <: HList
   ](
     file: String,
     parser: Cell.ParquetParser[T, P]

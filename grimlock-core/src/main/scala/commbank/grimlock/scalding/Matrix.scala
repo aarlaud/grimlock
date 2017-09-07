@@ -75,7 +75,7 @@ import shapeless.syntax.sized._
 
 /** Case class matrix operations using a `TypedPipe[Cell[P]]`. */
 case class Matrix[
-  P <: Nat
+  P <: HList
 ](
   data: Context.U[Cell[P]]
 ) extends FwMatrix[P, Context]
@@ -89,7 +89,7 @@ case class Matrix[
     tuner: T = InMemory()
   )(
     positions: Context.U[Position[slice.S]],
-    schema: Content.Parser,
+    schema: Content.Parser[Content[_]],
     writer: FwPersist.TextWriter[Cell[P]]
   )(implicit
     ev: FwMatrix.ChangeTuner[Context.U, T]
@@ -109,7 +109,7 @@ case class Matrix[
     (result.collect { case Right(cell) => cell }, result.collect { case Left(error) => error })
   }
 
-  def compact(): Context.E[Map[Position[P], Content]] = {
+  def compact(): Context.E[Map[Position[P], Content[_]]] = {
     val semigroup = new Semigroup[Map[Position[P], Content]] {
       def plus(l: Map[Position[P], Content], r: Map[Position[P], Content]) = l ++ r
     }
@@ -121,12 +121,12 @@ case class Matrix[
 
   def compact[
     T <: Tuner,
-    V[_ <: Nat]
+    V[_ <: HList]
   ](
     slice: Slice[P],
     tuner: T = Default()
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: Compactable[P, V],
     ev3: FwMatrix.CompactTuner[Context.U, T]
   ): Context.E[Map[Position[slice.S], V[slice.R]]] = {
@@ -173,14 +173,14 @@ case class Matrix[
     slice: Slice[P],
     tuner: T = Default()
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: FwPositions.NamesTuner[Context.U, T]
   ): Context.U[Position[slice.S]] = data
     .map { case c => slice.selected(c.position) }
     .tunedDistinct(tuner)
 
   def pairwise[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -189,7 +189,7 @@ case class Matrix[
     comparer: Comparer,
     operators: Operator[P, Q]*
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: GT[Q, slice.R],
     ev3: FwMatrix.PairwiseTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
@@ -199,7 +199,7 @@ case class Matrix[
   }
 
   def pairwiseWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -210,7 +210,7 @@ case class Matrix[
     value: Context.E[W],
     operators: OperatorWithValue[P, Q] { type V >: W }*
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: GT[Q, slice.R],
     ev3: FwMatrix.PairwiseTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
@@ -224,7 +224,7 @@ case class Matrix[
   }
 
   def pairwiseBetween[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -234,7 +234,7 @@ case class Matrix[
     that: Context.U[Cell[P]],
     operators: Operator[P, Q]*
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: GT[Q, slice.R],
     ev3: FwMatrix.PairwiseTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
@@ -244,7 +244,7 @@ case class Matrix[
   }
 
   def pairwiseBetweenWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -256,7 +256,7 @@ case class Matrix[
     value: Context.E[W],
     operators: OperatorWithValue[P, Q] { type V >: W }*
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: GT[Q, slice.R],
     ev3: FwMatrix.PairwiseTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
@@ -269,11 +269,11 @@ case class Matrix[
       }
   }
 
-  def relocate[Q <: Nat](locate: Locate.FromCell[P, Q])(implicit ev: GTEq[Q, P]): Context.U[Cell[Q]] = data
+  def relocate[Q <: HList](locate: Locate.FromCell[P, Q])(implicit ev: GTEq[Q, P]): Context.U[Cell[Q]] = data
     .flatMap { case c => locate(c).map { case p => Cell(p, c.content) } }
 
   def relocateWithValue[
-    Q <: Nat,
+    Q <: HList,
     W
   ](
     value: Context.E[W],
@@ -360,7 +360,7 @@ case class Matrix[
   }
 
   def slide[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -369,7 +369,7 @@ case class Matrix[
     ascending: Boolean,
     windows: Window[P, slice.S, slice.R, Q]*
   )(implicit
-    ev1: slice.R =:!= _0,
+    ev1: slice.R =:!= HNil,
     ev2: GT[Q, slice.S],
     ev3: FwMatrix.SlideTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
@@ -391,7 +391,7 @@ case class Matrix[
   }
 
   def slideWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -402,7 +402,7 @@ case class Matrix[
     value: Context.E[W],
     windows: WindowWithValue[P, slice.S, slice.R, Q] { type V >: W }*
   )(implicit
-    ev1: slice.R =:!= _0,
+    ev1: slice.R =:!= HNil,
     ev2: GT[Q, slice.S],
     ev3: FwMatrix.SlideTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
@@ -448,7 +448,7 @@ case class Matrix[
   }
 
   def stream[
-    Q <: Nat
+    Q <: HList
   ](
     command: String,
     files: List[String],
@@ -468,7 +468,7 @@ case class Matrix[
   }
 
   def streamByPosition[
-    Q <: Nat
+    Q <: HList
   ](
     slice: Slice[P]
   )(
@@ -507,7 +507,7 @@ case class Matrix[
   }
 
   def summarise[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     slice: Slice[P],
@@ -528,7 +528,7 @@ case class Matrix[
   }
 
   def summariseWithValue[
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -563,17 +563,17 @@ case class Matrix[
 
   def toText(writer: FwPersist.TextWriter[Cell[P]]): Context.U[String] = data.flatMap { case c => writer(c) }
 
-  def toVector(melt: (List[Value]) => Value): Context.U[Cell[_1]] = data
+  def toVector[V](melt: (P) => V): Context.U[Cell[V :: HNil]] = data
     .map { case Cell(p, c) => Cell(Position(melt(p.coordinates)), c) }
 
-  def transform[Q <: Nat](transformers: Transformer[P, Q]*)(implicit ev: GTEq[Q, P]): Context.U[Cell[Q]] = {
+  def transform[Q <: HList](transformers: Transformer[P, Q]*)(implicit ev: GTEq[Q, P]): Context.U[Cell[Q]] = {
     val transformer: Transformer[P, Q] = if (transformers.size == 1) transformers.head else transformers.toList
 
     data.flatMap { case c => transformer.present(c) }
   }
 
   def transformWithValue[
-    Q <: Nat,
+    Q <: HList,
     W
   ](
     value: Context.E[W],
@@ -595,7 +595,7 @@ case class Matrix[
   )(
     specific: Boolean
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: FwMatrix.TypesTuner[Context.U, T]
   ): Context.U[Cell[slice.S]] = data
     .map { case Cell(p, c) => (slice.selected(p), c.schema.classification) }
@@ -616,7 +616,7 @@ case class Matrix[
     slice: Slice[P],
     tuner: T = Default()
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: FwMatrix.UniqueTuner[Context.U, T]
   ): Context.U[(Position[slice.S], Content)] = {
     val ordering = new Ordering[Cell[slice.S]] {
@@ -703,8 +703,8 @@ case class Matrix[
   }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_1]]`. */
-case class Matrix1D(data: Context.U[Cell[_1]]) extends FwMatrix1D[Context] with MatrixXD[_1] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: HNil]]`. */
+case class Matrix1D[V1](data: Context.U[Cell[V1 :: HNil]]) extends FwMatrix1D[V1, Context] with MatrixXD[V1 :: HNil] {
   def saveAsIV[
     T <: Tuner
   ](
@@ -715,7 +715,7 @@ case class Matrix1D(data: Context.U[Cell[_1]]) extends FwMatrix1D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_1]] = {
+  ): Context.U[Cell[V1 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -729,12 +729,12 @@ case class Matrix1D(data: Context.U[Cell[_1]]) extends FwMatrix1D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_1]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: HNil]] = coordinates(_1, tuner)
     .map { case c1 => Position(c1) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_2]]`. */
-case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with MatrixXD[_2] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: HNil]]`. */
+case class Matrix2D(data: Context.U[Cell[V1 :: V2 :: HNil]]) extends FwMatrix2D[V1, V2, Context] with MatrixXD[V1 :: V2 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt
@@ -745,7 +745,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     ev1: LTEq[D1, _2],
     ev2: LTEq[D2, _2],
     ev3: D1 =:!= D2
-  ): Context.U[Cell[_2]] = {
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = {
     val l = List(Nat.toInt[D1], Nat.toInt[D2]).zipWithIndex.sortBy { case (d, _) => d }.map { case (_, i) => i }
 
     data.map { case Cell(p, c) => Cell(p.permute(ListSet(l:_*).sized(2).get), c) }
@@ -754,7 +754,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
   def saveAsCSV[
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil],
     tuner: T = Default()
   )(
     context: Context,
@@ -767,7 +767,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     rowId: String
   )(implicit
     ev: FwMatrix.SaveAsCSVTuner[Context.U, T]
-  ): Context.U[Cell[_2]] = {
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = {
     val (pt, rt) = tuner match {
       case Binary(p, r) => (p, r)
       case r @ Redistribute(_) => (Default(), r)
@@ -808,7 +808,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_2]] = {
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -827,7 +827,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
   def saveAsVW[
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil],
     tuner: T = Default()
   )(
     context: Context,
@@ -837,12 +837,12 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     separator: String
   )(implicit
     ev: FwMatrix.SaveAsVWTuner[Context.U, T]
-  ): Context.U[Cell[_2]] = saveVW(slice, tuner)(context, file, None, None, tag, dictionary, separator)
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = saveVW(slice, tuner)(context, file, None, None, tag, dictionary, separator)
 
   def saveAsVWWithLabels[
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil],
     tuner: T = Default()
   )(
     context: Context,
@@ -853,12 +853,12 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     separator: String
   )(implicit
     ev: FwMatrix.SaveAsVWTuner[Context.U, T]
-  ): Context.U[Cell[_2]] = saveVW(slice, tuner)(context, file, Option(labels), None, tag, dictionary, separator)
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = saveVW(slice, tuner)(context, file, Option(labels), None, tag, dictionary, separator)
 
   def saveAsVWWithImportance[
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil],
     tuner: T = Default()
   )(
     context: Context,
@@ -869,12 +869,12 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     separator: String
   )(implicit
     ev: FwMatrix.SaveAsVWTuner[Context.U, T]
-  ): Context.U[Cell[_2]] = saveVW(slice, tuner)(context, file, None, Option(importance), tag, dictionary, separator)
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = saveVW(slice, tuner)(context, file, None, Option(importance), tag, dictionary, separator)
 
   def saveAsVWWithLabelsAndImportance[
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil],
     tuner: T = Default()
   )(
     context: Context,
@@ -886,7 +886,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     separator: String
   )(implicit
     ev: FwMatrix.SaveAsVWTuner[Context.U, T]
-  ): Context.U[Cell[_2]] = saveVW(
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = saveVW(
     slice,
     tuner
   )(
@@ -902,7 +902,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
   private def saveVW[
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil],
     tuner: T
   )(
     context: Context,
@@ -912,7 +912,7 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     tag: Boolean,
     dictionary: String,
     separator: String
-  ): Context.U[Cell[_2]] = {
+  ): Context.U[Cell[V1 :: V2 :: HNil]] = {
     val msj = Option(MapMapSideJoin[Position[slice.S], String, Cell[slice.S]]())
 
     val (pt, jt, rt) = tuner match {
@@ -965,13 +965,13 @@ case class Matrix2D(data: Context.U[Cell[_2]]) extends FwMatrix2D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_2]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .map { case (c1, c2) => Position(c1, c2) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_3]]`. */
-case class Matrix3D(data: Context.U[Cell[_3]]) extends FwMatrix3D[Context] with MatrixXD[_3] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: HNil]]`. */
+case class Matrix3D(data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]) extends FwMatrix3D[V1, V2, V3, Context] with MatrixXD[V1 :: V2 :: V3 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -985,7 +985,7 @@ case class Matrix3D(data: Context.U[Cell[_3]]) extends FwMatrix3D[Context] with 
     ev2: LTEq[D2, _3],
     ev3: LTEq[D3, _3],
     ev4: IsDistinctConstraint[D1 :: D2 :: D3 :: HNil]
-  ): Context.U[Cell[_3]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: HNil]] = {
     val l = List(Nat.toInt[D1], Nat.toInt[D2], Nat.toInt[D3])
       .zipWithIndex
       .sortBy { case (d, _) => d }
@@ -1004,7 +1004,7 @@ case class Matrix3D(data: Context.U[Cell[_3]]) extends FwMatrix3D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_3]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -1022,14 +1022,14 @@ case class Matrix3D(data: Context.U[Cell[_3]]) extends FwMatrix3D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_3]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_3, tuner))
     .map { case ((c1, c2), c3) => Position(c1, c2, c3) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_4]]`. */
-case class Matrix4D(data: Context.U[Cell[_4]]) extends FwMatrix4D[Context] with MatrixXD[_4] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]`. */
+case class Matrix4D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]) extends FwMatrix4D[V1, V2, V3, V4, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1046,7 +1046,7 @@ case class Matrix4D(data: Context.U[Cell[_4]]) extends FwMatrix4D[Context] with 
     ev3: LTEq[D3, _4],
     ev4: LTEq[D4, _4],
     ev5: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: HNil]
-  ): Context.U[Cell[_4]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]] = {
     val l = List(Nat.toInt[D1], Nat.toInt[D2], Nat.toInt[D3], Nat.toInt[D4])
       .zipWithIndex
       .sortBy { case (d, _) => d }
@@ -1065,7 +1065,7 @@ case class Matrix4D(data: Context.U[Cell[_4]]) extends FwMatrix4D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_4]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -1087,15 +1087,15 @@ case class Matrix4D(data: Context.U[Cell[_4]]) extends FwMatrix4D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_4]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: V4 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_3, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_4, tuner))
     .map { case (((c1, c2), c3), c4) => Position(c1, c2, c3, c4) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_5]]`. */
-case class Matrix5D(data: Context.U[Cell[_5]]) extends FwMatrix5D[Context] with MatrixXD[_5] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]`. */
+case class Matrix5D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]) extends FwMatrix5D[V1, V2, V3, V4, V5, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1115,7 +1115,7 @@ case class Matrix5D(data: Context.U[Cell[_5]]) extends FwMatrix5D[Context] with 
     ev4: LTEq[D4, _5],
     ev5: LTEq[D5, _5],
     ev6: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: HNil]
-  ): Context.U[Cell[_5]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]] = {
     val l = List(Nat.toInt[D1], Nat.toInt[D2], Nat.toInt[D3], Nat.toInt[D4], Nat.toInt[D5])
       .zipWithIndex
       .sortBy { case (d, _) => d }
@@ -1134,7 +1134,7 @@ case class Matrix5D(data: Context.U[Cell[_5]]) extends FwMatrix5D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_5]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -1158,7 +1158,7 @@ case class Matrix5D(data: Context.U[Cell[_5]]) extends FwMatrix5D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_5]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_3, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_4, tuner))
@@ -1166,8 +1166,8 @@ case class Matrix5D(data: Context.U[Cell[_5]]) extends FwMatrix5D[Context] with 
     .map { case ((((c1, c2), c3), c4), c5) => Position(c1, c2, c3, c4, c5) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_6]]`. */
-case class Matrix6D(data: Context.U[Cell[_6]]) extends FwMatrix6D[Context] with MatrixXD[_6] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]`. */
+case class Matrix6D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]) extends FwMatrix6D[V1, V2, V3, V4, V5, V6, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1190,7 +1190,7 @@ case class Matrix6D(data: Context.U[Cell[_6]]) extends FwMatrix6D[Context] with 
     ev5: LTEq[D5, _6],
     ev6: LTEq[D6, _6],
     ev7: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: HNil]
-  ): Context.U[Cell[_6]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]] = {
     val l = List(Nat.toInt[D1], Nat.toInt[D2], Nat.toInt[D3], Nat.toInt[D4], Nat.toInt[D5], Nat.toInt[D6])
       .zipWithIndex
       .sortBy { case (d, _) => d }
@@ -1209,7 +1209,7 @@ case class Matrix6D(data: Context.U[Cell[_6]]) extends FwMatrix6D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_6]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -1241,7 +1241,7 @@ case class Matrix6D(data: Context.U[Cell[_6]]) extends FwMatrix6D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_6]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_3, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_4, tuner))
@@ -1250,8 +1250,8 @@ case class Matrix6D(data: Context.U[Cell[_6]]) extends FwMatrix6D[Context] with 
     .map { case (((((c1, c2), c3), c4), c5), c6) => Position(c1, c2, c3, c4, c5, c6) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_7]]`. */
-case class Matrix7D(data: Context.U[Cell[_7]]) extends FwMatrix7D[Context] with MatrixXD[_7] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]`. */
+case class Matrix7D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]) extends FwMatrix7D[V1, V2, V3, V4, V5, V6, V7, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1277,7 +1277,7 @@ case class Matrix7D(data: Context.U[Cell[_7]]) extends FwMatrix7D[Context] with 
     ev6: LTEq[D6, _7],
     ev7: LTEq[D7, _7],
     ev8: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: D7 :: HNil]
-  ): Context.U[Cell[_7]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]] = {
     val l = List(
         Nat.toInt[D1],
         Nat.toInt[D2],
@@ -1304,7 +1304,7 @@ case class Matrix7D(data: Context.U[Cell[_7]]) extends FwMatrix7D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_7]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -1339,7 +1339,7 @@ case class Matrix7D(data: Context.U[Cell[_7]]) extends FwMatrix7D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_7]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_3, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_4, tuner))
@@ -1349,8 +1349,8 @@ case class Matrix7D(data: Context.U[Cell[_7]]) extends FwMatrix7D[Context] with 
     .map { case ((((((c1, c2), c3), c4), c5), c6), c7) => Position(c1, c2, c3, c4, c5, c6, c7) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_8]]`. */
-case class Matrix8D(data: Context.U[Cell[_8]]) extends FwMatrix8D[Context] with MatrixXD[_8] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]`. */
+case class Matrix8D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]) extends FwMatrix8D[V1, V2, V3, V4, V5, V6, V7, V8, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1379,7 +1379,7 @@ case class Matrix8D(data: Context.U[Cell[_8]]) extends FwMatrix8D[Context] with 
     ev7: LTEq[D7, _8],
     ev8: LTEq[D8, _8],
     ev9: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: D7 :: D8 :: HNil]
-  ): Context.U[Cell[_8]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]] = {
     val l = List(
         Nat.toInt[D1],
         Nat.toInt[D2],
@@ -1407,7 +1407,7 @@ case class Matrix8D(data: Context.U[Cell[_8]]) extends FwMatrix8D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_8]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -1445,7 +1445,7 @@ case class Matrix8D(data: Context.U[Cell[_8]]) extends FwMatrix8D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_8]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_3, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_4, tuner))
@@ -1456,8 +1456,8 @@ case class Matrix8D(data: Context.U[Cell[_8]]) extends FwMatrix8D[Context] with 
     .map { case (((((((c1, c2), c3), c4), c5), c6), c7), c8) => Position(c1, c2, c3, c4, c5, c6, c7, c8) }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[_9]]`. */
-case class Matrix9D(data: Context.U[Cell[_9]]) extends FwMatrix9D[Context] with MatrixXD[_9] {
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]`. */
+case class Matrix9D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]) extends FwMatrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1489,7 +1489,7 @@ case class Matrix9D(data: Context.U[Cell[_9]]) extends FwMatrix9D[Context] with 
     ev8: LTEq[D8, _9],
     ev9: LTEq[D9, _9],
     ev10: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: D7 :: D8 :: D9 :: HNil]
-  ): Context.U[Cell[_9]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]] = {
     val l = List(
         Nat.toInt[D1],
         Nat.toInt[D2],
@@ -1518,7 +1518,7 @@ case class Matrix9D(data: Context.U[Cell[_9]]) extends FwMatrix9D[Context] with 
     tuner: T = Default()
   )(implicit
     ev: FwMatrix.SaveAsIVTuner[Context.U, T]
-  ): Context.U[Cell[_9]] = {
+  ): Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]] = {
     def msj[V] = Option(MapMapSideJoin[Position[_1], V, Long]())
 
     val (jt, rt) = getSaveAsIVTuners(tuner)
@@ -1559,7 +1559,7 @@ case class Matrix9D(data: Context.U[Cell[_9]]) extends FwMatrix9D[Context] with 
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[_9]] = coordinates(_1, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]] = coordinates(_1, tuner)
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_2, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_3, tuner))
     .tunedCross[Value](tuner, (_, _) => true, coordinates(_4, tuner))
@@ -1572,7 +1572,7 @@ case class Matrix9D(data: Context.U[Cell[_9]]) extends FwMatrix9D[Context] with 
 }
 
 /** Trait for XD specific implementations. */
-trait MatrixXD[P <: Nat] extends Persist[Cell[P]] {
+trait MatrixXD[P <: HList] extends Persist[Cell[P]] {
   def domain[
     T <: Tuner
   ](
@@ -1668,7 +1668,7 @@ trait MatrixXD[P <: Nat] extends Persist[Cell[P]] {
 
 /** Case class for methods that change the number of dimensions using a `TypedPipe[Cell[P]]`. */
 case class MultiDimensionMatrix[
-  P <: Nat
+  P <: HList
 ](
   data: Context.U[Cell[P]]
 ) extends FwMultiDimensionMatrix[P, Context]
@@ -1714,11 +1714,14 @@ case class MultiDimensionMatrix[
   def melt[
     D <: Nat : ToInt,
     I <: Nat : ToInt,
-    Q <: Nat
+    V,
+    W,
+    X,
+    Q <: HList
   ](
     dim: D,
     into: I,
-    merge: (Value, Value) => Value
+    merge: (V, W) => X
   )(implicit
     ev1: LTEq[D, P],
     ev2: LTEq[I, P],
@@ -1728,11 +1731,12 @@ case class MultiDimensionMatrix[
 
   def reshape[
     D <: Nat : ToInt,
-    Q <: Nat,
+    V,
+    Q <: HList,
     T <: Tuner
   ](
     dim: D,
-    coordinate: Value,
+    coordinate: V,
     locate: Locate.FromCellAndOptionalValue[P, Q],
     tuner: T = Default()
   )(implicit
@@ -1758,7 +1762,7 @@ case class MultiDimensionMatrix[
 
   def squash[
     D <: Nat : ToInt,
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     dim: D,
@@ -1777,7 +1781,7 @@ case class MultiDimensionMatrix[
 
   def squashWithValue[
     D <: Nat : ToInt,
-    Q <: Nat,
+    Q <: HList,
     W,
     T <: Tuner
   ](
@@ -1803,7 +1807,7 @@ case class MultiDimensionMatrix[
 
 private object Util {
   def pivot[
-    P <: Nat
+    P <: HList
   ](
     data: Context.U[Cell[P]],
     slice: Slice[P],

@@ -27,10 +27,10 @@ import commbank.grimlock.scalding.Persist
 
 import com.twitter.algebird.{ Aggregator, Moments, Monoid }
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for computing common statistics from a matrix. */
-trait Statistics[P <: Nat] extends FwStatistics[P, Context] with Persist[Cell[P]] { self: FwMatrix[P, Context] =>
+trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[P]] { self: FwMatrix[P, Context] =>
   def counts[
     T <: Tuner
   ](

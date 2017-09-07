@@ -22,18 +22,17 @@ import commbank.grimlock.scalding.environment.Context
 import commbank.grimlock.scalding.environment.tuner.ScaldingImplicits._
 import commbank.grimlock.scalding.Persist
 
-import shapeless.{ =:!=, Nat }
-import shapeless.nat._0
+import shapeless.{ =:!=, HList, HNil }
 
 /** Rich wrapper around a `TypedPipe[Position[P]]`. */
-case class Positions[P <: Nat](data: Context.U[Position[P]]) extends FwPositions[P, Context] with Persist[Position[P]] {
+case class Positions[P <: HList](data: Context.U[Position[P]]) extends FwPositions[P, Context] with Persist[Position[P]] {
   def names[
     T <: Tuner
   ](
     slice: Slice[P],
     tuner: T = Default()
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: slice.S =:!= HNil,
     ev2: FwPositions.NamesTuner[Context.U, T]
   ): Context.U[Position[slice.S]] = data.map { case p => slice.selected(p) }.tunedDistinct(tuner)(Position.ordering())
 

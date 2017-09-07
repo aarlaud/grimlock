@@ -26,38 +26,38 @@ import commbank.grimlock.framework.position.Position
 import commbank.grimlock.scalding.environment.Context
 import commbank.grimlock.scalding.Persist
 
-import shapeless.Nat
+import shapeless.HList
 
-/** Rich wrapper around a `TypedPipe[Content]`. */
-case class Contents(data: Context.U[Content]) extends FwContents[Context] with Persist[Content] {
+/** Rich wrapper around a `TypedPipe[Content[_]]`. */
+case class Contents(data: Context.U[Content[_]]) extends FwContents[Context] with Persist[Content[_]] {
   def saveAsText[
     T <: Tuner
   ](
     context: Context,
     file: String,
-    writer: FwPersist.TextWriter[Content],
+    writer: FwPersist.TextWriter[Content[_]],
     tuner: T = Default()
   )(implicit
     ev: FwPersist.SaveAsTextTuner[Context.U, T]
-  ): Context.U[Content] = saveText(context, file, writer, tuner)
+  ): Context.U[Content[_]] = saveText(context, file, writer, tuner)
 }
 
-/** Rich wrapper around a `TypedPipe[(Position[P], Content]`. */
+/** Rich wrapper around a `TypedPipe[(Position[P], Content[_]]`. */
 case class IndexedContents[
-  P <: Nat
+  P <: HList
 ](
-  data: Context.U[(Position[P], Content)]
+  data: Context.U[(Position[P], Content[_])]
 ) extends FwIndexedContents[P, Context]
-  with Persist[(Position[P], Content)] {
+  with Persist[(Position[P], Content[_])] {
   def saveAsText[
     T <: Tuner
   ](
     context: Context,
     file: String,
-    writer: FwPersist.TextWriter[(Position[P], Content)],
+    writer: FwPersist.TextWriter[(Position[P], Content[_])],
     tuner: T = Default()
   )(implicit
     ev: FwPersist.SaveAsTextTuner[Context.U, T]
-  ): Context.U[(Position[P], Content)] = saveText(context, file, writer, tuner)
+  ): Context.U[(Position[P], Content[_])] = saveText(context, file, writer, tuner)
 }
 
