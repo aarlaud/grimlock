@@ -15,24 +15,24 @@
 package commbank.grimlock.framework
 
 import commbank.grimlock.framework.content.Content
-import commbank.grimlock.framework.encoding.{ Codec, EncodeString, StringCodec, Value }
+import commbank.grimlock.framework.encoding.{ Codec, EncodeString } //, StringCodec, Value }
 import commbank.grimlock.framework.position.Position
 
 import com.twitter.scrooge.ThriftStruct
 
-import java.util.regex.Pattern
+//import java.util.regex.Pattern
 
 import org.apache.hadoop.io.Writable
 
-import play.api.libs.json.{ JsError, JsObject, Json, JsResult, JsSuccess, JsValue, Reads, Writes }
+//import play.api.libs.json.{ JsError, JsObject, Json, JsResult, JsSuccess, JsValue, Reads, Writes }
 
-import scala.util.Try
+//import scala.util.Try
 
-import shapeless.{ ::, HList, HNil, LUBConstraint, Nat, Sized }
-import shapeless.nat.{ _1, _2 }
+import shapeless.{ ::, HList, HNil, LUBConstraint } //, Nat, Sized }
+//import shapeless.nat.{ _1, _2 }
 import shapeless.ops.hlist.{ Mapper, ToTraversable, Zip }
-import shapeless.ops.nat.{ LTEq, ToInt }
-import shapeless.syntax.sized._
+//import shapeless.ops.nat.{ LTEq, ToInt }
+//import shapeless.syntax.sized._
 
 /**
  * Cell in a matrix.
@@ -75,7 +75,7 @@ case class Cell[P <: HList](position: Position[P], content: Content[_]) {
     ev2: Zip.Aux[L :: P :: HNil, Z],
     ev3: Mapper.Aux[EncodeString.type, Z, M],
     ev4: ToTraversable.Aux[M, List, Any]
-  ): String = position.toShortString(separator) + separator + content.toShortString(separator, descriptive)
+  ): String = position.toShortString(codecs, separator) + separator + content.toShortString(separator, descriptive)
 
   /**
    * Converts the cell to a JSON string.
@@ -83,12 +83,14 @@ case class Cell[P <: HList](position: Position[P], content: Content[_]) {
    * @param pretty      Indicator if the resulting JSON string to be indented.
    * @param descriptive Indicator if the JSON should be self describing (true) or not.
    */
+/*
   def toJSON(pretty: Boolean = false, descriptive: Boolean = true): String = {
     implicit val wrt = Cell.writes[P](descriptive)
     val json = Json.toJson(this)
 
     if (pretty) Json.prettyPrint(json) else Json.stringify(json)
   }
+*/
 }
 
 /** Companion object to the Cell class. */
@@ -111,12 +113,13 @@ object Cell {
    * @param separator The column separator.
    * @param first     The codec for decoding the first dimension.
    */
-  def parse1D(
+/*
+  def parse1D[D](
     separator: String = "|",
-    first: Codec = StringCodec
+    first: Codec[D] = StringCodec
   ): (String) => TraversableOnce[Either[String, Cell[_1]]] = line =>
     parseXD(line, separator, Sized.wrap(List(first)), ParserFromParts(separator))
-
+*/
   /**
    * Parse a line into a `Cell[_1]` with a dictionary.
    *
@@ -124,13 +127,14 @@ object Cell {
    * @param separator The column separator.
    * @param first     The codec for decoding the first dimension.
    */
-  def parse1DWithDictionary(
-    dict: Map[String, Content.Parser],
+/*
+  def parse1DWithDictionary[D](
+    dict: Map[String, Content.Parser[Content[_]]],
     separator: String = "|",
-    first: Codec = StringCodec
+    first: Codec[D] = StringCodec
   ): (String) => TraversableOnce[Either[String, Cell[_1]]] = line =>
     parseXD(line, separator, Sized.wrap(List(first)), ParserFromDictionary[_1](dict))
-
+*/
   /**
    * Parse a line into a `Cell[_1]` with a schema.
    *
@@ -138,13 +142,14 @@ object Cell {
    * @param separator The column separator.
    * @param first     The codec for decoding the first dimension.
    */
-  def parse1DWithSchema(
+/*
+  def parse1DWithSchema[D](
     schema: Content.Parser,
     separator: String = "|",
-    first: Codec = StringCodec
+    first: Codec[D] = StringCodec
   ): (String) => TraversableOnce[Either[String, Cell[_1]]] = line =>
     parseXD(line, separator, Sized.wrap(List(first)), ParserFromSchema(schema))
-
+*/
   /**
    * Parse a line into a `List[Cell[_2]]` with column definitions.
    *
@@ -152,6 +157,7 @@ object Cell {
    * @param pkeyIndex Index (into `columns`) describing which column is the primary key.
    * @param separator The column separator.
    */
+/*
   def parseTable(
     columns: List[(String, Content.Parser)],
     pkeyIndex: Int = 0,
@@ -173,41 +179,44 @@ object Cell {
     } else
       List(Left("Unable to split: '" + line + "'"))
   }
-
+*/
   /**
    * Parse JSON into a `Cell[_1]`.
    *
    * @param first The codec for decoding the first dimension.
    */
-  def parse1DJSON(
-    first: Codec = StringCodec
+/*
+  def parse1DJSON[D](
+    first: Codec[D] = StringCodec
   ): (String) => TraversableOnce[Either[String, Cell[_1]]] = json =>
     parseXDJSON(json, Sized.wrap(List(first)), ParserFromParts())
-
+*/
   /**
    * Parse JSON into a `Cell[_1]` with a dictionary.
    *
    * @param dict  The dictionary describing the features in the data.
    * @param first The codec for decoding the first dimension.
    */
-  def parse1DJSONWithDictionary(
-    dict: Map[String, Content.Parser],
-    first: Codec = StringCodec
+/*
+  def parse1DJSONWithDictionary[D](
+    dict: Map[String, Content.Parser[Content[_]]],
+    first: Codec[D] = StringCodec
   ): (String) => TraversableOnce[Either[String, Cell[_1]]] = json =>
     parseXDJSON(json, Sized.wrap(List(first)), ParserFromDictionary[_1](dict))
-
+*/
   /**
    * Parse JSON into a `Cell[_1]` with a schema.
    *
    * @param schema The schema for decoding the data.
    * @param first  The codec for decoding the first dimension.
    */
-  def parse1DJSONWithSchema(
-    schema: Content.Parser,
-    first: Codec = StringCodec
+/*
+  def parse1DJSONWithSchema[D](
+    schema: Content.Parser[Content[D]],
+    first: Codec[D] = StringCodec
   ): (String) => TraversableOnce[Either[String, Cell[_1]]] = json =>
     parseXDJSON(json, Sized.wrap(List(first)), ParserFromSchema(schema))
-
+*/
   /**
    * Return function that returns a string representation of a cell.
    *
@@ -215,32 +224,35 @@ object Cell {
    * @param separator   The separator to use between various fields (only used if verbose is `false`).
    * @param descriptive Indicator if codec and schema are required or not (only used if verbose is `false`).
    */
+/*
   def toString[
-    P <: Nat
+    P <: HList
   ](
     verbose: Boolean = false,
     separator: String = "|",
     descriptive: Boolean = true
   ): (Cell[P]) => TraversableOnce[String] = (t: Cell[P]) =>
     List(if (verbose) t.toString else t.toShortString(separator, descriptive))
-
+*/
   /**
    * Return function that returns a JSON representation of a cell.
    *
    * @param pretty      Indicator if the resulting JSON string to be indented.
    * @param descriptive Indicator if the JSON should be self describing (true) or not.
    */
-  def toJSON[P <: Nat ](pretty: Boolean = false, descriptive: Boolean = true): (Cell[P]) => TraversableOnce[String] =
+/*
+  def toJSON[P <: HList](pretty: Boolean = false, descriptive: Boolean = true): (Cell[P]) => TraversableOnce[String] =
     (t: Cell[P]) => List(t.toJSON(pretty, descriptive))
-
+*/
   /**
    * Return a `Reads` for parsing a JSON cell.
    *
    * @param codecs List of codecs for parsing the position.
    * @param parser Optional parser; in case the JSON content is not self describing.
    */
-  def reads[P <: Nat : ToInt](
-    codecs: Sized[List[Codec], P],
+/*
+  def reads[P <: HList](
+    codecs: Sized[List[Codec[_]], P],
     parser: (List[Value]) => Option[Content.Parser]
   ): Reads[Cell[P]] = new Reads[Cell[P]] {
     implicit val prd = Position.reads(codecs)
@@ -259,24 +271,25 @@ object Cell {
         JsError("Incorrect number of fields")
     }
   }
-
+*/
   /**
    * Return a `Writes` for writing JSON cell.
    *
    * @param descriptive Indicator if the JSON should be self describing (true) or not.
    */
-  def writes[P <: Nat](descriptive: Boolean): Writes[Cell[P]] = new Writes[Cell[P]] {
+/*
+  def writes[P <: HList](descriptive: Boolean): Writes[Cell[P]] = new Writes[Cell[P]] {
     implicit val wrt = Content.writes(descriptive)
 
     def writes(o: Cell[P]): JsValue = Json.obj("position" -> o.position, "content" -> o.content)
   }
 
   private def parseXD[
-    Q <: Nat : ToInt
+    Q <: HList
   ](
     line: String,
     separator: String,
-    codecs: Sized[List[Codec], Q],
+    codecs: Sized[List[Codec[_]], Q],
     parser: CellContentParser
   ): TraversableOnce[Either[String, Cell[Q]]] = {
     val split = Nat.toInt[Q]
@@ -299,10 +312,10 @@ object Cell {
   }
 
   private def parseXDJSON[
-    Q <: Nat : ToInt
+    Q <: HList
   ](
     json: String,
-    codecs: Sized[List[Codec], Q],
+    codecs: Sized[List[Codec[_]], Q],
     parser: CellContentParser
   ): TraversableOnce[Either[String, Cell[Q]]] = List(
     Json.fromJson[Cell[Q]](Json.parse(json))(reads(codecs, parser.getJSONParser)) match {
@@ -310,8 +323,9 @@ object Cell {
       case _ => Left(s"Unable to decode: '" + json + "'")
     }
   )
+*/
 }
-
+/*
 private trait CellContentParser {
   val textParts: Int
 
@@ -368,4 +382,4 @@ private case class ParserFromDictionary[D <: Nat : ToInt](
 
   private val idx = Nat.toInt[D]
 }
-
+*/

@@ -21,15 +21,15 @@ import commbank.grimlock.framework.squash.Squasher
 
 import  scala.reflect.classTag
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
 import shapeless.ops.nat.{ LTEq, ToInt }
 
 private[squash] object PreservingPosition {
-  type T = (Value, Content)
+  type T = (Value, Content[_])
 
   val tTag = classTag[T]
 
-  def prepare[P <: Nat, D <: Nat : ToInt](cell: Cell[P], dim: D)(implicit ev: LTEq[D, P]): Option[T] =
+  def prepare[P <: HList, D <: Nat : ToInt](cell: Cell[P], dim: D)(implicit ev: LTEq[D, P]): Option[T] =
     Option((cell.position(dim), cell.content))
 
   def reduce(maximum: Boolean)(lt: T, rt: T): T = {
@@ -38,11 +38,11 @@ private[squash] object PreservingPosition {
     if (maximum) max else min
   }
 
-  def present(t: T): Option[Content] = Option(t._2)
+  def present(t: T): Option[Content[_]] = Option(t._2)
 }
 
 /** Reduce two cells preserving the cell with maximal value for the coordinate of the dimension being squashed. */
-case class PreservingMaximumPosition[P <: Nat]() extends Squasher[P] {
+case class PreservingMaximumPosition[P <: HList]() extends Squasher[P] {
   type T = PreservingPosition.T
 
   val tTag = PreservingPosition.tTag
@@ -58,11 +58,11 @@ case class PreservingMaximumPosition[P <: Nat]() extends Squasher[P] {
 
   def reduce(lt: T, rt: T): T = PreservingPosition.reduce(true)(lt, rt)
 
-  def present(t: T): Option[Content] = PreservingPosition.present(t)
+  def present(t: T): Option[Content[_]] = PreservingPosition.present(t)
 }
 
 /** Reduce two cells preserving the cell with minimal value for the coordinate of the dimension being squashed. */
-case class PreservingMinimumPosition[P <: Nat]() extends Squasher[P] {
+case class PreservingMinimumPosition[P <: HList]() extends Squasher[P] {
   type T = PreservingPosition.T
 
   val tTag = PreservingPosition.tTag
@@ -78,12 +78,12 @@ case class PreservingMinimumPosition[P <: Nat]() extends Squasher[P] {
 
   def reduce(lt: T, rt: T): T = PreservingPosition.reduce(false)(lt, rt)
 
-  def present(t: T): Option[Content] = PreservingPosition.present(t)
+  def present(t: T): Option[Content[_]] = PreservingPosition.present(t)
 }
 
 /** Reduce two cells preserving the cell whose coordinate matches `keep`. */
-case class KeepSlice[P <: Nat](keep: Value) extends Squasher[P] {
-  type T = Content
+case class KeepSlice[P <: HList](keep: Value) extends Squasher[P] {
+  type T = Content[_]
 
   val tTag = classTag[T]
 
@@ -98,6 +98,6 @@ case class KeepSlice[P <: Nat](keep: Value) extends Squasher[P] {
 
   def reduce(lt: T, rt: T): T = lt
 
-  def present(t: T): Option[Content] = Option(t)
+  def present(t: T): Option[Content[_]] = Option(t)
 }
 

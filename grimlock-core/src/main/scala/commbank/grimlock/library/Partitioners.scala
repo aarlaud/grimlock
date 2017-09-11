@@ -20,7 +20,7 @@ import commbank.grimlock.framework.partition.Partitioner
 
 import java.util.Date
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
 import shapeless.ops.nat.{ LTEq, ToInt }
 
 /**
@@ -37,7 +37,7 @@ import shapeless.ops.nat.{ LTEq, ToInt }
  */
 case class BinaryHashSplit[
   D <: Nat : ToInt,
-  P <: Nat,
+  P <: HList,
   I
 ](
   dim: D,
@@ -70,7 +70,7 @@ case class BinaryHashSplit[
  */
 case class TernaryHashSplit[
   D <: Nat : ToInt,
-  P <: Nat,
+  P <: HList,
   I
 ](
   dim: D,
@@ -103,7 +103,7 @@ case class TernaryHashSplit[
  */
 case class HashSplit[
   D <: Nat : ToInt,
-  P <: Nat,
+  P <: HList,
   I
 ](
   dim: D,
@@ -133,7 +133,7 @@ case class HashSplit[
  */
 case class BinaryDateSplit[
   D <: Nat : ToInt,
-  P <: Nat,
+  P <: HList,
   I
 ](
   dim: D,
@@ -165,7 +165,7 @@ case class BinaryDateSplit[
  */
 case class TernaryDateSplit[
   D <: Nat : ToInt,
-  P <: Nat,
+  P <: HList,
   I
 ](
   dim: D,
@@ -198,7 +198,7 @@ case class TernaryDateSplit[
  */
 case class DateSplit[
   D <: Nat : ToInt,
-  P <: Nat,
+  P <: HList,
   I
 ](
   dim: D,

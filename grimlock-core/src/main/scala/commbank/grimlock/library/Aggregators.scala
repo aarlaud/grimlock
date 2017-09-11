@@ -18,7 +18,7 @@ import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.aggregate.{ Aggregator, AggregatorWithValue, Multiple, Single }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.distribution.{ CountMap, StreamingHistogram, TDigest, Quantiles }
-import commbank.grimlock.framework.encoding.Value
+import commbank.grimlock.framework.encoding.{ DoubleCodec, LongCodec, Value }
 import commbank.grimlock.framework.extract.Extract
 import commbank.grimlock.framework.metadata.{ CategoricalType, ContinuousSchema, DiscreteSchema, NumericType }
 import commbank.grimlock.framework.position.Position
@@ -28,7 +28,7 @@ import com.twitter.algebird.{ Moments => AlgeMoments, Monoid }
 
 import  scala.reflect.classTag
 
-import shapeless.Nat
+import shapeless.HList
 import shapeless.ops.nat.GT
 
 private[aggregate] object Aggregate {
@@ -42,7 +42,7 @@ private[aggregate] object Aggregate {
     else reduction(lt, rt)
 
   def present[
-    S <: Nat,
+    S <: HList,
     T
   ](
     nan: Boolean,
@@ -56,9 +56,9 @@ private[aggregate] object Aggregate {
     if (missing(t) || (invalid(t) && !nan))
       Single()
     else if (invalid(t))
-      Single(Cell(pos, Content(ContinuousSchema[Double](), Double.NaN)))
+      Single(Cell(pos, Content(DoubleCodec, ContinuousSchema[Double](), Double.NaN)))
     else
-      Single(Cell(pos, Content(ContinuousSchema[Double](), asDouble(t))))
+      Single(Cell(pos, Content(DoubleCodec, ContinuousSchema[Double](), asDouble(t))))
 
 }
 
@@ -67,7 +67,7 @@ private[aggregate] object AggregateDouble {
 
   val tTag = classTag[T]
 
-  def prepare[P <: Nat](cell: Cell[P], filter: Boolean): Option[Double] =
+  def prepare[P <: HList](cell: Cell[P], filter: Boolean): Option[Double] =
     if (filter && !cell.content.schema.classification.isOfType(NumericType))
       None
     else
@@ -82,7 +82,7 @@ private[aggregate] object AggregateDouble {
   ): T = Aggregate.reduce(strict, invalid, reduction)(lt, rt)
 
   def present[
-    S <: Nat
+    S <: HList
   ](
     nan: Boolean
   )(
@@ -100,13 +100,13 @@ private[aggregate] object AggregateMoments {
 
   val tTag = classTag[T]
 
-  def prepare[P <: Nat](cell: Cell[P], filter: Boolean): Option[T] = AggregateDouble.prepare(cell, filter)
+  def prepare[P <: HList](cell: Cell[P], filter: Boolean): Option[T] = AggregateDouble.prepare(cell, filter)
     .map { case d => AlgeMoments(d) }
 
   def reduce(strict: Boolean)(lt: T, rt: T): T = Aggregate.reduce(strict, invalid, reduction)(lt, rt)
 
   def present[
-    S <: Nat
+    S <: HList
   ](
     nan: Boolean,
     asDouble: (T) => Double
@@ -121,7 +121,7 @@ private[aggregate] object AggregateMoments {
 }
 
 /** Count reductions. */
-case class Counts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
+case class Counts[P <: HList, S <: HList]() extends Aggregator[P, S, S] {
   type T = Long
   type O[A] = Single[A]
 
@@ -130,11 +130,11 @@ case class Counts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
 
   def prepare(cell: Cell[P]): Option[T] = Option(1)
   def reduce(lt: T, rt: T): T = lt + rt
-  def present(pos: Position[S], t: T): O[Cell[S]] = Single(Cell(pos, Content(DiscreteSchema[Long](), t)))
+  def present(pos: Position[S], t: T): O[Cell[S]] = Single(Cell(pos, Content(LongCodec, DiscreteSchema[Long](), t)))
 }
 
 /** Distinct count reductions. */
-case class DistinctCounts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
+case class DistinctCounts[P <: HList, S <: HList]() extends Aggregator[P, S, S] {
   type T = Set[Value]
   type O[A] = Single[A]
 
@@ -143,7 +143,7 @@ case class DistinctCounts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
 
   def prepare(cell: Cell[P]): Option[T] = Option(Set(cell.content.value))
   def reduce(lt: T, rt: T): T = lt ++ rt
-  def present(pos: Position[S], t: T): O[Cell[S]] = Single(Cell(pos, Content(DiscreteSchema[Long](), t.size)))
+  def present(pos: Position[S], t: T): O[Cell[S]] = Single(Cell(pos, Content(LongCodec, DiscreteSchema[Long](), t.size)))
 }
 
 /**
@@ -151,7 +151,7 @@ case class DistinctCounts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
  *
  * @param predicte Function to be applied to content.
  */
-case class PredicateCounts[P <: Nat, S <: Nat](predicate: (Content) => Boolean) extends Aggregator[P, S, S] {
+case class PredicateCounts[P <: HList, S <: HList](predicate: (Content[_]) => Boolean) extends Aggregator[P, S, S] {
   type T = Long
   type O[A] = Single[A]
 
@@ -160,7 +160,7 @@ case class PredicateCounts[P <: Nat, S <: Nat](predicate: (Content) => Boolean) 
 
   def prepare(cell: Cell[P]): Option[T] = if (predicate(cell.content)) Option(1) else None
   def reduce(lt: T, rt: T): T = lt + rt
-  def present(pos: Position[S], t: T): O[Cell[S]] = Single(Cell(pos, Content(DiscreteSchema[Long](), t)))
+  def present(pos: Position[S], t: T): O[Cell[S]] = Single(Cell(pos, Content(LongCodec, DiscreteSchema[Long](), t)))
 }
 
 /**
@@ -180,9 +180,9 @@ case class PredicateCounts[P <: Nat, S <: Nat](predicate: (Content) => Boolean) 
  *                 data).
  */
 case class Moments[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   mean: Locate.FromPosition[S, Q],
   sd: Locate.FromPosition[S, Q],
@@ -210,20 +210,20 @@ case class Moments[
     else if (AggregateMoments.invalid(t))
       Multiple(
         List(
-          mean(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Double.NaN)) },
-          sd(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Double.NaN)) },
-          skewness(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Double.NaN)) },
-          kurtosis(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Double.NaN)) }
+          mean(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Double.NaN)) },
+          sd(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Double.NaN)) },
+          skewness(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Double.NaN)) },
+          kurtosis(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Double.NaN)) }
         )
         .flatten
       )
     else
       Multiple(
         List(
-          mean(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), t.mean)) },
-          sd(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Statistics.sd(t, biased))) },
-          skewness(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), t.skewness)) },
-          kurtosis(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Statistics.kurtosis(t, excess))) }
+          mean(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), t.mean)) },
+          sd(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Statistics.sd(t, biased))) },
+          skewness(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), t.skewness)) },
+          kurtosis(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Statistics.kurtosis(t, excess))) }
         )
         .flatten
       )
@@ -240,8 +240,8 @@ case class Moments[
  *               data).
  */
 case class Mean[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -272,8 +272,8 @@ case class Mean[
  *               data).
  */
 case class StandardDeviation[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   biased: Boolean = false,
   filter: Boolean = true,
@@ -304,8 +304,8 @@ case class StandardDeviation[
  *               data).
  */
 case class Skewness[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -336,8 +336,8 @@ case class Skewness[
  *               data).
  */
 case class Kurtosis[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   excess: Boolean = false,
   filter: Boolean = true,
@@ -370,9 +370,9 @@ case class Kurtosis[
  *               data).
  */
 case class Limits[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   min: Locate.FromPosition[S, Q],
   max: Locate.FromPosition[S, Q],
@@ -396,16 +396,16 @@ case class Limits[
     else if (invalid(t))
       Multiple(
         List(
-          min(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Double.NaN)) },
-          max(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), Double.NaN)) }
+          min(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Double.NaN)) },
+          max(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), Double.NaN)) }
         )
         .flatten
       )
     else
       Multiple(
         List(
-          min(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), t._1)) },
-          max(pos).map { case p => Cell(p, Content(ContinuousSchema[Double](), t._2)) }
+          min(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), t._1)) },
+          max(pos).map { case p => Cell(p, Content(DoubleCodec, ContinuousSchema[Double](), t._2)) }
         )
         .flatten
       )
@@ -425,8 +425,8 @@ case class Limits[
  *               data).
  */
 case class Minimum[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -456,8 +456,8 @@ case class Minimum[
  *               data).
  */
 case class Maximum[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -487,8 +487,8 @@ case class Maximum[
  *               data).
  */
 case class MaximumAbsolute[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -518,8 +518,8 @@ case class MaximumAbsolute[
  *               data).
  */
 case class Sums[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -550,8 +550,8 @@ case class Sums[
  *               data).
  */
 case class WeightedSums[
-  P <: Nat,
-  S <: Nat,
+  P <: HList,
+  S <: HList,
   W
 ](
   weight: Extract[P, W, Double],
@@ -572,7 +572,7 @@ case class WeightedSums[
   def reduce(lt: T, rt: T): T = AggregateDouble.reduce(strict, reduction)(lt, rt)
 
   def presentWithValue(pos: Position[S], t: T, ext: V): O[Cell[S]] =
-    if (t.isNaN && !nan) Single() else Single(Cell(pos, Content(ContinuousSchema[Double](), t)))
+    if (t.isNaN && !nan) Single() else Single(Cell(pos, Content(DoubleCodec, ContinuousSchema[Double](), t)))
 
   private def reduction(lt: T, rt: T): T = lt + rt
 }
@@ -591,8 +591,8 @@ case class WeightedSums[
  * @param log    The log function to use.
  */
 case class Entropy[
-  P <: Nat,
-  S <: Nat,
+  P <: HList,
+  S <: HList,
   W
 ](
   count: Extract[P, W, Double],
@@ -626,7 +626,7 @@ case class Entropy[
     if (t._1 == 1 || (t._2.isNaN && !nan))
       Single()
     else
-      Single(Cell(pos, Content(ContinuousSchema[Double](), if (negate) t._2 else -t._2)))
+      Single(Cell(pos, Content(DoubleCodec, ContinuousSchema[Double](), if (negate) t._2 else -t._2)))
 }
 
 /**
@@ -640,8 +640,8 @@ case class Entropy[
  *               data).
  */
 case class FrequencyRatio[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -682,9 +682,9 @@ case class FrequencyRatio[
  * @see https://github.com/tdunning/t-digest
  */
 case class TDigestQuantiles[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   probs: List[Double],
   compression: Double,
@@ -722,9 +722,9 @@ case class TDigestQuantiles[
  * @note Only use this if all distinct values and their counts fit in memory.
  */
 case class CountMapQuantiles[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   probs: List[Double],
   quantiser: Quantiles.Quantiser,
@@ -758,9 +758,9 @@ case class CountMapQuantiles[
  * @see http://www.jmlr.org/papers/volume11/ben-haim10a/ben-haim10a.pdf
  */
 sealed case class UniformQuantiles[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   count: Long,
   name: Locate.FromSelectedAndOutput[S, Double, Q],
@@ -793,16 +793,16 @@ sealed case class UniformQuantiles[
  * @note Only use this if all distinct values and their counts fit in memory.
  */
 case class CountMapHistogram[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   name: Locate.FromSelectedAndContent[S, Q],
   filter: Boolean = true
 )(implicit
   ev: GT[Q, S]
 ) extends Aggregator[P, S, Q] {
-  type T = Map[Content, Long]
+  type T = Map[Content[_], Long]
   type O[A] = Multiple[A]
 
   val tTag = classTag[T]
@@ -822,7 +822,7 @@ case class CountMapHistogram[
 
   def present(pos: Position[S], t: T): O[Cell[Q]] = Multiple(
     t
-      .flatMap { case (c, s) => name(pos, c).map { case p => Cell(p, Content(DiscreteSchema[Long](), s)) } }
+      .flatMap { case (c, s) => name(pos, c).map { case p => Cell(p, Content(LongCodec, DiscreteSchema[Long](), s)) } }
       .toList
   )
 }

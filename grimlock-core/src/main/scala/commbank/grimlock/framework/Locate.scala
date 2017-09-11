@@ -55,7 +55,7 @@ object Locate {
   type FromSelectedAndOutput[S <: HList, T, Q <: HList] = (Position[S], T) => Option[Position[Q]]
 
   /** Extract position from selected position and a content. */
-  type FromSelectedAndContent[S <: HList, Q <: HList] = (Position[S], Content) => Option[Position[Q]]
+  type FromSelectedAndContent[S <: HList, Q <: HList, D] = (Position[S], Content[D]) => Option[Position[Q]]
 
   /**
    * Rename a dimension.

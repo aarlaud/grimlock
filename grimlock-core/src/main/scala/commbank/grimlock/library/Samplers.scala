@@ -20,7 +20,7 @@ import commbank.grimlock.framework.sample.{ Sampler, SamplerWithValue }
 
 import scala.util.Random
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
 import shapeless.ops.nat.{ LTEq, ToInt }
 
 /**
@@ -31,7 +31,7 @@ import shapeless.ops.nat.{ LTEq, ToInt }
  *
  * @note This randomly samples ignoring the position.
  */
-case class RandomSample[P <: Nat](ratio: Double, rnd: Random = new Random()) extends Sampler[P] {
+case class RandomSample[P <: HList](ratio: Double, rnd: Random = new Random()) extends Sampler[P] {
   def select(cell: Cell[P]): Boolean = rnd.nextDouble() < ratio
 }
 
@@ -44,7 +44,7 @@ case class RandomSample[P <: Nat](ratio: Double, rnd: Random = new Random()) ext
  */
 case class HashSample[
   D <: Nat : ToInt,
-  P <: Nat
+  P <: HList
 ](
   dim: D,
   ratio: Int,
@@ -64,7 +64,7 @@ case class HashSample[
  */
 case class HashSampleToSize[
   D <: Nat : ToInt,
-  P <: Nat,
+  P <: HList,
   W
 ](
   dim: D,
