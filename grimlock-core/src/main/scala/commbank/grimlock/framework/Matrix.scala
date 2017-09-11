@@ -59,7 +59,7 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   )(
     positions: C#U[Position[slice.S]],
     schema: Content.Parser[Content[_]],
-    writer: Persist.TextWriter[Cell[P]] = Cell.toString()
+    writer: Persist.TextWriter[Cell[P]] //= Cell.toString()
   )(implicit
     ev: Matrix.ChangeTuner[C#U, T]
   ): (C#U[Cell[P]], C#U[String])
@@ -287,7 +287,7 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[Cell[P]] = Cell.toString(),
+    writer: Persist.TextWriter[Cell[P]], // = Cell.toString(),
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]

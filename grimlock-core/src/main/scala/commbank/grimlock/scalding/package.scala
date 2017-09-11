@@ -80,7 +80,7 @@ import commbank.grimlock.scalding.content.{ Contents, IndexedContents }
 import commbank.grimlock.scalding.partition.Partitions
 import commbank.grimlock.scalding.position.Positions
 
-import shapeless.Nat
+import shapeless.{ ::, HList, HNil, Nat }
 import shapeless.nat.{ _1, _2, _3, _4, _5, _6, _7, _8, _9 }
 import shapeless.ops.nat.GT
 

@@ -734,7 +734,7 @@ case class Matrix1D[V1](data: Context.U[Cell[V1 :: HNil]]) extends FwMatrix1D[V1
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: HNil]]`. */
-case class Matrix2D(data: Context.U[Cell[V1 :: V2 :: HNil]]) extends FwMatrix2D[V1, V2, Context] with MatrixXD[V1 :: V2 :: HNil] {
+case class Matrix2D[V1, V2](data: Context.U[Cell[V1 :: V2 :: HNil]]) extends FwMatrix2D[V1, V2, Context] with MatrixXD[V1 :: V2 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt
@@ -971,7 +971,7 @@ case class Matrix2D(data: Context.U[Cell[V1 :: V2 :: HNil]]) extends FwMatrix2D[
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: HNil]]`. */
-case class Matrix3D(data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]) extends FwMatrix3D[V1, V2, V3, Context] with MatrixXD[V1 :: V2 :: V3 :: HNil] {
+case class Matrix3D[V1, V2, V3](data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]) extends FwMatrix3D[V1, V2, V3, Context] with MatrixXD[V1 :: V2 :: V3 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1029,7 +1029,7 @@ case class Matrix3D(data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]) extends FwMat
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]`. */
-case class Matrix4D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]) extends FwMatrix4D[V1, V2, V3, V4, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: HNil] {
+case class Matrix4D[V1, V2, V3, V4](data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]) extends FwMatrix4D[V1, V2, V3, V4, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1095,7 +1095,7 @@ case class Matrix4D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]) extends
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]`. */
-case class Matrix5D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]) extends FwMatrix5D[V1, V2, V3, V4, V5, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] {
+case class Matrix5D[V1, V2, V3, V4, V5](data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]) extends FwMatrix5D[V1, V2, V3, V4, V5, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1167,7 +1167,7 @@ case class Matrix5D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]) e
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]`. */
-case class Matrix6D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]) extends FwMatrix6D[V1, V2, V3, V4, V5, V6, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] {
+case class Matrix6D[V1, V2, V3, V4, V5, V6](data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]) extends FwMatrix6D[V1, V2, V3, V4, V5, V6, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1251,7 +1251,7 @@ case class Matrix6D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNi
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]`. */
-case class Matrix7D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]) extends FwMatrix7D[V1, V2, V3, V4, V5, V6, V7, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] {
+case class Matrix7D[V1, V2, V3, V4, V5, V6, V7](data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]) extends FwMatrix7D[V1, V2, V3, V4, V5, V6, V7, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1350,7 +1350,7 @@ case class Matrix7D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]`. */
-case class Matrix8D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]) extends FwMatrix8D[V1, V2, V3, V4, V5, V6, V7, V8, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] {
+case class Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8](data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]) extends FwMatrix8D[V1, V2, V3, V4, V5, V6, V7, V8, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,
@@ -1457,7 +1457,7 @@ case class Matrix8D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]`. */
-case class Matrix9D(data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]) extends FwMatrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] {
+case class Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9](data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]) extends FwMatrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9, Context] with MatrixXD[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] {
   def permute[
     D1 <: Nat : ToInt,
     D2 <: Nat : ToInt,

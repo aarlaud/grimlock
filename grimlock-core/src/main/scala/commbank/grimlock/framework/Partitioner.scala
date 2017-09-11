@@ -15,12 +15,14 @@
 package commbank.grimlock.framework.partition
 
 import commbank.grimlock.framework.{ Cell, Persist }
+import commbank.grimlock.framework.encoding.{ Codec, EncodeString }
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.Tuner
 
 import scala.reflect.ClassTag
 
-import shapeless.HList
+import shapeless.{ ::, HList, HNil, LUBConstraint }
+import shapeless.ops.hlist.{ Mapper, ToTraversable, Zip }
 
 /** Trait for partitioners. */
 trait Partitioner[P <: HList, I] extends PartitionerWithValue[P, I] {
@@ -209,7 +211,7 @@ trait Partitions[P <: HList, I, C <: Context[C]] extends Persist[(I, Cell[P]), C
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[(I, Cell[P])] = Partitions.toString(),
+    writer: Persist.TextWriter[(I, Cell[P])], // = Partitions.toString(),
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -233,13 +235,22 @@ object Partitions {
    */
   def toString[
     I,
-    P <: HList
+    P <: HList,
+    L <: HList,
+    Z <: HList,
+    M <: HList
   ](
+    codecs: L,
     verbose: Boolean = false,
     separator: String = "|",
     descriptive: Boolean = true
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[L :: P :: HNil, Z],
+    ev3: Mapper.Aux[EncodeString.type, Z, M],
+    ev4: ToTraversable.Aux[M, List, Any]
   ): ((I, Cell[P])) => TraversableOnce[String] = (t: (I, Cell[P])) =>
-    List(t._1.toString + separator + (if (verbose) t._2.toString else t._2.toShortString(separator, descriptive)))
+    List(t._1.toString + separator + (if (verbose) t._2.toString else t._2.toShortString(codecs, separator, descriptive)))
 
   /**
    * Return function that returns a JSON representations of a partition.
@@ -250,6 +261,7 @@ object Partitions {
    *
    * @note The key and cell are separately encoded and then combined using the separator.
    */
+/*
   def toJSON[
     I,
     P <: HList
@@ -259,5 +271,6 @@ object Partitions {
     descriptive: Boolean = true
   ): ((I, Cell[P])) => TraversableOnce[String] = (t: (I, Cell[P])) =>
     List(t._1.toString + separator + t._2.toJSON(pretty, descriptive))
+*/
 }
 

@@ -578,7 +578,7 @@ trait Positions[P <: HList, C <: Context[C]] extends Persist[Position[P], C] {
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[Position[P]] = Position.toString(),
+    writer: Persist.TextWriter[Position[P]], // = Position.toString(),
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -605,7 +605,7 @@ trait Positions[P <: HList, C <: Context[C]] extends Persist[Position[P], C] {
     regex: Regex
   )(implicit
     ev: At.Aux[P, D, V]
-  ): C#U[Position[P]] = slice(keep, p => regex.pattern.matcher(p(dim).toShortString).matches)
+  ): C#U[Position[P]] = slice(keep, p => regex.pattern.matcher(p(dim).toString).matches) // toShortString?
 
   /**
    * Slice the positions using a regular expression.

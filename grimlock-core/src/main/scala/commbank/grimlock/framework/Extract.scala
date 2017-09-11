@@ -17,7 +17,8 @@ package commbank.grimlock.framework.extract
 import commbank.grimlock.framework.Cell
 import commbank.grimlock.framework.position.{ Position, Slice }
 
-import shapeless.{ HList, HNil, Nat }
+import shapeless.{ ::, HList, HNil, Nat }
+import shapeless.ops.hlist.At
 
 /** Trait for extracting data from a user provided value given a cell. */
 trait Extract[P <: HList, V, T] extends java.io.Serializable { self =>
@@ -85,9 +86,9 @@ object ExtractWithDimension {
     dimension: D
   )(implicit
     ev: At.Aux[P, D, V]
-  ): ExtractWithDimension[P, T] = new ExtractWithDimension[P, T] {
+  ): ExtractWithDimension[P, V, T] = new ExtractWithDimension[P, V, T] {
     def extract(cell: Cell[P], ext: Map[Position[V :: HNil], T]): Option[T] = ext
-      .get(Position(cell.position(dimensino)))
+      .get(Position(cell.position(dimension)))
   }
 }
 
@@ -122,7 +123,7 @@ object ExtractWithDimensionAndKey {
     key: Position[W :: HNil]
   )(implicit
     ev: At.Aux[P, D, V]
-  ): ExtractWithDimensionAndKey[P, T] = new ExtractWithDimensionAndKey[P, T] {
+  ): ExtractWithDimensionAndKey[P, V, W, T] = new ExtractWithDimensionAndKey[P, V, W, T] {
     def extract(cell: Cell[P], ext: Map[Position[V :: HNil], Map[Position[W :: HNil], T]]): Option[T] = ext
       .get(Position(cell.position(dimension)))
       .flatMap(_.get(key))
@@ -200,7 +201,7 @@ object ExtractWithSelectedAndKey {
   ](
     slice: Slice[P],
     key: Position[V :: HNil]
-  ): ExtractWithSelectedAndKey[P, slice.S, T] = new ExtractWithSelectedAndKey[P, slice.S, T] {
+  ): ExtractWithSelectedAndKey[P, slice.S, V, T] = new ExtractWithSelectedAndKey[P, slice.S, V, T] {
     def extract(cell: Cell[P], ext: Map[Position[slice.S], Map[Position[V :: HNil], T]]): Option[T] = ext
       .get(slice.selected(cell.position))
       .flatMap(_.get(key))

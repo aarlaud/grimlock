@@ -15,7 +15,7 @@
 package commbank.grimlock.framework.content
 
 import commbank.grimlock.framework.Persist
-import commbank.grimlock.framework.encoding.{ Codec, Value }
+import commbank.grimlock.framework.encoding.{ Codec, EncodeString, Value }
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.Tuner
 import commbank.grimlock.framework.metadata.{ Schema, Type }
@@ -26,8 +26,9 @@ import java.util.regex.Pattern
 
 import play.api.libs.json.{ JsError, JsObject, Json, JsResult, JsString, JsSuccess, JsValue, Reads }
 
-import shapeless.{ :+:, CNil, Coproduct, HList, Inl, Inr }
+import shapeless.{ ::, :+:, CNil, Coproduct, HList, HNil, Inl, Inr, LUBConstraint }
 import shapeless.ops.coproduct.Inject
+import shapeless.ops.hlist.{ Mapper, ToTraversable, Zip }
 
 /**
  * Contents of a cell in a matrix.
@@ -323,7 +324,7 @@ trait Contents[C <: Context[C]] extends Persist[Content[_], C] {
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[Content[_]] = Content.toString(),
+    writer: Persist.TextWriter[Content[_]], // = Content.toString(),
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -347,7 +348,7 @@ trait IndexedContents[P <: HList, C <: Context[C]] extends Persist[(Position[P],
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[(Position[P], Content[_])] = IndexedContents.toString(),
+    writer: Persist.TextWriter[(Position[P], Content[_])], // = IndexedContents.toString(),
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -364,17 +365,26 @@ object IndexedContents {
    * @param descriptive Indicator if codec and schema are required or not (only used if verbose is `false`).
    */
   def toString[
+    L <: HList,
+    Z <: HList,
+    M <: HList,
     P <: HList
   ](
+    codecs: L,
     verbose: Boolean = false,
     separator: String = "|",
     descriptive: Boolean = true
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[L :: P :: HNil, Z],
+    ev3: Mapper.Aux[EncodeString.type, Z, M],
+    ev4: ToTraversable.Aux[M, List, Any]
   ): ((Position[P], Content[_])) => TraversableOnce[String] = (t: (Position[P], Content[_])) =>
     List(
       if (verbose)
         t.toString
       else
-        t._1.toShortString(separator) + separator + t._2.toShortString(separator, descriptive)
+        t._1.toShortString(codecs, separator) + separator + t._2.toShortString(separator, descriptive)
     )
 
   /**
@@ -387,12 +397,21 @@ object IndexedContents {
    * @note The index (Position) and content are separately encoded and then combined using the separator.
    */
   def toJSON[
+    L <: HList,
+    Z <: HList,
+    M <: HList,
     P <: HList
   ](
+    codecs: L,
     pretty: Boolean = false,
     separator: String = ",",
     descriptive: Boolean = false
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[L :: P :: HNil, Z],
+    ev3: Mapper.Aux[EncodeString.type, Z, M],
+    ev4: ToTraversable.Aux[M, List, String]
   ): ((Position[P], Content[_])) => TraversableOnce[String] = (t: (Position[P], Content[_])) =>
-    List(t._1.toJSON(pretty) + separator + t._2.toJSON(pretty, descriptive))
+    List(t._1.toJSON(codecs, pretty) + separator + t._2.toJSON(pretty, descriptive))
 }
 

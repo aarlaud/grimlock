@@ -15,10 +15,11 @@
 package commbank.grimlock.framework
 
 import commbank.grimlock.framework.content.Content
+import commbank.grimlock.framework.encoding.{ Codec, EncodeString }
 import commbank.grimlock.framework.position.{ Position, Slice }
 
-import shapeless.{ ::, HList, HNil, Nat }
-import shapeless.ops.hlist.{ At, Prepend, ReplaceAt }
+import shapeless.{ ::, HList, HNil, LUBConstraint, Nat }
+import shapeless.ops.hlist.{ At, Mapper, Prepend, ReplaceAt, ToTraversable, Zip }
 
 // TODO: Remove calls of Object.toString
 
@@ -132,13 +133,22 @@ object Locate {
    * @note If a position is returned then it's always right cell's remainder with an additional coordinate prepended.
    */
   def PrependPairwiseSelectedStringToRemainder[
-    P <: HList
+    P <: HList,
+    L <: HList,
+    Z <: HList,
+    M <: HList
   ](
     slice: Slice[P],
+    codecs: L,
     pattern: String,
     all: Boolean = false,
     separator: String = "|"
-  ): FromPairwiseCells[P, String :: P] = (left: Cell[P], right: Cell[P]) => {
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[L :: slice.S :: HNil, Z],
+    ev3: Mapper.Aux[EncodeString.type, Z, M],
+    ev4: ToTraversable.Aux[M, List, Any]
+  ): FromPairwiseCells[P, String :: slice.R] = (left: Cell[P], right: Cell[P]) => {
     val reml = slice.remainder(left.position)
     val remr = slice.remainder(right.position)
 
@@ -146,8 +156,8 @@ object Locate {
       reml
         .prepend(
           pattern.format(
-            slice.selected(left.position).toShortString(separator),
-            slice.selected(right.position).toShortString(separator)
+            slice.selected(left.position).toShortString(codecs, separator),
+            slice.selected(right.position).toShortString(codecs, separator)
           )
         )
         .toOption
@@ -181,13 +191,21 @@ object Locate {
   def AppendRemainderString[
     S <: HList,
     R <: HList,
+    L <: HList,
+    Z <: HList,
+    M <: HList,
     Out <: HList
   ](
+    codecs: L,
     separator: String = "|"
   )(implicit
-    ev: Prepend.Aux[S, String :: HNil, Out]
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[L :: R :: HNil, Z],
+    ev3: Mapper.Aux[EncodeString.type, Z, M],
+    ev4: ToTraversable.Aux[M, List, Any],
+    ev5: Prepend.Aux[S, String :: HNil, Out]
   ): FromSelectedAndRemainder[S, R, Out] = (sel: Position[S], rem: Position[R]) => sel
-    .append(rem.toShortString(separator))
+    .append(rem.toShortString(codecs, separator))
     .toOption
 
   /**
@@ -229,11 +247,12 @@ object Locate {
   /** Append the content string to the position. */
   def AppendContentString[
     S <: HList,
+    D,
     Out <: HList
   ](
   )(implicit
     ev: Prepend.Aux[S, String :: HNil, Out]
-  ): FromSelectedAndContent[S, Out] = (sel: Position[S], con: Content[_]) => sel
+  ): FromSelectedAndContent[S, Out, D] = (sel: Position[S], con: Content[D]) => sel
     .append(con.value.toString)
     .toOption
 
@@ -255,7 +274,7 @@ object Locate {
   )(implicit
     ev1: At.Aux[S, D, V],
     ev2: Prepend.Aux[S, String :: HNil, Out]
-  ): FromSelectedAndContent[S, Out] = (sel: Position[S], con: Content[_]) => sel
+  ): FromSelectedAndContent[S, Out, V] = (sel: Position[S], con: Content[V]) => sel
     .append(name.format(sel(dim).toString, con.value.toString))
     .toOption
 }
