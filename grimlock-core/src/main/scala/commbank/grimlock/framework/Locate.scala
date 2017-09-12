@@ -218,14 +218,22 @@ object Locate {
   def AppendPairwiseString[
     S <: HList,
     R <: HList,
+    L <: HList,
+    Z <: HList,
+    M <: HList,
     Out <: HList
   ](
+    codecs: L,
     pattern: String,
     separator: String = "|"
   )(implicit
-    ev: Prepend.Aux[S, String :: HNil, Out]
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[L :: R :: HNil, Z],
+    ev3: Mapper.Aux[EncodeString.type, Z, M],
+    ev4: ToTraversable.Aux[M, List, Any],
+    ev5: Prepend.Aux[S, String :: HNil, Out]
   ): FromSelectedAndPairwiseRemainder[S, R, Out] = (sel: Position[S], curr: Position[R], prev: Position[R]) => sel
-    .append(pattern.format(prev.toShortString(separator), curr.toShortString(separator)))
+    .append(pattern.format(prev.toShortString(codecs, separator), curr.toShortString(codecs, separator)))
     .toOption
 
   /**

@@ -277,10 +277,10 @@ object Position {
   def apply(): Position[HNil] = Position(HNil)
 
   /** Constructor for 1 dimensional position. */
-  def apply[V1](first: V1)(implicit ev: V1 =:!= HList): Position[V1 :: HNil] = Position(first :: HNil)
+  def apply[V1](first: V1)(implicit ev: V1 =:!= HList): Position[V1 :: HNil] = Position(HNil.::(first))
 
   /** Constructor for 2 dimensional position. */
-  def apply[V1, V2](first: V1, second: V2): Position[V1 :: V2 :: HNil] = Position(first :: second :: HNil)
+  def apply[V1, V2](first: V1, second: V2): Position[V1 :: V2 :: HNil] = Position(::(first, HNil.::(second)))
 
   /** Constructor for 3 dimensional position. */
   def apply[
@@ -291,7 +291,7 @@ object Position {
     first: V1,
     second: V2,
     third: V3
-  ): Position[V1 :: V2 :: V3 :: HNil] = Position(first :: second :: third :: HNil)
+  ): Position[V1 :: V2 :: V3 :: HNil] = Position(::(first, ::(second, HNil.::(third))))
 
   /** Constructor for 4 dimensional position. */
   def apply[
@@ -304,7 +304,7 @@ object Position {
     second: V2,
     third: V3,
     fourth: V4
-  ): Position[V1 :: V2 :: V3 :: V4 :: HNil] = Position(first :: second :: third :: fourth :: HNil)
+  ): Position[V1 :: V2 :: V3 :: V4 :: HNil] = Position(::(first, ::(second, ::(third, HNil.::(fourth)))))
 
   /** Constructor for 5 dimensional position. */
   def apply[
@@ -319,7 +319,9 @@ object Position {
     third: V3,
     fourth: V4,
     fifth: V5
-  ): Position[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] = Position(first :: second :: third :: fourth :: fifth :: HNil)
+  ): Position[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] = Position(
+    ::(first, ::(second, ::(third, ::(fourth, HNil.::(fifth)))))
+  )
 
   /** Constructor for 6 dimensional position. */
   def apply[
@@ -337,7 +339,7 @@ object Position {
     fifth: V5,
     sixth: V6
   ): Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] = Position(
-    first :: second :: third :: fourth :: fifth :: sixth :: HNil
+    ::(first, ::(second, ::(third, ::(fourth, ::(fifth, HNil.::(sixth))))))
   )
 
   /** Constructor for 7 dimensional position. */
@@ -358,7 +360,7 @@ object Position {
     sixth: V6,
     seventh: V7
   ): Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] = Position(
-    first :: second :: third :: fourth :: fifth :: sixth :: seventh :: HNil
+    ::(first, ::(second, ::(third, ::(fourth, ::(fifth, ::(sixth, HNil.::(seventh)))))))
   )
 
   /** Constructor for 8 dimensional position. */
@@ -381,7 +383,7 @@ object Position {
     seventh: V7,
     eighth: V8
   ): Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] = Position(
-    first :: second :: third :: fourth :: fifth :: sixth :: seventh :: eighth :: HNil
+    ::(first, ::(second, ::(third, ::(fourth, ::(fifth, ::(sixth, ::(seventh, HNil.::(eighth))))))))
   )
 
   /** Constructor for 9 dimensional position. */
@@ -406,7 +408,7 @@ object Position {
     eighth: V8,
     nineth: V9
   ): Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] = Position(
-    first :: second :: third :: fourth :: fifth :: sixth :: seventh :: eighth :: nineth :: HNil
+    ::(first, ::(second, ::(third, ::(fourth, ::(fifth, ::(sixth, ::(seventh, ::(eighth, HNil.::(nineth)))))))))
   )
 
   /**

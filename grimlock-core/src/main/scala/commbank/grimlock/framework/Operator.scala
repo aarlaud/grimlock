@@ -16,10 +16,11 @@ package commbank.grimlock.framework.pairwise
 
 import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
+import commbank.grimlock.framework.encoding.{ Codec, CompareTuple }
 import commbank.grimlock.framework.position.Position
 
-import shapeless.{ HList, Nat }
-import shapeless.ops.hlist.Length
+import shapeless.{ ::, HList, HNil, Nat, LUBConstraint }
+import shapeless.ops.hlist.{ Length, Mapper, ToTraversable, Zip }
 import shapeless.ops.nat.GTEq
 
 /** Trait for comparing two positions to determine if pairwise operation is to be applied. */
@@ -30,37 +31,149 @@ trait Comparer {
    * @param left  Left position.
    * @param right Right position.
    */
-  def keep[P <: HList](left: Position[P], right: Position[P]): Boolean
+  def keep[
+    P <: HList,
+    L <: HList,
+    Z1 <: HList,
+    Z2 <: HList,
+    M <: HList
+  ](
+    left: Position[P],
+    right: Position[P],
+    codecs: L
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[P :: P :: HNil, Z1],
+    ev3: Zip.Aux[Z1 :: L :: HNil, Z2],
+    ev4: Mapper.Aux[CompareTuple.type, Z2, M],
+    ev5: ToTraversable.Aux[M, List, Int]
+  ): Boolean
 }
 
 /** Case object for computing all pairwise combinations. */
 case object All extends Comparer {
-  def keep[P <: HList](left: Position[P], right: Position[P]): Boolean = true
+  def keep[
+    P <: HList,
+    L <: HList,
+    Z1 <: HList,
+    Z2 <: HList,
+    M <: HList
+  ](
+    left: Position[P],
+    right: Position[P],
+    codecs: L
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[P :: P :: HNil, Z1],
+    ev3: Zip.Aux[Z1 :: L :: HNil, Z2],
+    ev4: Mapper.Aux[CompareTuple.type, Z2, M],
+    ev5: ToTraversable.Aux[M, List, Int]
+  ): Boolean = true
 }
 
 /** Case object for computing diagonal pairwise combinations (i.e. left == right). */
 case object Diagonal extends Comparer {
-  def keep[P <: HList](left: Position[P], right: Position[P]): Boolean = left.compare(right) == 0
+  def keep[
+    P <: HList,
+    L <: HList,
+    Z1 <: HList,
+    Z2 <: HList,
+    M <: HList
+  ](
+    left: Position[P],
+    right: Position[P],
+    codecs: L
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[P :: P :: HNil, Z1],
+    ev3: Zip.Aux[Z1 :: L :: HNil, Z2],
+    ev4: Mapper.Aux[CompareTuple.type, Z2, M],
+    ev5: ToTraversable.Aux[M, List, Int]
+  ): Boolean = left.compare(codecs, right) == 0
 }
 
 /** Case object for computing upper triangular pairwise combinations (i.e. right > left). */
 case object Upper extends Comparer {
-  def keep[P <: HList](left: Position[P], right: Position[P]): Boolean = right.compare(left) > 0
+  def keep[
+    P <: HList,
+    L <: HList,
+    Z1 <: HList,
+    Z2 <: HList,
+    M <: HList
+  ](
+    left: Position[P],
+    right: Position[P],
+    codecs: L
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[P :: P :: HNil, Z1],
+    ev3: Zip.Aux[Z1 :: L :: HNil, Z2],
+    ev4: Mapper.Aux[CompareTuple.type, Z2, M],
+    ev5: ToTraversable.Aux[M, List, Int]
+  ): Boolean = right.compare(codecs, left) > 0
 }
 
 /** Case object for computing upper triangular or diagonal pairwise combinations (i.e. right >= left). */
 case object UpperDiagonal extends Comparer {
-  def keep[P <: HList](left: Position[P], right: Position[P]): Boolean = right.compare(left) >= 0
+  def keep[
+    P <: HList,
+    L <: HList,
+    Z1 <: HList,
+    Z2 <: HList,
+    M <: HList
+  ](
+    left: Position[P],
+    right: Position[P],
+    codecs: L
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[P :: P :: HNil, Z1],
+    ev3: Zip.Aux[Z1 :: L :: HNil, Z2],
+    ev4: Mapper.Aux[CompareTuple.type, Z2, M],
+    ev5: ToTraversable.Aux[M, List, Int]
+  ): Boolean = right.compare(codecs, left) >= 0
 }
 
 /** Case object for computing lower triangular pairwise combinations (i.e. left > right). */
 case object Lower extends Comparer {
-  def keep[P <: HList](left: Position[P], right: Position[P]): Boolean = left.compare(right) > 0
+  def keep[
+    P <: HList,
+    L <: HList,
+    Z1 <: HList,
+    Z2 <: HList,
+    M <: HList
+  ](
+    left: Position[P],
+    right: Position[P],
+    codecs: L
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[P :: P :: HNil, Z1],
+    ev3: Zip.Aux[Z1 :: L :: HNil, Z2],
+    ev4: Mapper.Aux[CompareTuple.type, Z2, M],
+    ev5: ToTraversable.Aux[M, List, Int]
+  ): Boolean = left.compare(codecs, right) > 0
 }
 
 /** Case object for computing lower triangular or diagonal pairwise combinations (i.e. left >= right). */
 case object LowerDiagonal extends Comparer {
-  def keep[P <: HList](left: Position[P], right: Position[P]): Boolean = left.compare(right) >= 0
+  def keep[
+    P <: HList,
+    L <: HList,
+    Z1 <: HList,
+    Z2 <: HList,
+    M <: HList
+  ](
+    left: Position[P],
+    right: Position[P],
+    codecs: L
+  )(implicit
+    ev1: LUBConstraint[L, Codec[_]],
+    ev2: Zip.Aux[P :: P :: HNil, Z1],
+    ev3: Zip.Aux[Z1 :: L :: HNil, Z2],
+    ev4: Mapper.Aux[CompareTuple.type, Z2, M],
+    ev5: ToTraversable.Aux[M, List, Int]
+  ): Boolean = left.compare(codecs, right) >= 0
 }
 
 /** Trait for computing pairwise values. */
