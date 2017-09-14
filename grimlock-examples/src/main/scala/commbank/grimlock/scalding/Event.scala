@@ -191,7 +191,7 @@ class InstanceCentricTfIdf(args: Args) extends Job(args) {
   // Apply TfIdf to the term frequency matrix with the Idf values, then save the results to file.
   //
   // Uncomment one of the 3 lines below to try different tf-idf versions.
-  val tfIdf = tf
+  tf
     //.transform(BooleanTf())
     //.transform(LogarithmicTf())
     //.transformWithValue(
@@ -200,5 +200,6 @@ class InstanceCentricTfIdf(args: Args) extends Job(args) {
     //)
     .transformWithValue(idf, TfIdf(extractIdf))
     .saveAsText(ctx, s"./demo.${output}/tfidf_entity.out")
+    .toUnit
 }
 
