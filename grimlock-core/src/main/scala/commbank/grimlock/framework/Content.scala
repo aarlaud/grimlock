@@ -20,40 +20,26 @@ import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.Tuner
 import commbank.grimlock.framework.metadata.Schema
 import commbank.grimlock.framework.position.Position
+import commbank.grimlock.framework.utility.JSON
 
 import java.util.regex.Pattern
 
-import play.api.libs.json.{ JsError, JsObject, Json, JsResult, JsString, JsSuccess, JsValue, Reads, Writes }
+import play.api.libs.json.{ JsError, JsObject, JsResult, JsString, JsSuccess, JsValue, Reads, Writes }
 
-import shapeless.Nat
+import shapeless.{ HList, Inl, Inr }
 
 /** Contents of a cell in a matrix. */
 trait Content { self =>
   /** Type of the data. */
-  type D
+  type T
 
   /** Schema (description) of the value. */
-  val schema: Schema { type D = self.D }
+  val schema: Schema[T]
 
   /** The value of the variable. */
-  val value: Value { type D = self.D }
+  val value: Value[T]
 
-  /**
-   * Converts the content to a consise (terse) string.
-   *
-   * @param separator   The separator to use between the fields.
-   * @param descriptive Indicator if codec and schema are required or not.
-   *
-   * @return Short string representation.
-   */
-  def toShortString(separator: String, descriptive: Boolean = true): String = (
-    if (descriptive)
-      value.codec.toShortString + separator + schema.toShortString(value.codec) + separator
-    else
-      ""
-  ) + value.toShortString
-
-  override def toString(): String = "Content(" + schema.toString + "," + value.toString + ")"
+  override def toString: String = "Content(" + schema.toString + "," + value.toString + ")"
 
   /**
    * Converts the content to a JSON string.
@@ -61,19 +47,33 @@ trait Content { self =>
    * @param pretty      Indicator if the resulting JSON string to be indented.
    * @param descriptive Indicator if the JSON should be self describing (true) or not.
    */
-  def toJSON(pretty: Boolean = false, descriptive: Boolean = true): String = {
-    implicit val wrt = Content.writes(descriptive)
+  def toJSON(verbose: Boolean, pretty: Boolean = false): String = JSON.to(this, Content.writes(verbose), pretty)
 
-    val json = Json.toJson(this)
+  /**
+   * Converts the content to a consise (terse) string.
+   *
+   * @return Short string representation.
+   */
+  def toShortString: String = value.toShortString
 
-    if (pretty) Json.prettyPrint(json) else Json.stringify(json)
-  }
+  /**
+   * Converts the content to a consise (terse) self-describing string.
+   *
+   * @param separator The separator to use between the fields.
+   *
+   * @return Short string representation.
+   */
+  def toShortString(separator: String): String = value.codec.toShortString +
+    separator +
+    schema.toShortString(value.codec) +
+    separator +
+    value.toShortString
 }
 
 /** Companion object to `Content` trait. */
 object Content {
-  /** Type for parsing a string to `Content`. */
-  type Parser = (String) => Option[Content]
+  /** Type for decoding a string to `Content`. */
+  type Decoder = (String) => Option[Content]
 
   /**
    * Construct a content from a schema and value.
@@ -81,36 +81,10 @@ object Content {
    * @param schema Schema of the variable value.
    * @param value  Value of the variable.
    */
-  def apply[T](schema: Schema { type D = T }, value: Value { type D = T }): Content = ContentImpl(schema, value)
-
-  /** Standard `unapply` method for pattern matching. */
-  def unapply(con: Content): Option[(Schema, Value)] = Option((con.schema, con.value))
+  def apply[T](schema: Schema[T], value: Value[T]): Content = ContentImpl(schema, value)
 
   /**
-   * Return content parser from codec and schema.
-   *
-   * @param codec  The codec to decode content with.
-   * @param schema The schema to validate content with.
-   *
-   * @return A content parser.
-   */
-  def parser[T](codec: Codec { type D = T }, schema: Schema { type D = T }): Parser = (str: String) => codec
-    .decode(str)
-    .flatMap { case v => if (schema.validate(v)) Option(Content(schema, v)) else None }
-
-  /**
-   * Return content parser from codec and schema strings.
-   *
-   * @param codec  The codec string to decode content with.
-   * @param schema The schema string to validate content with.
-   *
-   * @return A content parser.
-   */
-  def parserFromComponents(codec: String, schema: String): Option[Parser] = Codec.fromShortString(codec)
-    .flatMap(c => Schema.fromShortString(schema, c).map(s => parser[c.D](c, s)))
-
-  /**
-   * Parse a content from string components
+   * Parse a content from string components.
    *
    * @param codec  The codec string to decode content with.
    * @param schema The schema string to validate content with.
@@ -122,100 +96,286 @@ object Content {
     codec: String,
     schema: String,
     value: String
-  ): Option[Content] = parserFromComponents(codec, schema).flatMap(parser => parser(value))
+  ): Option[Content] = parse(codec, schema, value).right.toOption
 
   /**
-   * Parse a content from string.
+   * Parse a content from a self-describing JSON string.
    *
-   * @param str       The string to parse.
-   * @param separator The separator between codec, schema and value.
+   * @param str The string to parse.
    *
    * @return A `Some[Content]` if successful, `None` otherwise.
    */
-  def fromShortString(
-    str: String,
-    separator: String = "|"
-  ): Option[Content] = str.split(Pattern.quote(separator)) match {
-    case Array(c, s, v) => fromComponents(c, s, v)
-    case _ => None
-  }
+  def fromJSON(str: String): Option[Content] = JSON.from(str, reads).right.toOption
 
   /**
-   * Return string representation of a content.
+   * Parse a content from a JSON string that does not have codec or schema information in it.
    *
-   * @param verbose     Indicator if verbose string is required or not.
-   * @param separator   The separator to use between various fields (only used if verbose is `false`).
-   * @param descriptive Indicator if codec and schema are required or not (only used if verbose is `false`).
+   * @param str     The string to parse.
+   * @param decoder The decoder to parse with.
+   *
+   * @return A `Some[Content]` if successful, `None` otherwise.
    */
-  def toString(
-    verbose: Boolean = false,
-    separator: String = "|",
-    descriptive: Boolean = true
-  ): (Content) => TraversableOnce[String] = (t: Content) =>
-    List(if (verbose) t.toString else t.toShortString(separator, descriptive))
+  def fromJSON(str: String, decoder: Decoder): Option[Content] = JSON.from(str, reads(decoder)).right.toOption
+
+  /**
+   * Parse a content from a JSON string that does not have codec or schema information in it.
+   *
+   * @param str    The string to parse.
+   * @param codec  The codec string to decode content with.
+   * @param schema The schema string to validate content with.
+   *
+   * @return A `Some[Content]` if successful, `None` otherwise.
+   */
+  def fromJSON[
+    T
+  ](
+    str: String,
+    codec: Codec[T],
+    schema: Schema[T]
+  ): Option[Content] = JSON.from(str, reads(codec, schema)).right.toOption
+
+  /**
+   * Parse a content from a short string that does not have codec or schema information in it.
+   *
+   * @param str     The string to parse.
+   * @param decoder The decoder to parse with.
+   *
+   * @return A `Some[Content]` if successful, `None` otherwise.
+   */
+  def fromShortString(str: String, decoder: Decoder): Option[Content] = parse(str, decoder).right.toOption
+
+  /**
+   * Parse a content from a self-describing short string.
+   *
+   * @param str       The string to parse.
+   * @param separator The string separator.
+   *
+   * @return A `Some[Content]` if successful, `None` otherwise.
+   */
+  def fromShortString(str: String, separator: String): Option[Content] = parse(str, separator).right.toOption
+
+  /**
+   * Parse a content from a short string that does not have codec or schema information in it.
+   *
+   * @param str    The string to parse.
+   * @param codec  The codec string to decode content with.
+   * @param schema The schema string to validate content with.
+   *
+   * @return A `Some[Content]` if successful, `None` otherwise.
+   */
+  def fromShortString[T](
+    str: String,
+    codec: Codec[T],
+    schema: Schema[T]
+  ): Option[Content] = parse(str, codec, schema).right.toOption
+
+  /**
+   * Return content parser for self describing JSON strings.
+   *
+   * @return A content parser.
+   */
+  def jsonParser: Persist.TextParser[Content] = (str) => List(JSON.from(str, reads))
+
+  /**
+   * Return content parser from a decoder. This parses JSON strings that do not have codec or schema information.
+   *
+   * @param decoder The decoder to decode the string with.
+   *
+   * @return A content parser.
+   */
+  def jsonParser(decoder: Decoder): Persist.TextParser[Content] = (str) => List(JSON.from(str, reads(decoder)))
+
+  /**
+   * Return content parser from codec and schema. This parses JSON strings that do not have codec or schema information.
+   *
+   * @param codec  The codec to decode content with.
+   * @param schema The schema to validate content with.
+   *
+   * @return A content parser.
+   */
+  def jsonParser[
+    T
+  ](
+    codec: Codec[T],
+    schema: Schema[T]
+  ): Persist.TextParser[Content] = (str) => List(JSON.from(str, reads(codec, schema)))
+
+  /** Return a `Reads` for parsing self-describing JSON content. */
+  def reads: Reads[Content] = reads(None)
+
+  /**
+   * Return a `Reads` for parsing self-describing JSON content. This parses JSON strings that do
+   * not have codec or schema information.
+   *
+   * @param decoder The decoder to decode the string with.
+   */
+  def reads(decoder: Decoder): Reads[Content] = reads(Option(decoder))
+
+  /**
+   * Return a `Reads` for parsing self-describing JSON content. This parses JSON strings that do
+   * not have codec or schema information.
+   *
+   * @param codec  The codec to decode content with.
+   * @param schema The schema to validate content with.
+   */
+  def reads[
+    T
+  ](
+    codec: Codec[T],
+    schema: Schema[T]
+  ): Reads[Content] = reads(Option((str: String) => parse(str, codec, schema).right.toOption))
+
+  /**
+   * Return content parser from a decoder. This parses strings that do not have codec or schema information.
+   *
+   * @param decoder The decoder to decode the string with.
+   *
+   * @return A content parser.
+   */
+  def shortStringParser(decoder: Decoder): Persist.TextParser[Content] = (str) => List(parse(str, decoder))
+
+  /**
+   * Return content parser for self describing strings.
+   *
+   * @param separator The string separator.
+   *
+   * @return A content parser.
+   */
+  def shortStringParser(separator: String): Persist.TextParser[Content] = (str) => List(parse(str, separator))
+
+  /**
+   * Return content parser from codec and schema. This parses strings that do not have codec or schema information.
+   *
+   * @param codec  The codec to decode content with.
+   * @param schema The schema to validate content with.
+   *
+   * @return A content parser.
+   */
+  def shortStringParser[
+    T
+  ](
+    codec: Codec[T],
+    schema: Schema[T]
+  ): Persist.TextParser[Content] = (str) => List(parse(str, codec, schema))
 
   /**
    * Return function that returns a JSON representation of a content.
    *
-   * @param pretty      Indicator if the resulting JSON string to be indented.
-   * @param descriptive Indicator if the JSON should be self describing (true) or not.
+   * @param verbose Indicator if the JSON should be self-describing or not.
+   * @param pretty  Indicator if the resulting JSON string to be indented.
    */
   def toJSON(
-    pretty: Boolean = false,
-    descriptive: Boolean = true
-  ): (Content) => TraversableOnce[String] = (t: Content) => List(t.toJSON(pretty, descriptive))
+    verbose: Boolean,
+    pretty: Boolean = false
+  ): Persist.TextWriter[Content] = (con) => List(con.toJSON(verbose, pretty))
+
+  /** Return function that returns a short string representation of a content. */
+  def toShortString: Persist.TextWriter[Content] = (con) => List(con.toShortString)
 
   /**
-   * Return a `Reads` for parsing a JSON content.
+   * Return function that returns a short string representation of a content. The string includes
+   * codec and schema information.
    *
-   * @param parser Optional parser; in case the JSON is not self describing.
+   * @param separator The separator to use between various fields (only used if verbose is `false`).
    */
-  def reads(parser: Option[Parser]): Reads[Content] = new Reads[Content] {
+  def toShortString(
+    separator: String
+  ): Persist.TextWriter[Content] = (con) => List(con.toShortString(separator))
+
+  /** Standard `unapply` method for pattern matching. */
+  def unapply(con: Content): Option[(Schema[con.T], Value[con.T])] = Option((con.schema, con.value))
+
+  /**
+   * Return a `Writes` for writing JSON content.
+   *
+   * @param verbose Indicator if the JSON should be self-describing or not.
+   */
+  def writes(verbose: Boolean): Writes[Content] = new Writes[Content] {
+    def writes(con: Content): JsValue = JsObject(
+      (
+        if (verbose)
+          Seq(
+            "codec" -> JsString(con.value.codec.toShortString),
+            "schema" -> JsString(con.schema.toShortString(con.value.codec))
+          )
+        else
+          Seq.empty
+      ) ++ Seq("value" -> JsString(con.value.toShortString))
+    )
+  }
+
+  private def parse(str: String, decoder: Decoder): Either[String, Content] = decoder(str)
+    .map(con => Right(con))
+    .getOrElse(Left(s"Unable to decode: '${str}'"))
+
+  private def parse(
+    str: String,
+    separator: String
+  ): Either[String, Content] = str.split(Pattern.quote(separator)) match {
+    case Array(c, s, v) => parse(c, s, v)
+    case _ => Left(s"Unable to split: '${str}'")
+  }
+
+  private def parse(codec: String, schema: String, value: String): Either[String, Content] = {
+    def parseSchemaToContent[T](codec: Codec[T]) = {
+      Schema.fromShortString[Schema.DefaultSchemas[T], T](schema, codec) match {
+        case Some(Inl(s)) => parse(value, codec, s)
+        case Some(Inr(Inl(s))) => parse(value, codec, s)
+        case Some(Inr(Inr(Inl(s)))) => parse(value, codec, s)
+        case Some(Inr(Inr(Inr(Inl(s))))) => parse(value, codec, s)
+        case Some(Inr(Inr(Inr(Inr(Inl(s)))))) => parse(value, codec, s)
+        case _ => Left(s"Unable to decode schema: '${schema}'")
+      }
+    }
+
+    Codec.fromShortString[Codec.DefaultCodecs](codec) match {
+      case Some(Inl(c)) => parseSchemaToContent(c)
+      case Some(Inr(Inl(c))) => parseSchemaToContent(c)
+      case Some(Inr(Inr(Inl(c)))) => parseSchemaToContent(c)
+      case Some(Inr(Inr(Inr(Inl(c))))) => parseSchemaToContent(c)
+      case Some(Inr(Inr(Inr(Inr(Inl(c)))))) => parseSchemaToContent(c)
+      case Some(Inr(Inr(Inr(Inr(Inr(Inl(c))))))) => parseSchemaToContent(c)
+      case _ => Left(s"Unable to decode codec: '${codec}'")
+    }
+  }
+
+  private def parse[
+    T
+  ](
+    str: String,
+    codec: Codec[T],
+    schema: Schema[T]
+  ): Either[String, Content] = Value.fromShortString(str, codec)
+    .map {
+      case value if (schema.validate(value)) => Right(Content(schema, value))
+      case _ => Left(s"Invalid value: '${str}'")
+    }
+    .getOrElse(Left(s"Unable to decode: '${str}'"))
+
+  private def reads(decoder: Option[Decoder]): Reads[Content] = new Reads[Content] {
     def reads(json: JsValue): JsResult[Content] = {
       val fields = json.as[JsObject].value
 
-      if ((fields.size == 3 && parser.isEmpty) || (fields.size == 1 && parser.isDefined))
+      if ((fields.size == 3 && decoder.isEmpty) || (fields.size == 1 && decoder.isDefined))
         (
           for {
-            decoder <- parser.orElse(
+            dec <- decoder.orElse(
               for {
                 codec <- fields.get("codec").map(_.as[String])
                 schema <- fields.get("schema").map(_.as[String])
-                pfc <- Content.parserFromComponents(codec, schema)
-              } yield pfc
+              } yield (str: String) => fromComponents(codec, schema, str)
             )
             value <- fields.get("value").map(_.as[String])
-            content <- decoder(value)
+            content <- dec(value)
           } yield JsSuccess(content)
         ).getOrElse(JsError("Unable to parse content"))
       else
         JsError("Incorrect number of fields")
     }
   }
-
-  /**
-   * Return a `Writes` for writing JSON content.
-   *
-   * @param descriptive Indicator if the JSON should be self describing (true) or not.
-   */
-  def writes(descriptive: Boolean): Writes[Content] = new Writes[Content] {
-    def writes(o: Content): JsValue = JsObject(
-      (
-        if (descriptive)
-          Seq(
-            "codec" -> JsString(o.value.codec.toShortString),
-            "schema" -> JsString(o.schema.toShortString(o.value.codec))
-          )
-        else
-          Seq()
-      ) ++ Seq("value" -> JsString(o.value.toShortString))
-    )
-  }
 }
 
-private case class ContentImpl[T](schema: Schema { type D = T }, value: Value { type D = T }) extends Content {
-  type D = T
-}
+private case class ContentImpl[X](schema: Schema[X], value: Value[X]) extends Content { type T = X }
 
 /** Trait that represents the contents of a matrix. */
 trait Contents[C <: Context[C]] extends Persist[Content, C] {
@@ -234,7 +394,7 @@ trait Contents[C <: Context[C]] extends Persist[Content, C] {
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[Content] = Content.toString(),
+    writer: Persist.TextWriter[Content],
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -242,7 +402,7 @@ trait Contents[C <: Context[C]] extends Persist[Content, C] {
 }
 
 /** Trait that represents the output of uniqueByPosition. */
-trait IndexedContents[P <: Nat, C <: Context[C]] extends Persist[(Position[P], Content), C] {
+trait IndexedContents[P <: HList, C <: Context[C]] extends Persist[(Position[P], Content), C] {
   /**
    * Persist to disk.
    *
@@ -258,7 +418,7 @@ trait IndexedContents[P <: Nat, C <: Context[C]] extends Persist[(Position[P], C
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[(Position[P], Content)] = IndexedContents.toString(),
+    writer: Persist.TextWriter[(Position[P], Content)],
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -270,40 +430,34 @@ object IndexedContents {
   /**
    * Return string representation of an indexed content.
    *
-   * @param verbose     Indicator if verbose string is required or not.
-   * @param separator   The separator to use between various fields (only used if verbose is `false`).
-   * @param descriptive Indicator if codec and schema are required or not (only used if verbose is `false`).
+   * @param verbose   Indicator if the string should be self-describing or not.
+   * @param separator The separator to use between various fields.
    */
   def toString[
-    P <: Nat
+    P <: HList
   ](
-    verbose: Boolean = false,
-    separator: String = "|",
-    descriptive: Boolean = true
-  ): ((Position[P], Content)) => TraversableOnce[String] = (t: (Position[P], Content)) =>
-    List(
-      if (verbose)
-        t.toString
-      else
-        t._1.toShortString(separator) + separator + t._2.toShortString(separator, descriptive)
-    )
+    verbose: Boolean,
+    separator: String
+  ): ((Position[P], Content)) => TraversableOnce[String] = (t: (Position[P], Content)) => List(
+    t._1.toShortString(separator) + separator + (if (verbose) t._2.toShortString(separator) else t._2.toShortString)
+  )
 
   /**
    * Return function that returns a JSON representations of an indexed content.
    *
-   * @param pretty      Indicator if the resulting JSON string to be indented.
+   * @param descriptive Indicator if the JSON should be self-describing or not.
    * @param separator   The separator to use between various both JSON strings.
-   * @param descriptive Indicator if the JSON should be self describing (true) or not.
+   * @param pretty      Indicator if the resulting JSON string to be indented.
    *
    * @note The index (Position) and content are separately encoded and then combined using the separator.
    */
   def toJSON[
-    P <: Nat
+    P <: HList
   ](
-    pretty: Boolean = false,
-    separator: String = ",",
-    descriptive: Boolean = false
+    verbose: Boolean,
+    separator: String,
+    pretty: Boolean = false
   ): ((Position[P], Content)) => TraversableOnce[String] = (t: (Position[P], Content)) =>
-    List(t._1.toJSON(pretty) + separator + t._2.toJSON(pretty, descriptive))
+    List(t._1.toJSON(pretty) + separator + t._2.toJSON(verbose, pretty))
 }
 

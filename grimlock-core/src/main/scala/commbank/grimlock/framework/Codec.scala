@@ -20,25 +20,55 @@ import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import scala.reflect.{ classTag, ClassTag }
 import scala.util.Try
 
-/** Trait for encoding/decoding (basic) data types. */
-trait Codec { self =>
-  /** The data type. */
-  type D
+import shapeless.{ :+:, CNil, Coproduct }
+import shapeless.ops.coproduct.Inject
 
+/** Trait for encoding/decoding (basic) data types. */
+trait Codec[T] { self =>
   /** The value (boxed data) type. */
-  type V <: Value { type D = self.D }
+  type V <: Value[T]
+
+  /** An optional date type class for this data type. */
+  val date: Option[T => Date]
+
+  /** An optional numeric type class for this data type. */
+  val numeric: Option[Numeric[T]]
+
+  /** An optional intergal type class for this data type. */
+  val integral: Option[Integral[T]]
+
+  /** An Ordering for this data type. */
+  val ordering: Ordering[T] = new Ordering[T] { def compare(x: T, y: T): Int = self.compare(x, y) }
 
   /**
-   * Decode a basic data type into a value.
+   * Box a (basic) data type in a `Value`.
    *
-   * @param str String to decode into a value.
+   * @param value The data to box.
    *
-   * @return `Some[Value]` if the decode was successful, `None` otherwise.
+   * @return The value wrapped in a `Value`.
    */
-  def decode(str: String): Option[V]
+  def box(value: T): V
+
+  /**
+   * Compare two values.
+   *
+   * @param x The first value to compare.
+   * @param y The second value to compare.
+   *
+   * @return The returned value is < 0 iff x < y, 0 iff x = y, > 0 iff x > y.
+   */
+  def compare(x: T, y: T): Int
+
+  /**
+   * Decode a basic data type.
+   *
+   * @param str String to decode.
+   *
+   * @return `Some[T]` if the decode was successful, `None` otherwise.
+   */
+  def decode(str: String): Option[T]
 
   /**
    * Converts a value to a consise (terse) string.
@@ -47,79 +77,127 @@ trait Codec { self =>
    *
    * @return Short string representation of the value.
    */
-  def encode(value: D): String
-
-  /**
-   * Compare two value objects.
-   *
-   * @param x The first value to compare.
-   * @param y The second value to compare.
-   *
-   * @return `Some[Int]` if `x` and `y` can be compared, `None` otherwise. If successful, then the returned value
-   *         is < 0 iff x < y, 0 iff x = y, > 0 iff x > y.
-   */
-  def compare(x: Value, y: Value): Option[Int]
+  def encode(value: T): String
 
   /** Return a consise (terse) string representation of a codec. */
-  def toShortString(): String
-
-  /** Return an optional ClassTag for this data type. */
-  def tag(): Option[ClassTag[D]] = None
-
-  /** Return an optional Ordering for this data type. */
-  def ordering(): Option[Ordering[D]] = None
-
-  /** Return an optional date type class for this data type. */
-  def date(): Option[D => Date] = None
-
-  /** Return an optional numeric type class for this data type. */
-  def numeric(): Option[Numeric[D]] = None
-
-  /** Return an optional intergal type class for this data type. */
-  def integral(): Option[Integral[D]] = None
+  def toShortString: String
 }
 
 /** Companion object to the `Codec` trait. */
 object Codec {
+  /** Type for a default Codec co-product when parsing Codecs from string. */
+  type DefaultCodecs = BooleanCodec.type :+:
+    DateCodec :+:
+    DoubleCodec.type :+:
+    LongCodec.type :+:
+    StringCodec.type :+:
+    TypeCodec.type :+:
+    CNil
+
+  /** Type that captures all constraints for parsing default Codecs from string. */
+  trait TextParseConstraints[C <: Coproduct] extends java.io.Serializable {
+    implicit val asBoolean: Inject[C, BooleanCodec.type]
+    implicit val asDate: Inject[C, DateCodec]
+    implicit val asDouble: Inject[C, DoubleCodec.type]
+    implicit val asLong: Inject[C, LongCodec.type]
+    implicit val asString: Inject[C, StringCodec.type]
+    implicit val asType: Inject[C, TypeCodec.type]
+  }
+
+  /** Implicit meeting text parsing constraints for the default Codecs. */
+  implicit def codecTextParseConstraints[
+    C <: Coproduct
+  ](implicit
+    ev1: Inject[C, BooleanCodec.type],
+    ev2: Inject[C, DateCodec],
+    ev3: Inject[C, DoubleCodec.type],
+    ev4: Inject[C, LongCodec.type],
+    ev5: Inject[C, StringCodec.type],
+    ev6: Inject[C, TypeCodec.type]
+  ): TextParseConstraints[C] = new TextParseConstraints[C] {
+    implicit val asBoolean = ev1
+    implicit val asDate = ev2
+    implicit val asDouble = ev3
+    implicit val asLong = ev4
+    implicit val asString = ev5
+    implicit val asType = ev6
+  }
+
   /**
    * Parse a codec from a string.
    *
    * @param str String from which to parse the codec.
    *
-   * @return A `Some[Codec]` in case of success, `None` otherwise.
+   * @return A `Some[C]` in case of success, `None` otherwise.
    */
-  def fromShortString(str: String): Option[Codec] = str match {
-    case DateCodec.Pattern(_) => DateCodec.fromShortString(str)
-    case StringCodec.Pattern() => StringCodec.fromShortString(str)
-    case DoubleCodec.Pattern() => DoubleCodec.fromShortString(str)
-    case LongCodec.Pattern() => LongCodec.fromShortString(str)
-    case BooleanCodec.Pattern() => BooleanCodec.fromShortString(str)
-    case TypeCodec.Pattern() => TypeCodec.fromShortString(str)
-    case _ => None
+  def fromShortString[C <: Coproduct](str: String)(implicit ev: TextParseConstraints[C]): Option[C] = {
+    import ev._
+
+    str match {
+      case BooleanCodec.Pattern() => BooleanCodec.fromShortString(str).map(Coproduct(_))
+      case DateCodec.Pattern(_) => DateCodec.fromShortString(str).map(Coproduct(_))
+      case DoubleCodec.Pattern() => DoubleCodec.fromShortString(str).map(Coproduct(_))
+      case LongCodec.Pattern() => LongCodec.fromShortString(str).map(Coproduct(_))
+      case StringCodec.Pattern() => StringCodec.fromShortString(str).map(Coproduct(_))
+      case TypeCodec.Pattern() => TypeCodec.fromShortString(str).map(Coproduct(_))
+      case _ => None
+    }
   }
 }
 
-/** Codec for dealing with `java.util.Date`. */
-case class DateCodec(format: String = "yyyy-MM-dd") extends Codec {
-  type D = Date
-  type V = DateValue
+/** Codec for dealing with `Boolean`. */
+case object BooleanCodec extends Codec[Boolean] {
+  type V = BooleanValue
 
-  def decode(value: String): Option[V] = Try(DateValue(df.parse(value), this)).toOption
-  def encode(value: D): String = df.format(value)
+  val date: Option[Boolean => Date] = None
+  val integral: Option[Integral[Boolean]] = None
+  val numeric: Option[Numeric[Boolean]] = None
 
-  def compare(x: Value, y: Value): Option[Int] = (x.asDate, y.asDate) match {
-    case (Some(l), Some(r)) => Option(cmp(l, r))
+  /** Pattern for parsing `BooleanCodec` from string. */
+  val Pattern = "boolean".r
+
+  def box(value: Boolean): BooleanValue = BooleanValue(value, this)
+
+  def compare(x: Boolean, y: Boolean): Int = x.compare(y)
+
+  def decode(str: String): Option[Boolean] = Try(str.toBoolean).toOption
+
+  def encode(value: Boolean): String = value.toString
+
+  /**
+   * Parse a BooleanCodec from a string.
+   *
+   * @param str String from which to parse the codec.
+   *
+   * @return A `Some[BooleanCodec]` in case of success, `None` otherwise.
+   */
+  def fromShortString(str: String): Option[BooleanCodec.type] = str match {
+    case Pattern() => Option(this)
     case _ => None
   }
 
-  def toShortString() = s"date(${format})"
+  def toShortString = "boolean"
+}
 
-  override def tag(): Option[ClassTag[D]] = Option(classTag[D])
-  override def ordering(): Option[Ordering[D]] = Option(new Ordering[D] { def compare(x: D, y: D): Int = cmp(x, y) })
-  override def date(): Option[D => Date] = Option(c => c)
+/** Codec for dealing with `java.util.Date`. */
+case class DateCodec(format: String = "yyyy-MM-dd") extends Codec[Date] {
+  type V = DateValue
 
-  private def cmp(x: D, y: D): Int = x.getTime().compare(y.getTime())
-  private def df(): SimpleDateFormat = new SimpleDateFormat(format)
+  val date: Option[Date => Date] = Option(identity)
+  val integral: Option[Integral[Date]] = None
+  val numeric: Option[Numeric[Date]] = None
+
+  def box(value: Date): DateValue = DateValue(value, this)
+
+  def compare(x: Date, y: Date): Int = x.getTime.compare(y.getTime)
+
+  def decode(value: String): Option[Date] = Try(df.parse(value)).toOption
+
+  def encode(value: Date): String = df.format(value)
+
+  def toShortString = s"date(${format})"
+
+  private def df: SimpleDateFormat = new SimpleDateFormat(format)
 }
 
 /** Companion object to DateCodec. */
@@ -140,57 +218,24 @@ object DateCodec {
   }
 }
 
-/** Codec for dealing with `String`. */
-case object StringCodec extends Codec {
-  type D = String
-  type V = StringValue
-
-  /** Pattern for parsing `StringCodec` from string. */
-  val Pattern = "string".r
-
-  def decode(str: String): Option[V] = Option(StringValue(str, this))
-  def encode(value: D): String = value
-
-  def compare(x: Value, y: Value): Option[Int] = (x.asString, y.asString) match {
-    case (Some(l), Some(r)) => Option(l.compare(r))
-    case _ => None
-  }
-
-  def toShortString() = "string"
-
-  /**
-   * Parse a StringCodec from a string.
-   *
-   * @param str String from which to parse the codec.
-   *
-   * @return A `Some[StringCodec]` in case of success, `None` otherwise.
-   */
-  def fromShortString(str: String): Option[StringCodec.type] = str match {
-    case Pattern() => Option(this)
-    case _ => None
-  }
-
-  override def tag(): Option[ClassTag[D]] = Option(classTag[D])
-  override def ordering(): Option[Ordering[D]] = Option(Ordering.String)
-}
-
 /** Codec for dealing with `Double`. */
-case object DoubleCodec extends Codec {
-  type D = Double
+case object DoubleCodec extends Codec[Double] {
   type V = DoubleValue
+
+  val date: Option[Double => Date] = None
+  val integral: Option[Integral[Double]] = None
+  val numeric: Option[Numeric[Double]] = Option(Numeric.DoubleIsFractional)
 
   /** Pattern for parsing `DoubleCodec` from string. */
   val Pattern = "double".r
 
-  def decode(str: String): Option[V] = Try(DoubleValue(str.toDouble, this)).toOption
-  def encode(value: D): String = value.toString
+  def box(value: Double): DoubleValue = DoubleValue(value, this)
 
-  def compare(x: Value, y: Value): Option[Int] = (x.asDouble, y.asDouble) match {
-    case (Some(l), Some(r)) => Option(l.compare(r))
-    case _ => None
-  }
+  def compare(x: Double, y: Double): Int = x.compare(y)
 
-  def toShortString() = "double"
+  def decode(str: String): Option[Double] = Try(str.toDouble).toOption
+
+  def encode(value: Double): String = value.toString
 
   /**
    * Parse a DoubleCodec from a string.
@@ -204,28 +249,27 @@ case object DoubleCodec extends Codec {
     case _ => None
   }
 
-  override def tag(): Option[ClassTag[D]] = Option(classTag[D])
-  override def ordering(): Option[Ordering[D]] = Option(Ordering.Double)
-  override def numeric(): Option[Numeric[D]] = Option(Numeric.DoubleIsFractional)
+  def toShortString = "double"
 }
 
 /** Codec for dealing with `Long`. */
-case object LongCodec extends Codec {
-  type D = Long
+case object LongCodec extends Codec[Long] {
   type V = LongValue
+
+  val date: Option[Long => Date] = None
+  val integral: Option[Integral[Long]] = Option(Numeric.LongIsIntegral)
+  val numeric: Option[Numeric[Long]] = Option(Numeric.LongIsIntegral)
 
   /** Pattern for parsing `LongCodec` from string. */
   val Pattern = "long|int|short".r
 
-  def decode(str: String): Option[V] = Try(LongValue(new BigDecimal(str.trim).longValueExact, this)).toOption
-  def encode(value: D): String = value.toString
+  def box(value: Long): LongValue = LongValue(value, this)
 
-  def compare(x: Value, y: Value): Option[Int] = (x.asLong, y.asLong) match {
-    case (Some(l), Some(r)) => Option(l.compare(r))
-    case _ => DoubleCodec.compare(x, y)
-  }
+  def compare(x: Long, y: Long): Int = x.compare(y)
 
-  def toShortString() = "long"
+  def decode(str: String): Option[Long] = Try(new BigDecimal(str.trim).longValueExact).toOption
+
+  def encode(value: Long): String = value.toString
 
   /**
    * Parse a LongCodec from a string.
@@ -239,63 +283,61 @@ case object LongCodec extends Codec {
     case _ => None
   }
 
-  override def tag(): Option[ClassTag[D]] = Option(classTag[D])
-  override def ordering(): Option[Ordering[D]] = Option(Ordering.Long)
-  override def numeric(): Option[Numeric[D]] = Option(Numeric.LongIsIntegral)
-  override def integral(): Option[Integral[D]] = Option(Numeric.LongIsIntegral)
+  def toShortString = "long"
 }
 
-/** Codec for dealing with `Boolean`. */
-case object BooleanCodec extends Codec {
-  type D = Boolean
-  type V = BooleanValue
+/** Codec for dealing with `String`. */
+case object StringCodec extends Codec[String] {
+  type V = StringValue
 
-  /** Pattern for parsing `BooleanCodec` from string. */
-  val Pattern = "boolean".r
+  val date: Option[String => Date] = None
+  val integral: Option[Integral[String]] = None
+  val numeric: Option[Numeric[String]] = None
 
-  def decode(str: String): Option[V] = Try(BooleanValue(str.toBoolean, this)).toOption
-  def encode(value: D): String = value.toString
+  /** Pattern for parsing `StringCodec` from string. */
+  val Pattern = "string".r
 
-  def compare(x: Value, y: Value): Option[Int] = (x.asBoolean, y.asBoolean) match {
-    case (Some(l), Some(r)) => Option(l.compare(r))
-    case _ => None
-  }
+  def box(value: String): StringValue = StringValue(value, this)
 
-  def toShortString() = "boolean"
+  def compare(x: String, y: String): Int = x.compare(y)
+
+  def decode(str: String): Option[String] = Option(str)
+
+  def encode(value: String): String = value
 
   /**
-   * Parse a BooleanCodec from a string.
+   * Parse a StringCodec from a string.
    *
    * @param str String from which to parse the codec.
    *
-   * @return A `Some[BooleanCodec]` in case of success, `None` otherwise.
+   * @return A `Some[StringCodec]` in case of success, `None` otherwise.
    */
-  def fromShortString(str: String): Option[BooleanCodec.type] = str match {
+  def fromShortString(str: String): Option[StringCodec.type] = str match {
     case Pattern() => Option(this)
     case _ => None
   }
 
-  override def tag(): Option[ClassTag[D]] = Option(classTag[D])
-  override def ordering(): Option[Ordering[D]] = Option(Ordering.Boolean)
+  def toShortString = "string"
 }
 
 /** Codec for dealing with `Type`. */
-case object TypeCodec extends Codec {
-  type D = Type
+case object TypeCodec extends Codec[Type] {
   type V = TypeValue
+
+  val date: Option[Type => Date] = None
+  val integral: Option[Integral[Type]] = None
+  val numeric: Option[Numeric[Type]] = None
 
   /** Pattern for parsing `TypeCodec` from string. */
   val Pattern = "type".r
 
-  def decode(str: String): Option[V] = Type.fromShortString(str).map(TypeValue(_, this))
-  def encode(value: D): String = value.toShortString
+  def box(value: Type): TypeValue = TypeValue(value, this)
 
-  def compare(x: Value, y: Value): Option[Int] = (x.asType, y.asType) match {
-    case (Some(l), Some(r)) => Option(l.toString.compare(r.toString))
-    case _ => None
-  }
+  def compare(x: Type, y: Type): Int = x.toString.compare(y.toString)
 
-  def toShortString() = "type"
+  def decode(str: String): Option[Type] = Type.fromShortString(str)
+
+  def encode(value: Type): String = value.toShortString
 
   /**
    * Parse a TypeCodec from a string.
@@ -309,11 +351,6 @@ case object TypeCodec extends Codec {
     case _ => None
   }
 
-  override def tag(): Option[ClassTag[D]] = Option(classTag[D])
-}
-
-/** Trait for dealing with structured data. */
-trait StructuredCodec extends Codec {
-  type T <: Structured
+  def toShortString = "type"
 }
 

@@ -14,29 +14,12 @@
 
 package commbank.grimlock.framework.position
 
-import shapeless.Nat
-import shapeless.nat._1
-import shapeless.ops.nat.{ LTEq, Pred, ToInt }
+import commbank.grimlock.framework.encoding.Value
+
+import shapeless.{ ::, HList, HNil, Nat }
 
 /** Trait that encapsulates dimension on which to operate. */
-sealed trait Slice[P <: Nat] {
-  /**
-   * Return type of the `selected` method; a position of dimension less than `P`.
-   *
-   * @note `S` and `R` together make `P`.
-   */
-  type S <: Nat
-
-  /**
-   * Return type of the `remainder` method; a position of dimension less than `P`.
-   *
-   * @note `S` and `R` together make `P`.
-   */
-  type R <: Nat
-
-  /** The dimension of this slice. */
-  val dimension: Nat
-
+trait Slice[P <: HList, S <: HList, R <: HList] {
   /** Returns the selected coordinate(s) for the given `pos`. */
   def selected(pos: Position[P]): Position[S]
 
@@ -51,20 +34,18 @@ sealed trait Slice[P <: Nat] {
  * @param dimension Dimension of the selected coordinate.
  */
 case class Over[
-  L <: Nat,
-  P <: Nat,
-  D <: Nat : ToInt
+  P <: HList,
+  D <: Nat,
+  V <: Value[_],
+  Q <: HList
 ](
   dimension: D
 )(implicit
-  ev1: Pred.Aux[P, L],
-  ev2: LTEq[D, P]
-) extends Slice[P] {
-  type S = _1
-  type R = L
-
-  def selected(pos: Position[P]): Position[S] = Position(pos(dimension))
-  def remainder(pos: Position[P]): Position[R] = pos.remove(dimension)
+  ev1: Position.IndexConstraints[P, D, V],
+  ev2: Position.RemoveConstraints[P, D, Q]
+) extends Slice[P, V :: HNil, Q] {
+  def selected(pos: Position[P]): Position[V :: HNil] = Position(pos(dimension))
+  def remainder(pos: Position[P]): Position[Q] = pos.remove(dimension)
 }
 
 /**
@@ -75,19 +56,17 @@ case class Over[
  * @param dimension Dimension of the coordinate to exclude.
  */
 case class Along[
-  L <: Nat,
-  P <: Nat,
-  D <: Nat : ToInt
+  P <: HList,
+  D <: Nat,
+  V <: Value[_],
+  Q <: HList
 ](
   dimension: D
 )(implicit
-  ev1: Pred.Aux[P, L],
-  ev2: LTEq[D, P]
-) extends Slice[P] {
-  type S = L
-  type R = _1
-
-  def selected(pos: Position[P]): Position[S] = pos.remove(dimension)
-  def remainder(pos: Position[P]): Position[R] = Position(pos(dimension))
+  ev1: Position.IndexConstraints[P, D, V],
+  ev2: Position.RemoveConstraints[P, D, Q]
+) extends Slice[P, Q, V :: HNil] {
+  def selected(pos: Position[P]): Position[Q] = pos.remove(dimension)
+  def remainder(pos: Position[P]): Position[V :: HNil] = Position(pos(dimension))
 }
 

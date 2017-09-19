@@ -14,6 +14,8 @@
 
 package commbank.grimlock.framework.utility
 
+import play.api.libs.json.{ JsError, Json, JsSuccess, Reads, Writes }
+
 /** Trait for ecaping special characters in a string. */
 trait Escape {
   /** The special character to escape. */
@@ -47,5 +49,21 @@ case class Quote(special: String, quote: String = "\"", all: Boolean = false) ex
  */
 case class Replace(special: String, pattern: String = "\\%1$s") extends Escape {
   def escape(str: String): String = str.replaceAllLiterally(special, pattern.format(special))
+}
+
+/* Object with convenience methods to converting to/from JSON strings. */
+private[grimlock] object JSON {
+  /* Convert `str` to a `T` using `reads`. */
+  def from[T](str: String, reads: Reads[T]): Either[String, T] = Json.fromJson(Json.parse(str))(reads) match {
+    case JsSuccess(obj, _) => Right(obj)
+    case JsError(err) => Left(err.toString)
+  }
+
+  /* Convert `obj` to a `String` using `writes`. */
+  def to[T](obj: T, writes: Writes[T], pretty: Boolean): String = {
+    val json = Json.toJson(obj)(writes)
+
+    if (pretty) Json.prettyPrint(json) else Json.stringify(json)
+  }
 }
 

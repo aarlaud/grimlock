@@ -32,19 +32,22 @@ trait Persist[X, C <: Context[C]] extends java.io.Serializable {
 
 /** Companion object to `Persist` with various types, implicits, etc. */
 object Persist {
-  /** Shorthand type for converting a `X` to key value tuple. */
-  type SequenceWriter[X, K <: Writable, V <: Writable] = (X) => TraversableOnce[(K, V)]
+  /** Shorthand type for converting a `T` to key value tuple. */
+  type SequenceWriter[T, K <: Writable, V <: Writable] = (T) => TraversableOnce[(K, V)]
 
-  /** Shorthand type for converting a `X` to string. */
-  type TextWriter[X] = (X) => TraversableOnce[String]
+  /** Shorthand type for converting a `T` to string. */
+  type TextWriter[T] = (T) => TraversableOnce[String]
 
   /**
-   * Type for converting pivoted `X`s to string.
+   * Type for converting pivoted `T`s to string.
    *
-   * All data will first be pivoted according to a slice. All `X` belonging to each slice.selected will
+   * All data will first be pivoted according to a slice. All `T` belonging to each slice.selected will
    * be grouped into the list.
    */
-  type TextWriterByPosition[X] = (List[Option[X]]) => TraversableOnce[String]
+  type TextWriterByPosition[T] = (List[Option[T]]) => TraversableOnce[String]
+
+  /** Type for parsing a string to one or more `T`s or an error string. */
+  type TextParser[T] = (String) => TraversableOnce[Either[String, T]]
 
   /** Trait for tuners permitted on a call to `saveAsText`. */
   trait SaveAsTextTuner[U[_], T <: Tuner] extends java.io.Serializable
