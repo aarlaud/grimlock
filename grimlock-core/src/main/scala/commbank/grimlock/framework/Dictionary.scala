@@ -38,7 +38,7 @@ object Dictionary {
     key: Int = 0,
     encoding: Int = 1,
     schema: Int = 2
-  ): (Map[String, Content.Parser], Iterator[String]) = {
+  ): (Map[String, Content.Decoder], Iterator[String]) = {
     val result = source
       .getLines()
       .map { case line =>
@@ -47,9 +47,10 @@ object Dictionary {
         if (List(key, encoding, schema).exists(_ >= parts.length))
           Left("unable to parse: '" + line + "'")
         else
-          Content.parserFromComponents(parts(encoding), parts(schema))
-            .map(p => Right((parts(key), p)))
-            .getOrElse(Left("unable to decode '" + line + "'"))
+          Content.decoderFromComponents(parts(encoding), parts(schema)) match {
+            case Left(err) => Left(err)
+            case Right(p) => Right((parts(key), p))
+          }
       }
 
     (result.collect { case Right(entry) => entry }.toMap, result.collect { case Left(error) => error })

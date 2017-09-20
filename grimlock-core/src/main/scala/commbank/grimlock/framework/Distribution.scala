@@ -26,12 +26,12 @@ import com.tdunning.math.stats.AVLTreeDigest
 import scala.collection.immutable.SortedMap
 import scala.math.BigDecimal
 
-import shapeless.{ =:!=, Nat }
-import shapeless.nat._0
+import shapeless.{ =:!=, HList, HNil, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT
 
 /** Trait for computing approximate distributions from a matrix. */
-trait ApproximateDistribution[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
+trait ApproximateDistribution[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
   /**
    * Compute histogram.
    *
@@ -43,17 +43,23 @@ trait ApproximateDistribution[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @return A `C#U[Cell[Q]]` with the histogram.
    */
   def histogram[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
-    name: Locate.FromSelectedAndContent[slice.S, Q],
+    name: Locate.FromSelectedAndContent[S, Q],
     filter: Boolean = true
   )(implicit
-    ev1: GT[Q, slice.S],
-    ev2: ApproximateDistribution.HistogramTuner[C#U, T]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M],
+    ev4: ApproximateDistribution.HistogramTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -72,21 +78,27 @@ trait ApproximateDistribution[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @note Non numeric values result in `NaN` quantiles, while missing counts result in no quantiles.
    */
   def quantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     probs: List[Double],
     quantiser: Quantiles.Quantiser,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean = true,
     nan: Boolean = false
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: ApproximateDistribution.QuantilesTuner[C#U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: ApproximateDistribution.QuantilesTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -105,21 +117,27 @@ trait ApproximateDistribution[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @note Only use this if all distinct values and their counts fit in memory.
    */
   def countMapQuantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     probs: List[Double],
     quantiser: Quantiles.Quantiser,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean = true,
     nan: Boolean = false
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: ApproximateDistribution.CountMapQuantilesTuner[C#U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: ApproximateDistribution.CountMapQuantilesTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -138,21 +156,27 @@ trait ApproximateDistribution[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @see https://github.com/tdunning/t-digest
    */
   def tDigestQuantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     probs: List[Double],
     compression: Double,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean = true,
     nan: Boolean = false
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: ApproximateDistribution.TDigestQuantilesTuner[C#U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: ApproximateDistribution.TDigestQuantilesTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -170,20 +194,26 @@ trait ApproximateDistribution[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @see http://www.jmlr.org/papers/volume11/ben-haim10a/ben-haim10a.pdf
    */
   def uniformQuantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     count: Long,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean = true,
     nan: Boolean = false
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: ApproximateDistribution.UniformQuantilesTuner[C#U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: ApproximateDistribution.UniformQuantilesTuner[C#U, T]
   ): C#U[Cell[Q]]
 }
 
@@ -300,9 +330,9 @@ object Quantiles {
 }
 
 private[grimlock] case class QuantileImpl[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   probs: List[Double],
   quantiser: Quantiles.Quantiser,
@@ -406,9 +436,9 @@ private[grimlock] object QuantileImpl {
    * @return The quantiles for this key.
    */
   def stream[
-    P <: Nat,
-    S <: Nat,
-    Q <: Nat
+    P <: HList,
+    S <: HList,
+    Q <: HList
   ](
     qnt: QuantileImpl[P, S, Q],
     key: (Position[S], Long),
@@ -464,8 +494,10 @@ private[grimlock] object CountMap {
    * @return A list of cells, one for each requested quantile probability.
    */
   def toCells[
-    S <: Nat,
-    Q <: Nat
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     t: T,
     probs: List[Double],
@@ -474,7 +506,9 @@ private[grimlock] object CountMap {
     name: Locate.FromSelectedAndOutput[S, Double, Q],
     nan: Boolean
   )(implicit
-    ev: GT[Q, S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M]
   ): List[Cell[Q]] = {
     val (values, counts) = t.toList.sorted.unzip
     val cumsum = counts.scan(0L)(_ + _).tail
@@ -483,8 +517,8 @@ private[grimlock] object CountMap {
   }
 
   private def toCell[
-    S <: Nat,
-    Q <: Nat
+    S <: HList,
+    Q <: HList
   ](
     pos: Position[S],
     boundary: (Long, Double, Double),
@@ -568,8 +602,10 @@ private[grimlock] object TDigest {
    * @return A list of cells, one for each requested quantile probability.
    */
   def toCells[
-    S <: Nat,
-    Q <: Nat
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     t: T,
     probs: List[Double],
@@ -577,7 +613,9 @@ private[grimlock] object TDigest {
     name: Locate.FromSelectedAndOutput[S, Double, Q],
     nan: Boolean
   )(implicit
-    ev: GT[Q, S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M]
   ): List[Cell[Q]] = for {
     q <- probs
     p <- name(pos, q)
@@ -745,8 +783,10 @@ private[grimlock] object StreamingHistogram {
    * @return A list of cells, of `bins` uniformly spaced quantiles.
    */
   def toCells[
-    S <: Nat,
-    Q <: Nat
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     t: T,
     bins: Long,
@@ -754,7 +794,9 @@ private[grimlock] object StreamingHistogram {
     name: Locate.FromSelectedAndOutput[S, Double, Q],
     nan: Boolean
   )(implicit
-    ev: GT[Q, S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M]
   ): List[Cell[Q]] = t
     .uniform(bins)
     .zipWithIndex

@@ -17,12 +17,13 @@ package commbank.grimlock.framework
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.position.{ Position, Slice }
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
 import shapeless.nat._1
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT
 
 /** Trait for compacting a cell to a `Map`. */
-trait Compactable[P <: Nat, V[_ <: Nat]] extends java.io.Serializable {
+trait Compactable[P <: HList, V[_ <: HList]] extends java.io.Serializable {
   /**
    * Convert a single cell to a `Map`.
    *
@@ -31,7 +32,7 @@ trait Compactable[P <: Nat, V[_ <: Nat]] extends java.io.Serializable {
    *
    * @return A `Map` with the compacted cell.
    */
-  def toMap(slice: Slice[P], cell: Cell[P]): Map[Position[slice.S], V[slice.R]] = Map(
+  def toMap[S <: HList, R <: HList](slice: Slice[P, S, R], cell: Cell[P]): Map[Position[S], V[R]] = Map(
     slice.selected(cell.position) -> compact(slice.remainder(cell.position), cell.content)
   )
 
@@ -44,35 +45,47 @@ trait Compactable[P <: Nat, V[_ <: Nat]] extends java.io.Serializable {
    * @return The combined map.
    */
   def combineMaps[
-    S <: Nat,
-    R <: Nat
+    S <: HList,
+    R <: HList
   ](
     x: Map[Position[S], V[R]],
     y: Map[Position[S], V[R]]
   ): Map[Position[S], V[R]] = x ++ y.map { case (k, v) => k -> combine(x.get(k), v) }
 
-  protected def compact[R <: Nat](rem: Position[R], con: Content): V[R]
-  protected def combine[R <: Nat](x: Option[V[R]], y: V[R]): V[R]
+  protected def compact[R <: HList](rem: Position[R], con: Content): V[R]
+  protected def combine[R <: HList](x: Option[V[R]], y: V[R]): V[R]
 }
 
 /** Companion object to the `Compactable` trait. */
 object Compactable {
   /** Compacted content for `Position1D`. */
-  type V1[R <: Nat] = Content
+  type V1[R <: HList] = Content
 
   /** Compacted content for `Position[P]` with `P` greater than `_1`. */
-  type VX[R <: Nat] = Map[Position[R], Content]
+  type VX[R <: HList] = Map[Position[R], Content]
 
   /** A `Compactable[_1, V1]` for `Position1D`. */
-  implicit val compactable1D: Compactable[_1, V1] = new Compactable[_1, V1] {
-    protected def compact[R <: Nat](rem: Position[R], con: V1[R]): V1[R] = con
-    protected def combine[R <: Nat](x: Option[V1[R]], y: V1[R]): V1[R] = y
+  implicit def compactable1D[
+    P <: HList,
+    L <: Nat
+  ](implicit
+    ev1: Length.Aux[P, L],
+    ev2: L =:= _1
+  ): Compactable[P, V1] = new Compactable[P, V1] {
+    protected def compact[R <: HList](rem: Position[R], con: V1[R]): V1[R] = con
+    protected def combine[R <: HList](x: Option[V1[R]], y: V1[R]): V1[R] = y
   }
 
   /** A `Compactable[P, VX]` for positions `P` greater than `_1`. */
-  implicit def compactableXD[P <: Nat](implicit ev: GT[P, _1]): Compactable[P, VX] = new Compactable[P, VX] {
-    protected def compact[R <: Nat](rem: Position[R], con: Content): VX[R] = Map(rem -> con)
-    protected def combine[R <: Nat](x: Option[VX[R]], y: VX[R]): VX[R] = x.map(_ ++ y).getOrElse(y)
+  implicit def compactableXD[
+    P <: HList,
+    L <: Nat
+  ](implicit
+    ev1: Length.Aux[P, L],
+    ev2: GT[L, _1]
+  ): Compactable[P, VX] = new Compactable[P, VX] {
+    protected def compact[R <: HList](rem: Position[R], con: Content): VX[R] = Map(rem -> con)
+    protected def combine[R <: HList](x: Option[VX[R]], y: VX[R]): VX[R] = x.map(_ ++ y).getOrElse(y)
   }
 }
 

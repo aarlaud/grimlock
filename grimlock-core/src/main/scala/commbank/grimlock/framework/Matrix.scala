@@ -18,7 +18,7 @@ import commbank.grimlock.framework.aggregate.{ Aggregator, AggregatorWithValue }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.distance.PairwiseDistance
 import commbank.grimlock.framework.distribution.ApproximateDistribution
-import commbank.grimlock.framework.encoding.Value
+import commbank.grimlock.framework.encoding.{ LongValue, Value }
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.{ Reducers, Tuner }
 import commbank.grimlock.framework.pairwise.{ Comparer, Operator, OperatorWithValue }
@@ -33,12 +33,12 @@ import commbank.grimlock.framework.window.{ Window, WindowWithValue }
 
 import org.apache.hadoop.io.Writable
 
-import shapeless.{ ::, =:!=, HNil, IsDistinctConstraint, Nat }
-import shapeless.nat.{ _0, _1, _2, _3, _4, _5, _6, _7, _8, _9 }
+import shapeless.{ ::, =:!=, HList, HNil, IsDistinctConstraint, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.{ LTEq, GT, GTEq, Pred, ToInt }
 
 /** Trait for common matrix operations. */
-trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
+trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   with ApproximateDistribution[P, C]
   with Statistics[P, C] {
   /**
@@ -53,14 +53,16 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[P]]` with the changed contents and a `C#U[String]` with errors.
    */
   def change[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
-    positions: C#U[Position[slice.S]],
-    schema: Content.Parser,
-    writer: Persist.TextWriter[Cell[P]] = Cell.toString()
+    positions: C#U[Position[S]],
+    schema: Content.Decoder,
+    writer: Persist.TextWriter[Cell[P]]
   )(implicit
     ev: Matrix.ChangeTuner[C#U, T]
   ): (C#U[Cell[P]], C#U[String])
@@ -80,22 +82,24 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @param slice Encapsulates the dimension(s) along which to convert.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#E[Map[Position[slice.S], V[slice.R]]]` containing the Map
+   * @return A `C#E[Map[Position[S], V[R]]]` containing the Map
    *         representation of this matrix.
    *
    * @note Avoid using this for very large matrices.
    */
   def compact[
+    S <: HList,
+    R <: HList,
     T <: Tuner,
-    V[_ <: Nat]
+    V[_ <: HList]
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: S =:!= HNil,
     ev2: Compactable[P, V],
     ev3: Matrix.CompactTuner[C#U, T]
-  ): C#E[Map[Position[slice.S], V[slice.R]]]
+  ): C#E[Map[Position[S], V[R]]]
 
   /**
    * Return contents of a matrix at `positions`.
@@ -124,17 +128,19 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @param slice Encapsulates the dimension(s) for which the names are to be returned.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Position[slice.S]]` of the distinct position(s).
+   * @return A `C#U[Position[S]]` of the distinct position(s).
    */
   def names[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: S =:!= HNil,
     ev2: Positions.NamesTuner[C#U, T]
-  ): C#U[Position[slice.S]]
+  ): C#U[Position[S]]
 
   /**
    * Compute pairwise values between all pairs of values given a slice.
@@ -147,18 +153,24 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwise[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     comparer: Comparer,
     operators: Operator[P, Q]*
   )(implicit
-    ev1: slice.S =:!= _0,
-    ev2: GT[Q, slice.R],
-    ev3: Matrix.PairwiseTuner[C#U, T]
+    ev1: S =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[R, M],
+    ev4: GT[L, M],
+    ev5: Matrix.PairwiseTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -173,20 +185,26 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwiseWithValue[
-    Q <: Nat,
+    S <: HList,
+    R <: HList,
+    Q <: HList,
     W,
-    T <: Tuner
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     comparer: Comparer,
     value: C#E[W],
     operators: OperatorWithValue[P, Q] { type V >: W }*
   )(implicit
-    ev1: slice.S =:!= _0,
-    ev2: GT[Q, slice.R],
-    ev3: Matrix.PairwiseTuner[C#U, T]
+    ev1: S =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[R, M],
+    ev4: GT[L, M],
+    ev5: Matrix.PairwiseTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -201,19 +219,25 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwiseBetween[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     comparer: Comparer,
     that: C#U[Cell[P]],
     operators: Operator[P, Q]*
   )(implicit
-    ev1: slice.S =:!= _0,
-    ev2: GT[Q, slice.R],
-    ev3: Matrix.PairwiseTuner[C#U, T]
+    ev1: S =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[R, M],
+    ev4: GT[L, M],
+    ev5: Matrix.PairwiseTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -229,11 +253,15 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the content contains the pairwise values.
    */
   def pairwiseBetweenWithValue[
-    Q <: Nat,
+    S <: HList,
+    R <: HList,
+    Q <: HList,
     W,
-    T <: Tuner
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     comparer: Comparer,
@@ -241,9 +269,11 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
     value: C#E[W],
     operators: OperatorWithValue[P, Q] { type V >: W }*
   )(implicit
-    ev1: slice.S =:!= _0,
-    ev2: GT[Q, slice.R],
-    ev3: Matrix.PairwiseTuner[C#U, T]
+    ev1: S =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[R, M],
+    ev4: GT[L, M],
+    ev5: Matrix.PairwiseTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -253,7 +283,17 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[Cell[Q]]` where the cells have been relocated.
    */
-  def relocate[Q <: Nat](locate: Locate.FromCell[P, Q])(implicit ev: GTEq[Q, P]): C#U[Cell[Q]]
+  def relocate[
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
+  ](
+    locate: Locate.FromCell[P, Q]
+  )(implicit
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[P, M],
+    ev3: GTEq[L, M]
+  ): C#U[Cell[Q]]
 
   /**
    * Relocate the coordinates of the cells using user a suplied value.
@@ -264,13 +304,17 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` where the cells have been relocated.
    */
   def relocateWithValue[
-    Q <: Nat,
-    W
+    Q <: HList,
+    W,
+    L <: Nat,
+    M <: Nat
   ](
     value: C#E[W],
     locate: Locate.FromCellWithValue[P, Q, W]
   )(implicit
-    ev: GTEq[Q, P]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[P, M],
+    ev3: GTEq[L, M]
   ): C#U[Cell[Q]]
 
   /**
@@ -288,7 +332,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[Cell[P]] = Cell.toString(),
+    writer: Persist.TextWriter[Cell[P]],
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -309,10 +353,10 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[Position1D]]`. The position consists of a long value of the dimension index. The
-   *         content has the actual size in it as a discrete variable.
+   * @return A `C#U[Cell[LongValue :: HNil]]`. The position consists of a long value of the dimension
+   *         index. The content has the actual size in it as a discrete variable.
    */
-  def shape[T <: Tuner](tuner: T)(implicit ev: Matrix.ShapeTuner[C#U, T]): C#U[Cell[_1]]
+  def shape[T <: Tuner](tuner: T)(implicit ev: Matrix.ShapeTuner[C#U, T]): C#U[Cell[LongValue :: HNil]]
 
   /**
    * Returns the size of the matrix in dimension `dim`.
@@ -322,20 +366,22 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *                 enabling this flag has better run-time performance.
    * @param tuner    The tuner for the job.
    *
-   * @return A `C#U[Cell[_1]]`. The position consists of a long value of the dimension index. The
+   * @return A `C#U[Cell[LongValue :: HNil]]`. The position consists of a long value of the dimension index. The
    *         content has the actual size in it as a discrete variable.
    */
   def size[
-    D <: Nat : ToInt,
-    T <: Tuner
+    D <: Nat,
+    T <: Tuner,
+    L <: Nat
   ](
     dim: D,
     distinct: Boolean = false,
     tuner: T
   )(implicit
-    ev1: LTEq[D, P],
-    ev2: Matrix.SizeTuner[C#U, T]
-  ): C#U[Cell[_1]]
+    ev1: Length.Aux[P, L],
+    ev2: LTEq[D, L],
+    ev3: Matrix.SizeTuner[C#U, T]
+  ): C#U[Cell[LongValue :: HNil]]
 
   /**
    * Slice a matrix.
@@ -348,13 +394,15 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[P]]` of the remaining content.
    */
   def slice[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     keep: Boolean,
-    positions: C#U[Position[slice.S]]
+    positions: C#U[Position[S]]
   )(implicit
     ev: Matrix.SliceTuner[C#U, T]
   ): C#U[Cell[P]]
@@ -370,18 +418,24 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the derived data.
    */
   def slide[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     ascending: Boolean,
-    windows: Window[P, slice.S, slice.R, Q]*
+    windows: Window[P, S, R, Q]*
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: Matrix.SlideTuner[C#U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: Matrix.SlideTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -396,20 +450,26 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the derived data.
    */
   def slideWithValue[
-    Q <: Nat,
+    S <: HList,
+    R <: HList,
+    Q <: HList,
     W,
-    T <: Tuner
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     ascendig: Boolean,
     value: C#E[W],
-    windows: WindowWithValue[P, slice.S, slice.R, Q] { type V >: W }*
+    windows: WindowWithValue[P, S, R, Q] { type V >: W }*
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: Matrix.SlideTuner[C#U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: Matrix.SlideTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -448,12 +508,12 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @note The `command` must be installed on each node of the cluster.
    */
   def stream[
-    Q <: Nat
+    Q <: HList
   ](
     command: String,
     files: List[String],
     writer: Persist.TextWriter[Cell[P]],
-    parser: Cell.TextParser[Q],
+    parser: Persist.TextParser[Cell[Q]],
     reducers: Reducers = Reducers(1),
     hash: (Position[P]) => Int = _ => 0
   ): (C#U[Cell[Q]], C#U[String])
@@ -475,17 +535,23 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *       values for a given slice fit into memory.
    */
   def streamByPosition[
-    Q <: Nat
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P]
+    slice: Slice[P, S, R]
   )(
     command: String,
     files: List[String],
     writer: Persist.TextWriterByPosition[Cell[P]],
-    parser: Cell.TextParser[Q],
+    parser: Persist.TextParser[Cell[Q]],
     reducers: Reducers = Reducers(1)
   )(implicit
-    ev: GTEq[Q, slice.S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GTEq[L, M]
   ): (C#U[Cell[Q]], C#U[String])
 
   /**
@@ -518,17 +584,23 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the aggregates.
    */
   def summarise[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
-    aggregators: Aggregator[P, slice.S, Q]*
+    aggregators: Aggregator[P, S, Q]*
   )(implicit
-    ev1: GTEq[Q, slice.S],
-    ev2: Aggregator.Validate[P, slice.S, Q],
-    ev3: Matrix.SummariseTuner[C#U, T]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GTEq[L, M],
+    ev4: Aggregator.Validate[P, S, Q],
+    ev5: Matrix.SummariseTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -542,19 +614,25 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the aggregates.
    */
   def summariseWithValue[
-    Q <: Nat,
+    S <: HList,
+    R <: HList,
+    Q <: HList,
     W,
-    T <: Tuner
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     value: C#E[W],
-    aggregators: AggregatorWithValue[P, slice.S, Q] { type V >: W }*
+    aggregators: AggregatorWithValue[P, S, Q] { type V >: W }*
   )(implicit
-    ev1: GTEq[Q, slice.S],
-    ev2: AggregatorWithValue.Validate[P, slice.S, Q, W],
-    ev3: Matrix.SummariseTuner[C#U, T]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GTEq[L, M],
+    ev4: AggregatorWithValue.Validate[P, S, Q, W],
+    ev5: Matrix.SummariseTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -582,7 +660,7 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[CellPosition[_1]]]` where all coordinates have been merged into a single position.
    */
-  def toVector(melt: (List[Value]) => Value): C#U[Cell[_1]]
+  def toVector[V <: Value[_]](melt: (List[Value[_]]) => V): C#U[Cell[V :: HNil]]
 
   /**
    * Transform the content of a matrix.
@@ -591,7 +669,17 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[Cell[Q]]` with the transformed cells.
    */
-  def transform[Q <: Nat](transformers: Transformer[P, Q]*)(implicit ev: GTEq[Q, P]): C#U[Cell[Q]]
+  def transform[
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
+  ](
+    transformers: Transformer[P, Q]*
+  )(implicit
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[P, M],
+    ev3: GTEq[L, M]
+  ): C#U[Cell[Q]]
 
   /**
    * Transform the content of a matrix using a user supplied value.
@@ -602,13 +690,17 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[Q]]` with the transformed cells.
    */
   def transformWithValue[
-    Q <: Nat,
-    W
+    Q <: HList,
+    W,
+    L <: Nat,
+    M <: Nat
   ](
     value: C#E[W],
     transformers: TransformerWithValue[P, Q] { type V >: W }*
   )(implicit
-    ev: GTEq[Q, P]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[P, M],
+    ev3: GTEq[L, M]
   ): C#U[Cell[Q]]
 
   /**
@@ -618,19 +710,21 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @param tuner    The tuner for the job.
    * @param specific Indicates if the most specific type should be returned, or it's generalisation (default).
    *
-   * @return A `C#U[Cell[slice.S]]` of the distinct position(s) together with their type.
+   * @return A `C#U[Cell[S]]` of the distinct position(s) together with their type.
    */
   def types[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     specific: Boolean
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: S =:!= HNil,
     ev2: Matrix.TypesTuner[C#U, T]
-  ): C#U[Cell[slice.S]]
+  ): C#U[Cell[S]]
 
   /**
    * Return the unique (distinct) contents of an entire matrix.
@@ -647,19 +741,21 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @param slice Encapsulates the dimension(s) along which to find unique contents.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[(Position[slice.S], Content)]` consisting of the unique values for each selected position.
+   * @return A `C#U[(Position[S], Content)]` consisting of the unique values for each selected position.
    *
-   * @note Comparison is performed based on the string representation of the `slice.S` and `Content`.
+   * @note Comparison is performed based on the string representation of the `S` and `Content`.
    */
   def uniqueByPosition[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev1: slice.S =:!= _0,
+    ev1: S =:!= HNil,
     ev2: Matrix.UniqueTuner[C#U, T]
-  ): C#U[(Position[slice.S], Content)]
+  ): C#U[(Position[S], Content)]
 
   /**
    * Query the contents of a matrix and return the positions of those that match the predicate.
@@ -682,17 +778,18 @@ trait Matrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Position[P]]` of the positions for which the content matches predicates.
    */
   def whichByPosition[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
-    predicates: List[(C#U[Position[slice.S]], Cell.Predicate[P])]
+    predicates: List[(C#U[Position[S]], Cell.Predicate[P])]
   )(implicit
     ev: Matrix.WhichTuner[C#U, T]
   ): C#U[Position[P]]
 
-  // TODO: Add more compile-time type checking
   // TODO: Add label join operations
   // TODO: Add read/write[CSV|Hive|HBase|VW|LibSVM] operations
   // TODO: Add machine learning operations (SVD/finding cliques/etc.) - use Spark instead?
@@ -768,7 +865,7 @@ object Matrix {
 }
 
 /** Trait for matrix operations on matrices with more than 1 dimension. */
-trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P, C] {
+trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance[P, C] {
   /**
    * Join two matrices.
    *
@@ -780,9 +877,11 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    */
   // TODO: Add inner/left/right/outer join functionality?
   def join[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     that: C#U[Cell[P]]
@@ -803,18 +902,19 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    *       `into` coordinates.
    */
   def melt[
-    D <: Nat : ToInt,
-    I <: Nat : ToInt,
-    Q <: Nat
+    D <: Nat,
+    I <: Nat,
+    T <% V,
+    V <: Value[_],
+    X <: Value[_],
+    Y <: Value[_],
+    Q <: HList
   ](
     dim: D,
     into: I,
-    merge: (Value, Value) => Value
+    merge: (X, Y) => T
   )(implicit
-    ev1: LTEq[D, P],
-    ev2: LTEq[I, P],
-    ev3: IsDistinctConstraint[D :: I :: HNil],
-    ev4: Pred.Aux[P, Q]
+    ev: Position.MeltConstraints[P, D, I, V, X, Y, Q]
   ): C#U[Cell[Q]]
 
   /**
@@ -829,18 +929,21 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    */
   def reshape[
     D <: Nat : ToInt,
-    Q <: Nat,
-    T <: Tuner
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
     dim: D,
-    coordinate: Value,
+    coordinate: Value[_],
     locate: Locate.FromCellAndOptionalValue[P, Q],
     tuner: T
   )(implicit
-    ev1: LTEq[D, P],
-    ev2: GT[Q, P],
-    ev3: Pred[P],
-    ev4: Matrix.ReshapeTuner[C#U, T]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[P, M],
+    ev3: LTEq[D, M],
+    ev4: GT[L, M],
+    ev5: Matrix.ReshapeTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -853,17 +956,21 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    * @return A `C#U[Cell[Q]]` with the dimension `dim` removed.
    */
   def squash[
-    D <: Nat : ToInt,
-    Q <: Nat,
-    T <: Tuner
+    D <: Nat,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
     dim: D,
     squasher: Squasher[P],
     tuner: T
   )(implicit
-    ev1: LTEq[D, P],
-    ev2: Pred.Aux[P, Q],
-    ev3: Matrix.SquashTuner[C#U, T]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[P, M],
+    ev3: LTEq[D, M],
+    ev4: Pred.Aux[M, L],
+    ev5: Matrix.SquashTuner[C#U, T]
   ): C#U[Cell[Q]]
 
   /**
@@ -878,23 +985,27 @@ trait MultiDimensionMatrix[P <: Nat, C <: Context[C]] extends PairwiseDistance[P
    */
   def squashWithValue[
     D <: Nat : ToInt,
-    Q <: Nat,
+    Q <: HList,
     W,
-    T <: Tuner
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
     dim: D,
     value: C#E[W],
     squasher: SquasherWithValue[P] { type V >: W },
     tuner: T
   )(implicit
-    ev1: LTEq[D, P],
-    ev2: Pred.Aux[P, Q],
-    ev3: Matrix.SquashTuner[C#U, T]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[P, M],
+    ev3: LTEq[D, M],
+    ev4: Pred.Aux[M, L],
+    ev5: Matrix.SquashTuner[C#U, T]
   ): C#U[Cell[Q]]
 }
 
 /** Trait for matrix methods that depend on the number of dimensions. */
-trait SetDimensionMatrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C] {
+trait SetDimensionMatrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C] {
   /**
    * Return all possible positions of a matrix.
    *
@@ -916,12 +1027,14 @@ trait SetDimensionMatrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C] 
    *       from the resulting matrix.
    */
   def fillHeterogeneous[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
-    values: C#U[Cell[slice.S]]
+    values: C#U[Cell[S]]
   )(implicit
     ev: Matrix.FillHeterogeneousTuner[C#U, T]
   ): C#U[Cell[P]]
@@ -968,11 +1081,11 @@ trait SetDimensionMatrix[P <: Nat, C <: Context[C]] extends Persist[Cell[P], C] 
 }
 
 /** Trait for 1D specific operations. */
-trait Matrix1D[C <: Context[C]] extends SetDimensionMatrix[_1, C] {
+trait Matrix1D[V1 <: Value[_], C <: Context[C]] extends SetDimensionMatrix[V1 :: HNil, C] {
 }
 
 /** Trait for 2D specific operations. */
-trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
+trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimensionMatrix[V1 :: V2 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -980,16 +1093,18 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
    * @param dim2 Dimension to use for the second coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_]
   ](
     dim1: D1,
     dim2: D2
   )(implicit
-    ev1: LTEq[D1, _2],
-    ev2: LTEq[D2, _2],
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, D2, W2],
     ev3: D1 =:!= D2
-  ): C#U[Cell[_2]]
+  ): C#U[Cell[W1 :: W2 :: HNil]]
 
   /**
    * Persist as a CSV file.
@@ -1005,12 +1120,14 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
    * @param writeRowId  Indicator if row names should be written.
    * @param rowId       Column name of row names.
    *
-   * @return A `C#U[Cell[_2]]`; that is it returns `data`.
+   * @return A `C#U[Cell[V1 :: V2 :: HNil]]`; that is it returns `data`.
    */
   def saveAsCSV[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
   )(
     context: C,
@@ -1023,7 +1140,7 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
     rowId: String = "id"
   )(implicit
     ev: Matrix.SaveAsCSVTuner[C#U, T]
-  ): C#U[Cell[_2]]
+  ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
    * Persist a `Matrix2D` as a Vowpal Wabbit file.
@@ -1036,12 +1153,14 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
    * @param tag        Indicator if the selected position should be added as a tag.
    * @param separator  Separator to use in dictionary.
    *
-   * @return A `C#U[Cell[_2]]`; that is it returns `data`.
+   * @return A `C#U[Cell[V1 :: V2 :: HNil]]`; that is it returns `data`.
    */
   def saveAsVW[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
   )(
     context: C,
@@ -1051,7 +1170,7 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
     separator: String = "|"
   )(implicit
     ev: Matrix.SaveAsVWTuner[C#U, T]
-  ): C#U[Cell[_2]]
+  ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
    * Persist a `Matrix2D` as a Vowpal Wabbit file with the provided labels.
@@ -1065,25 +1184,27 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
    * @param tag        Indicator if the selected position should be added as a tag.
    * @param separator  Separator to use in dictionary.
    *
-   * @return A `C#U[Cell[_2]]`; that is it returns `data`.
+   * @return A `C#U[Cell[V1 :: V2 :: HNil]]`; that is it returns `data`.
    *
    * @note The labels are joined to the data keeping only those examples for which data and a label are available.
    */
   def saveAsVWWithLabels[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
   )(
     context: C,
     file: String,
-    labels: C#U[Cell[slice.S]],
+    labels: C#U[Cell[S]],
     dictionary: String = "%s.dict",
     tag: Boolean = false,
     separator: String = "|"
   )(implicit
     ev: Matrix.SaveAsVWTuner[C#U, T]
-  ): C#U[Cell[_2]]
+  ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
    * Persist a `Matrix2D` as a Vowpal Wabbit file with the provided importance weights.
@@ -1097,25 +1218,27 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
    * @param tag        Indicator if the selected position should be added as a tag.
    * @param separator  Separator to use in dictionary.
    *
-   * @return A `C#U[Cell[_2]]`; that is it returns `data`.
+   * @return A `C#U[Cell[V1 :: V2 :: HNil]]`; that is it returns `data`.
    *
    * @note The weights are joined to the data keeping only those examples for which data and a weight are available.
    */
   def saveAsVWWithImportance[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
   )(
     context: C,
     file: String,
-    importance: C#U[Cell[slice.S]],
+    importance: C#U[Cell[S]],
     dictionary: String = "%s.dict",
     tag: Boolean = false,
     separator: String = "|"
   )(implicit
     ev: Matrix.SaveAsVWTuner[C#U, T]
-  ): C#U[Cell[_2]]
+  ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
    * Persist a `Matrix2D` as a Vowpal Wabbit file with the provided labels and importance weights.
@@ -1130,31 +1253,38 @@ trait Matrix2D[C <: Context[C]] extends SetDimensionMatrix[_2, C] {
    * @param tag        Indicator if the selected position should be added as a tag.
    * @param separator  Separator to use in dictionary.
    *
-   * @return A `C#U[Cell[_2]]`; that is it returns `data`.
+   * @return A `C#U[Cell[V1 :: V2 :: HNil]]`; that is it returns `data`.
    *
    * @note The labels and weights are joined to the data keeping only those examples for which data and a label
    *       and weight are available.
    */
   def saveAsVWWithLabelsAndImportance[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[_2],
+    slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
   )(
     context: C,
     file: String,
-    labels: C#U[Cell[slice.S]],
-    importance: C#U[Cell[slice.S]],
+    labels: C#U[Cell[S]],
+    importance: C#U[Cell[S]],
     dictionary: String = "%s.dict",
     tag: Boolean = false,
     separator: String = "|"
   )(implicit
     ev: Matrix.SaveAsVWTuner[C#U, T]
-  ): C#U[Cell[_2]]
+  ): C#U[Cell[V1 :: V2 :: HNil]]
 }
 
 /** Trait for 3D specific operations. */
-trait Matrix3D[C <: Context[C]] extends SetDimensionMatrix[_3, C] {
+trait Matrix3D[
+  V1 <: Value[_],
+  V2 <: Value[_],
+  V3 <: Value[_],
+  C <: Context[C]
+] extends SetDimensionMatrix[V1 :: V2 :: V3 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -1163,23 +1293,32 @@ trait Matrix3D[C <: Context[C]] extends SetDimensionMatrix[_3, C] {
    * @param dim3 Dimension to use for the third coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt,
-    D3 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    D3 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_],
+    W3 <: Value[_]
   ](
     dim1: D1,
     dim2: D2,
     dim3: D3
   )(implicit
-    ev1: LTEq[D1, _3],
-    ev2: LTEq[D2, _3],
-    ev3: LTEq[D3, _3],
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, D2, W2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, D3, W3],
     ev4: IsDistinctConstraint[D1 :: D2 :: D3 :: HNil]
-  ): C#U[Cell[_3]]
+  ): C#U[Cell[W1 :: W2 :: W3 :: HNil]]
 }
 
 /** Trait for 4D specific operations. */
-trait Matrix4D[C <: Context[C]] extends SetDimensionMatrix[_4, C] {
+trait Matrix4D[
+  V1 <: Value[_],
+  V2 <: Value[_],
+  V3 <: Value[_],
+  V4 <: Value[_],
+  C <: Context[C]
+] extends SetDimensionMatrix[V1 :: V2 :: V3 :: V4 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -1189,26 +1328,37 @@ trait Matrix4D[C <: Context[C]] extends SetDimensionMatrix[_4, C] {
    * @param dim4 Dimension to use for the fourth coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt,
-    D3 <: Nat : ToInt,
-    D4 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    D3 <: Nat,
+    D4 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_],
+    W3 <: Value[_],
+    W4 <: Value[_]
   ](
     dim1: D1,
     dim2: D2,
     dim3: D3,
     dim4: D4
   )(implicit
-    ev1: LTEq[D1, _4],
-    ev2: LTEq[D2, _4],
-    ev3: LTEq[D3, _4],
-    ev4: LTEq[D4, _4],
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, D2, W2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, D3, W3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, D4, W4],
     ev5: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: HNil]
-  ): C#U[Cell[_4]]
+  ): C#U[Cell[W1 :: W2 :: W3 :: W4 :: HNil]]
 }
 
 /** Trait for 5D specific operations. */
-trait Matrix5D[C <: Context[C]] extends SetDimensionMatrix[_5, C] {
+trait Matrix5D[
+  V1 <: Value[_],
+  V2 <: Value[_],
+  V3 <: Value[_],
+  V4 <: Value[_],
+  V5 <: Value[_],
+  C <: Context[C]
+] extends SetDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -1219,11 +1369,16 @@ trait Matrix5D[C <: Context[C]] extends SetDimensionMatrix[_5, C] {
    * @param dim5 Dimension to use for the fifth coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt,
-    D3 <: Nat : ToInt,
-    D4 <: Nat : ToInt,
-    D5 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    D3 <: Nat,
+    D4 <: Nat,
+    D5 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_],
+    W3 <: Value[_],
+    W4 <: Value[_],
+    W5 <: Value[_]
   ](
     dim1: D1,
     dim2: D2,
@@ -1231,17 +1386,25 @@ trait Matrix5D[C <: Context[C]] extends SetDimensionMatrix[_5, C] {
     dim4: D4,
     dim5: D5
   )(implicit
-    ev1: LTEq[D1, _5],
-    ev2: LTEq[D2, _5],
-    ev3: LTEq[D3, _5],
-    ev4: LTEq[D4, _5],
-    ev5: LTEq[D5, _5],
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, D2, W2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, D3, W3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, D4, W4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, D5, W5],
     ev6: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: HNil]
-  ): C#U[Cell[_5]]
+  ): C#U[Cell[W1 :: W2 :: W3 :: W4 :: W5 :: HNil]]
 }
 
 /** Trait for 6D specific operations. */
-trait Matrix6D[C <: Context[C]] extends SetDimensionMatrix[_6, C] {
+trait Matrix6D[
+  V1 <: Value[_],
+  V2 <: Value[_],
+  V3 <: Value[_],
+  V4 <: Value[_],
+  V5 <: Value[_],
+  V6 <: Value[_],
+  C <: Context[C]
+] extends SetDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -1253,12 +1416,18 @@ trait Matrix6D[C <: Context[C]] extends SetDimensionMatrix[_6, C] {
    * @param dim6 Dimension to use for the sixth coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt,
-    D3 <: Nat : ToInt,
-    D4 <: Nat : ToInt,
-    D5 <: Nat : ToInt,
-    D6 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    D3 <: Nat,
+    D4 <: Nat,
+    D5 <: Nat,
+    D6 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_],
+    W3 <: Value[_],
+    W4 <: Value[_],
+    W5 <: Value[_],
+    W6 <: Value[_]
   ](
     dim1: D1,
     dim2: D2,
@@ -1267,18 +1436,27 @@ trait Matrix6D[C <: Context[C]] extends SetDimensionMatrix[_6, C] {
     dim5: D5,
     dim6: D6
   )(implicit
-    ev1: LTEq[D1, _6],
-    ev2: LTEq[D2, _6],
-    ev3: LTEq[D3, _6],
-    ev4: LTEq[D4, _6],
-    ev5: LTEq[D5, _6],
-    ev6: LTEq[D6, _6],
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, D2, W2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, D3, W3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, D4, W4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, D5, W5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, D6, W6],
     ev7: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: HNil]
-  ): C#U[Cell[_6]]
+  ): C#U[Cell[W1 :: W2 :: W3 :: W4 :: W5 :: W6 :: HNil]]
 }
 
 /** Trait for 7D specific operations. */
-trait Matrix7D[C <: Context[C]] extends SetDimensionMatrix[_7, C] {
+trait Matrix7D[
+  V1 <: Value[_],
+  V2 <: Value[_],
+  V3 <: Value[_],
+  V4 <: Value[_],
+  V5 <: Value[_],
+  V6 <: Value[_],
+  V7 <: Value[_],
+  C <: Context[C]
+] extends SetDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -1291,13 +1469,20 @@ trait Matrix7D[C <: Context[C]] extends SetDimensionMatrix[_7, C] {
    * @param dim7 Dimension to use for the seventh coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt,
-    D3 <: Nat : ToInt,
-    D4 <: Nat : ToInt,
-    D5 <: Nat : ToInt,
-    D6 <: Nat : ToInt,
-    D7 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    D3 <: Nat,
+    D4 <: Nat,
+    D5 <: Nat,
+    D6 <: Nat,
+    D7 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_],
+    W3 <: Value[_],
+    W4 <: Value[_],
+    W5 <: Value[_],
+    W6 <: Value[_],
+    W7 <: Value[_]
   ](
     dim1: D1,
     dim2: D2,
@@ -1307,19 +1492,29 @@ trait Matrix7D[C <: Context[C]] extends SetDimensionMatrix[_7, C] {
     dim6: D6,
     dim7: D7
   )(implicit
-    ev1: LTEq[D1, _7],
-    ev2: LTEq[D2, _7],
-    ev3: LTEq[D3, _7],
-    ev4: LTEq[D4, _7],
-    ev5: LTEq[D5, _7],
-    ev6: LTEq[D6, _7],
-    ev7: LTEq[D7, _7],
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, D2, W2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, D3, W3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, D4, W4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, D5, W5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, D6, W6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, D7, W7],
     ev8: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: D7 :: HNil]
-  ): C#U[Cell[_7]]
+  ): C#U[Cell[W1 :: W2 :: W3 :: W4 :: W5 :: W6 :: W7 :: HNil]]
 }
 
 /** Trait for 8D specific operations. */
-trait Matrix8D[C <: Context[C]] extends SetDimensionMatrix[_8, C] {
+trait Matrix8D[
+  V1,
+  V2,
+  V3,
+  V4,
+  V5,
+  V6,
+  V7,
+  V8,
+  C <: Context[C]
+] extends SetDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -1333,14 +1528,22 @@ trait Matrix8D[C <: Context[C]] extends SetDimensionMatrix[_8, C] {
    * @param dim8 Dimension to use for the eighth coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt,
-    D3 <: Nat : ToInt,
-    D4 <: Nat : ToInt,
-    D5 <: Nat : ToInt,
-    D6 <: Nat : ToInt,
-    D7 <: Nat : ToInt,
-    D8 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    D3 <: Nat,
+    D4 <: Nat,
+    D5 <: Nat,
+    D6 <: Nat,
+    D7 <: Nat,
+    D8 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_],
+    W3 <: Value[_],
+    W4 <: Value[_],
+    W5 <: Value[_],
+    W6 <: Value[_],
+    W7 <: Value[_],
+    W8 <: Value[_]
   ](
     dim1: D1,
     dim2: D2,
@@ -1351,20 +1554,31 @@ trait Matrix8D[C <: Context[C]] extends SetDimensionMatrix[_8, C] {
     dim7: D7,
     dim8: D8
   )(implicit
-    ev1: LTEq[D1, _8],
-    ev2: LTEq[D2, _8],
-    ev3: LTEq[D3, _8],
-    ev4: LTEq[D4, _8],
-    ev5: LTEq[D5, _8],
-    ev6: LTEq[D6, _8],
-    ev7: LTEq[D7, _8],
-    ev8: LTEq[D8, _8],
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D2, W2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D3, W3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D4, W4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D5, W5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D6, W6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D7, W7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, D8, W8],
     ev9: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: D7 :: D8 :: HNil]
-  ): C#U[Cell[_8]]
+  ): C#U[Cell[W1 :: W2 :: W3 :: W4 :: W5 :: W6 :: W7 :: W8 :: HNil]]
 }
 
 /** Trait for 9D specific operations. */
-trait Matrix9D[C <: Context[C]] extends SetDimensionMatrix[_9, C] {
+trait Matrix9D[
+  V1 <: Value[_],
+  V2 <: Value[_],
+  V3 <: Value[_],
+  V4 <: Value[_],
+  V5 <: Value[_],
+  V6 <: Value[_],
+  V7 <: Value[_],
+  V8 <: Value[_],
+  V9 <: Value[_],
+  C <: Context[C]
+] extends SetDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, C] {
   /**
    * Permute the order of the coordinates in a position.
    *
@@ -1379,15 +1593,24 @@ trait Matrix9D[C <: Context[C]] extends SetDimensionMatrix[_9, C] {
    * @param dim9 Dimension to use for the ninth coordinate.
    */
   def permute[
-    D1 <: Nat : ToInt,
-    D2 <: Nat : ToInt,
-    D3 <: Nat : ToInt,
-    D4 <: Nat : ToInt,
-    D5 <: Nat : ToInt,
-    D6 <: Nat : ToInt,
-    D7 <: Nat : ToInt,
-    D8 <: Nat : ToInt,
-    D9 <: Nat : ToInt
+    D1 <: Nat,
+    D2 <: Nat,
+    D3 <: Nat,
+    D4 <: Nat,
+    D5 <: Nat,
+    D6 <: Nat,
+    D7 <: Nat,
+    D8 <: Nat,
+    D9 <: Nat,
+    W1 <: Value[_],
+    W2 <: Value[_],
+    W3 <: Value[_],
+    W4 <: Value[_],
+    W5 <: Value[_],
+    W6 <: Value[_],
+    W7 <: Value[_],
+    W8 <: Value[_],
+    W9 <: Value[_]
   ](
     dim1: D1,
     dim2: D2,
@@ -1399,17 +1622,17 @@ trait Matrix9D[C <: Context[C]] extends SetDimensionMatrix[_9, C] {
     dim8: D8,
     dim9: D9
   )(implicit
-    ev1: LTEq[D1, _9],
-    ev2: LTEq[D2, _9],
-    ev3: LTEq[D3, _9],
-    ev4: LTEq[D4, _9],
-    ev5: LTEq[D5, _9],
-    ev6: LTEq[D6, _9],
-    ev7: LTEq[D7, _9],
-    ev8: LTEq[D8, _9],
-    ev9: LTEq[D9, _9],
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D1, W1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D2, W2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D3, W3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D4, W4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D5, W5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D6, W6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D7, W7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D8, W8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, D9, W9],
     ev10: IsDistinctConstraint[D1 :: D2 :: D3 :: D4 :: D5 :: D6 :: D7 :: D8 :: D9 :: HNil]
-  ): C#U[Cell[_9]]
+  ): C#U[Cell[W1 :: W2 :: W3 :: W4 :: W5 :: W6 :: W7 :: W8 :: W9 :: HNil]]
 }
 
 /**
@@ -1418,5 +1641,5 @@ trait Matrix9D[C <: Context[C]] extends SetDimensionMatrix[_9, C] {
  * @param data   The parsed matrix.
  * @param errors Any parse errors.
  */
-case class MatrixWithParseErrors[P <: Nat, U[_]](data: U[Cell[P]], errors: U[String])
+case class MatrixWithParseErrors[P <: HList, U[_]](data: U[Cell[P]], errors: U[String])
 

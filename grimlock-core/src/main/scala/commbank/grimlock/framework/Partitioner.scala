@@ -17,13 +17,14 @@ package commbank.grimlock.framework.partition
 import commbank.grimlock.framework.{ Cell, Persist }
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.Tuner
+import commbank.grimlock.framework.position.Position
 
 import scala.reflect.ClassTag
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for partitioners. */
-trait Partitioner[P <: Nat, I] extends PartitionerWithValue[P, I] {
+trait Partitioner[P <: HList, I] extends PartitionerWithValue[P, I] {
   type V = Any
 
   def assignWithValue(cell: Cell[P], ext: V): TraversableOnce[I] = assign(cell)
@@ -41,23 +42,23 @@ trait Partitioner[P <: Nat, I] extends PartitionerWithValue[P, I] {
 /** Companion object for the `Partitioner` trait. */
 object Partitioner {
   /** Converts a `(Cell[P]) => I` to a `Partitioner[P, S]`. */
-  implicit def funcToPartitioner[P <: Nat, I](func: (Cell[P]) => I) = new Partitioner[P, I] {
+  implicit def funcToPartitioner[P <: HList, I](func: (Cell[P]) => I) = new Partitioner[P, I] {
     def assign(cell: Cell[P]): TraversableOnce[I] = List(func(cell))
   }
 
   /** Converts a `(Cell[P]) => List[S]` to a `Partitioner[P, I]`. */
-  implicit def funcListToPartitioner[P <: Nat, I](func: (Cell[P]) => List[I]) = new Partitioner[P, I] {
+  implicit def funcListToPartitioner[P <: HList, I](func: (Cell[P]) => List[I]) = new Partitioner[P, I] {
     def assign(cell: Cell[P]): TraversableOnce[I] = func(cell)
   }
 
   /** Converts a `List[Partitioner[P, I]]` to a single `Partitioner[P, I]`. */
-  implicit def listToPartitioner[P <: Nat, I](partitioners: List[Partitioner[P, I]]) = new Partitioner[P, I] {
+  implicit def listToPartitioner[P <: HList, I](partitioners: List[Partitioner[P, I]]) = new Partitioner[P, I] {
     def assign(cell: Cell[P]): TraversableOnce[I] = partitioners.flatMap(_.assign(cell))
   }
 }
 
 /** Trait for partitioners that use a user supplied value. */
-trait PartitionerWithValue[P <: Nat, I] {
+trait PartitionerWithValue[P <: HList, I] {
   /** Type of the external value. */
   type V
 
@@ -75,7 +76,7 @@ trait PartitionerWithValue[P <: Nat, I] {
 /** Companion object for the `PartitionerWithValue` trait. */
 object PartitionerWithValue {
   /** Converts a `(Cell[P], W) => I` to a `PartitionerWithValue[P, S] { type V >: W }`. */
-  implicit def funcToPartitionerWithValue[P <: Nat, I, W](func: (Cell[P], W) => I) = new PartitionerWithValue[P, I] {
+  implicit def funcToPartitionerWithValue[P <: HList, I, W](func: (Cell[P], W) => I) = new PartitionerWithValue[P, I] {
     type V = W
 
     def assignWithValue(cell: Cell[P], ext: W): TraversableOnce[I] = List(func(cell, ext))
@@ -83,7 +84,7 @@ object PartitionerWithValue {
 
   /** Converts a `(Cell[P], W) => List[I]` to a `PartitionerWithValue[P, I] { type V >: W }`. */
   implicit def funcListToPartitionerWithValue[
-    P <: Nat,
+    P <: HList,
     I,
     W
   ](
@@ -99,7 +100,7 @@ object PartitionerWithValue {
    * `PartitionerWithValue[P, I] { type V >: W }`.
    */
   implicit def listToPartitionerWithValue[
-    P <: Nat,
+    P <: HList,
     I,
     W
   ](
@@ -113,7 +114,7 @@ object PartitionerWithValue {
 }
 
 /** Trait that represents the partitions of matrices */
-trait Partitions[P <: Nat, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] {
+trait Partitions[P <: HList, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] {
   /**
    * Add a partition.
    *
@@ -138,7 +139,7 @@ trait Partitions[P <: Nat, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] 
    *       available to keep all (distinct) partition ids in memory.
    */
   def forAll[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     context: C,
@@ -158,7 +159,7 @@ trait Partitions[P <: Nat, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] 
    *
    * @return A `C#U[(I, Cell[Q])]` containing the paritions with `fn` applied to them.
    */
-  def forEach[Q <: Nat](ids: List[I], fn: (I, C#U[Cell[P]]) => C#U[Cell[Q]]): C#U[(I, Cell[Q])]
+  def forEach[Q <: HList](ids: List[I], fn: (I, C#U[Cell[P]]) => C#U[Cell[Q]]): C#U[(I, Cell[Q])]
 
   /**
    * Return the data for the partition `id`.
@@ -209,7 +210,7 @@ trait Partitions[P <: Nat, I, C <: Context[C]] extends Persist[(I, Cell[P]), C] 
   ](
     context: C,
     file: String,
-    writer: Persist.TextWriter[(I, Cell[P])] = Partitions.toString(),
+    writer: Persist.TextWriter[(I, Cell[P])],
     tuner: T
   )(implicit
     ev: Persist.SaveAsTextTuner[C#U, T]
@@ -227,37 +228,39 @@ object Partitions {
   /**
    * Return function that returns a string representation of a partition.
    *
-   * @param verbose     Indicator if verbose string is required or not.
-   * @param separator   The separator to use between various fields.
-   * @param descriptive Indicator if codec and schema are required or not (only used if verbose is `false`).
+   * @param verbose   Indicator if codec and schema are required or not.
+   * @param separator The separator to use between various fields.
    */
-  def toString[
+  def toShortString[
     I,
-    P <: Nat
+    P <: HList
   ](
-    verbose: Boolean = false,
-    separator: String = "|",
-    descriptive: Boolean = true
+    verbose: Boolean,
+    separator: String
+  )(implicit
+    ev: Position.ListConstraints[P]
   ): ((I, Cell[P])) => TraversableOnce[String] = (t: (I, Cell[P])) =>
-    List(t._1.toString + separator + (if (verbose) t._2.toString else t._2.toShortString(separator, descriptive)))
+    List(t._1.toString + separator + t._2.toShortString(verbose, separator))
 
   /**
    * Return function that returns a JSON representations of a partition.
    *
-   * @param pretty      Indicator if the resulting JSON string to be indented.
-   * @param separator   The separator to use between various both JSON strings.
-   * @param descriptive Indicator if the JSON should be self describing (true) or not.
+   * @param verbose   Indicator if the JSON should be self describing or not.
+   * @param separator The separator to use between both JSON strings.
+   * @param pretty    Indicator if the resulting JSON string to be indented.
    *
    * @note The key and cell are separately encoded and then combined using the separator.
    */
   def toJSON[
     I,
-    P <: Nat
+    P <: HList
   ](
-    pretty: Boolean = false,
-    separator: String = ",",
-    descriptive: Boolean = true
+    verbose: Boolean,
+    separator: String, // TODO: Create real JSON structure
+    pretty: Boolean = false
+  )(implicit
+    ev: Position.ListConstraints[P]
   ): ((I, Cell[P])) => TraversableOnce[String] = (t: (I, Cell[P])) =>
-    List(t._1.toString + separator + t._2.toJSON(pretty, descriptive))
+    List(t._1.toString + separator + t._2.toJSON(verbose, pretty))
 }
 

@@ -15,13 +15,14 @@
 package commbank.grimlock.library.sample
 
 import commbank.grimlock.framework.Cell
+import commbank.grimlock.framework.encoding.Value
 import commbank.grimlock.framework.extract.Extract
+import commbank.grimlock.framework.position.Position
 import commbank.grimlock.framework.sample.{ Sampler, SamplerWithValue }
 
 import scala.util.Random
 
-import shapeless.Nat
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.{ HList, Nat }
 
 /**
  * Randomly sample to a ratio.
@@ -31,7 +32,7 @@ import shapeless.ops.nat.{ LTEq, ToInt }
  *
  * @note This randomly samples ignoring the position.
  */
-case class RandomSample[P <: Nat](ratio: Double, rnd: Random = new Random()) extends Sampler[P] {
+case class RandomSample[P <: HList](ratio: Double, rnd: Random = new Random()) extends Sampler[P] {
   def select(cell: Cell[P]): Boolean = rnd.nextDouble() < ratio
 }
 
@@ -43,14 +44,15 @@ case class RandomSample[P <: Nat](ratio: Double, rnd: Random = new Random()) ext
  * @param base  The base of the sampling ratio.
  */
 case class HashSample[
-  D <: Nat : ToInt,
-  P <: Nat
+  P <: HList,
+  D <: Nat,
+  V <: Value[_]
 ](
   dim: D,
   ratio: Int,
   base: Int
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, V]
 ) extends Sampler[P] {
   def select(cell: Cell[P]): Boolean = math.abs(cell.position(dim).hashCode % base) < ratio
 }
@@ -63,15 +65,16 @@ case class HashSample[
  * @param size  The size to sample to.
  */
 case class HashSampleToSize[
-  D <: Nat : ToInt,
-  P <: Nat,
-  W
+  P <: HList,
+  D <: Nat,
+  W,
+  X <: Value[_]
 ](
   dim: D,
   count: Extract[P, W, Double],
   size: Long
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, X]
 ) extends SamplerWithValue[P] {
   type V = W
 

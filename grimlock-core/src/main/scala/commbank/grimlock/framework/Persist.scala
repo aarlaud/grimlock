@@ -17,10 +17,12 @@ package commbank.grimlock.framework
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.Tuner
 
+import com.twitter.scrooge.ThriftStruct
+
 import org.apache.hadoop.io.Writable
 
 /** Trait for persisting data. */
-trait Persist[X, C <: Context[C]] extends java.io.Serializable {
+trait Persist[T, C <: Context[C]] extends java.io.Serializable {
   /**
    *   Convenience function for suppressing ‘Discarded non-unit value’ compiler warnings.
    *
@@ -32,8 +34,17 @@ trait Persist[X, C <: Context[C]] extends java.io.Serializable {
 
 /** Companion object to `Persist` with various types, implicits, etc. */
 object Persist {
+  /** Type for parsing Parquet data. */
+  type ParquetParser[S <: ThriftStruct, T] = (S) => TraversableOnce[Either[String, T]]
+
+  /** Type for parsing a key value tuple into either a `Cell[P]` or an error message. */
+  type SequenceParser[K <: Writable, V <: Writable, T] = (K, V) => TraversableOnce[Either[String, T]]
+
   /** Shorthand type for converting a `T` to key value tuple. */
   type SequenceWriter[T, K <: Writable, V <: Writable] = (T) => TraversableOnce[(K, V)]
+
+  /** Type for parsing a string to one or more `T`s or an error string. */
+  type TextParser[T] = (String) => TraversableOnce[Either[String, T]]
 
   /** Shorthand type for converting a `T` to string. */
   type TextWriter[T] = (T) => TraversableOnce[String]
@@ -45,9 +56,6 @@ object Persist {
    * be grouped into the list.
    */
   type TextWriterByPosition[T] = (List[Option[T]]) => TraversableOnce[String]
-
-  /** Type for parsing a string to one or more `T`s or an error string. */
-  type TextParser[T] = (String) => TraversableOnce[Either[String, T]]
 
   /** Trait for tuners permitted on a call to `saveAsText`. */
   trait SaveAsTextTuner[U[_], T <: Tuner] extends java.io.Serializable

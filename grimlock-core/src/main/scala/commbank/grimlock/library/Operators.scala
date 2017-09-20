@@ -19,12 +19,12 @@ import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.metadata.{ ContinuousSchema, NominalSchema }
 import commbank.grimlock.framework.pairwise.Operator
 
-import shapeless.Nat
+import shapeless.HList
 
 private[pairwise] object DoubleOperator {
   def compute[
-    P <: Nat,
-    Q <: Nat
+    P <: HList,
+    Q <: HList
   ](
     left: Cell[P],
     right: Cell[P],
@@ -45,7 +45,7 @@ private[pairwise] object DoubleOperator {
  *
  * @param pos Function to extract result position.
  */
-case class Plus[P <: Nat, Q <: Nat](pos: Locate.FromPairwiseCells[P, Q]) extends Operator[P, Q] {
+case class Plus[P <: HList, Q <: HList](pos: Locate.FromPairwiseCells[P, Q]) extends Operator[P, Q] {
   def compute(
     left: Cell[P],
     right: Cell[P]
@@ -59,8 +59,8 @@ case class Plus[P <: Nat, Q <: Nat](pos: Locate.FromPairwiseCells[P, Q]) extends
  * @param inverse Indicator if pairwise operator `f()` should be called as `f(l, r)` or as `f(r, l)`.
  */
 case class Minus[
-  P <: Nat,
-  Q <: Nat
+  P <: HList,
+  Q <: HList
 ](
   pos: Locate.FromPairwiseCells[P, Q],
   inverse: Boolean = false
@@ -76,7 +76,7 @@ case class Minus[
  *
  * @param pos     Function to extract result position.
  */
-case class Times[P <: Nat, Q <: Nat](pos: Locate.FromPairwiseCells[P, Q]) extends Operator[P, Q] {
+case class Times[P <: HList, Q <: HList](pos: Locate.FromPairwiseCells[P, Q]) extends Operator[P, Q] {
   def compute(
     left: Cell[P],
     right: Cell[P]
@@ -90,8 +90,8 @@ case class Times[P <: Nat, Q <: Nat](pos: Locate.FromPairwiseCells[P, Q]) extend
  * @param inverse Indicator if pairwise operator `f()` should be called as `f(l, r)` or as `f(r, l)`.
  */
 case class Divide[
-  P <: Nat,
-  Q <: Nat
+  P <: HList,
+  Q <: HList
 ](
   pos: Locate.FromPairwiseCells[P, Q],
   inverse: Boolean = false
@@ -110,8 +110,8 @@ case class Divide[
  *              representations of the content.
  */
 case class Concatenate[
-  P <: Nat,
-  Q <: Nat
+  P <: HList,
+  Q <: HList
 ](
   pos: Locate.FromPairwiseCells[P, Q],
   value: String = "%1$s,%2$s"

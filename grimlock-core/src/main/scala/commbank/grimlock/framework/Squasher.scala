@@ -16,24 +16,26 @@ package commbank.grimlock.framework.squash
 
 import commbank.grimlock.framework.Cell
 import commbank.grimlock.framework.content.Content
+import commbank.grimlock.framework.encoding.Value
+import commbank.grimlock.framework.position.Position
 
 import scala.reflect.ClassTag
 
-import shapeless.Nat
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.{ HList, Nat }
 
 /** Trait for squashing a dimension. */
-trait Squasher[P <: Nat] extends SquasherWithValue[P] {
+trait Squasher[P <: HList] extends SquasherWithValue[P] {
   type V = Any
 
   def prepareWithValue[
-    D <: Nat : ToInt
+    D <: Nat,
+    W <: Value[_]
   ](
     cell: Cell[P],
     dim: D,
     ext: V
   )(implicit
-    ev: LTEq[D, P]
+    ev: Position.IndexConstraints[P, D, W]
   ): Option[T] = prepare(cell, dim)
   def presentWithValue(t: T, ext: V): Option[Content] = present(t)
 
@@ -45,7 +47,15 @@ trait Squasher[P <: Nat] extends SquasherWithValue[P] {
    *
    * @return State to reduce.
    */
-  def prepare[D <: Nat : ToInt](cell: Cell[P], dim: D)(implicit ev: LTEq[D, P]): Option[T]
+  def prepare[
+    D <: Nat,
+    W <: Value[_]
+  ](
+    cell: Cell[P],
+    dim: D
+  )(implicit
+    ev: Position.IndexConstraints[P, D, W]
+  ): Option[T]
 
   /**
    * Present the squashed content.
@@ -58,7 +68,7 @@ trait Squasher[P <: Nat] extends SquasherWithValue[P] {
 }
 
 /** Trait for squashing a dimension with a user provided value. */
-trait SquasherWithValue[P <: Nat] extends java.io.Serializable {
+trait SquasherWithValue[P <: HList] extends java.io.Serializable {
   /** Type of the state being squashed. */
   type T
 
@@ -77,7 +87,16 @@ trait SquasherWithValue[P <: Nat] extends java.io.Serializable {
    *
    * @return State to reduce.
    */
-  def prepareWithValue[D <: Nat : ToInt](cell: Cell[P], dim: D, ext: V)(implicit ev: LTEq[D, P]): Option[T]
+  def prepareWithValue[
+    D <: Nat,
+    W <: Value[_]
+  ](
+    cell: Cell[P],
+    dim: D,
+    ext: V
+  )(implicit
+    ev: Position.IndexConstraints[P, D, W]
+  ): Option[T]
 
   /**
    * Standard reduce method.

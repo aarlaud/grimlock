@@ -28,7 +28,8 @@ import com.twitter.algebird.{ Moments => AlgeMoments, Monoid }
 
 import  scala.reflect.classTag
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT
 
 private[aggregate] object Aggregate {
@@ -42,7 +43,7 @@ private[aggregate] object Aggregate {
     else reduction(lt, rt)
 
   def present[
-    S <: Nat,
+    S <: HList,
     T
   ](
     nan: Boolean,
@@ -67,7 +68,7 @@ private[aggregate] object AggregateDouble {
 
   val tTag = classTag[T]
 
-  def prepare[P <: Nat](cell: Cell[P], filter: Boolean): Option[Double] =
+  def prepare[P <: HList](cell: Cell[P], filter: Boolean): Option[Double] =
     if (filter && !cell.content.schema.classification.isOfType(NumericType))
       None
     else
@@ -82,7 +83,7 @@ private[aggregate] object AggregateDouble {
   ): T = Aggregate.reduce(strict, invalid, reduction)(lt, rt)
 
   def present[
-    S <: Nat
+    S <: HList
   ](
     nan: Boolean
   )(
@@ -100,13 +101,13 @@ private[aggregate] object AggregateMoments {
 
   val tTag = classTag[T]
 
-  def prepare[P <: Nat](cell: Cell[P], filter: Boolean): Option[T] = AggregateDouble.prepare(cell, filter)
+  def prepare[P <: HList](cell: Cell[P], filter: Boolean): Option[T] = AggregateDouble.prepare(cell, filter)
     .map { case d => AlgeMoments(d) }
 
   def reduce(strict: Boolean)(lt: T, rt: T): T = Aggregate.reduce(strict, invalid, reduction)(lt, rt)
 
   def present[
-    S <: Nat
+    S <: HList
   ](
     nan: Boolean,
     asDouble: (T) => Double
@@ -121,7 +122,7 @@ private[aggregate] object AggregateMoments {
 }
 
 /** Count reductions. */
-case class Counts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
+case class Counts[P <: HList, S <: HList]() extends Aggregator[P, S, S] {
   type T = Long
   type O[A] = Single[A]
 
@@ -134,8 +135,8 @@ case class Counts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
 }
 
 /** Distinct count reductions. */
-case class DistinctCounts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
-  type T = Set[Value]
+case class DistinctCounts[P <: HList, S <: HList]() extends Aggregator[P, S, S] {
+  type T = Set[Value[_]]
   type O[A] = Single[A]
 
   val tTag = classTag[T]
@@ -151,7 +152,7 @@ case class DistinctCounts[P <: Nat, S <: Nat]() extends Aggregator[P, S, S] {
  *
  * @param predicte Function to be applied to content.
  */
-case class PredicateCounts[P <: Nat, S <: Nat](predicate: (Content) => Boolean) extends Aggregator[P, S, S] {
+case class PredicateCounts[P <: HList, S <: HList](predicate: (Content) => Boolean) extends Aggregator[P, S, S] {
   type T = Long
   type O[A] = Single[A]
 
@@ -180,9 +181,9 @@ case class PredicateCounts[P <: Nat, S <: Nat](predicate: (Content) => Boolean) 
  *                 data).
  */
 case class Moments[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   mean: Locate.FromPosition[S, Q],
   sd: Locate.FromPosition[S, Q],
@@ -240,8 +241,8 @@ case class Moments[
  *               data).
  */
 case class Mean[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -272,8 +273,8 @@ case class Mean[
  *               data).
  */
 case class StandardDeviation[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   biased: Boolean = false,
   filter: Boolean = true,
@@ -304,8 +305,8 @@ case class StandardDeviation[
  *               data).
  */
 case class Skewness[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -336,8 +337,8 @@ case class Skewness[
  *               data).
  */
 case class Kurtosis[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   excess: Boolean = false,
   filter: Boolean = true,
@@ -370,9 +371,9 @@ case class Kurtosis[
  *               data).
  */
 case class Limits[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList
 ](
   min: Locate.FromPosition[S, Q],
   max: Locate.FromPosition[S, Q],
@@ -425,8 +426,8 @@ case class Limits[
  *               data).
  */
 case class Minimum[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -456,8 +457,8 @@ case class Minimum[
  *               data).
  */
 case class Maximum[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -487,8 +488,8 @@ case class Maximum[
  *               data).
  */
 case class MaximumAbsolute[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -518,8 +519,8 @@ case class MaximumAbsolute[
  *               data).
  */
 case class Sums[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -550,8 +551,8 @@ case class Sums[
  *               data).
  */
 case class WeightedSums[
-  P <: Nat,
-  S <: Nat,
+  P <: HList,
+  S <: HList,
   W
 ](
   weight: Extract[P, W, Double],
@@ -591,8 +592,8 @@ case class WeightedSums[
  * @param log    The log function to use.
  */
 case class Entropy[
-  P <: Nat,
-  S <: Nat,
+  P <: HList,
+  S <: HList,
   W
 ](
   count: Extract[P, W, Double],
@@ -640,8 +641,8 @@ case class Entropy[
  *               data).
  */
 case class FrequencyRatio[
-  P <: Nat,
-  S <: Nat
+  P <: HList,
+  S <: HList
 ](
   filter: Boolean = true,
   strict: Boolean = true,
@@ -682,9 +683,11 @@ case class FrequencyRatio[
  * @see https://github.com/tdunning/t-digest
  */
 case class TDigestQuantiles[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList,
+  L <: Nat,
+  M <: Nat
 ](
   probs: List[Double],
   compression: Double,
@@ -692,7 +695,9 @@ case class TDigestQuantiles[
   filter: Boolean = true,
   nan: Boolean = false
 )(implicit
-  ev: GT[Q, S]
+  ev1: Length.Aux[Q, L],
+  ev2: Length.Aux[S, M],
+  ev3: GT[L, M]
 ) extends Aggregator[P, S, Q] {
   type T = TDigest.T
   type O[A] = Multiple[A]
@@ -722,9 +727,11 @@ case class TDigestQuantiles[
  * @note Only use this if all distinct values and their counts fit in memory.
  */
 case class CountMapQuantiles[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList,
+  L <: Nat,
+  M <: Nat
 ](
   probs: List[Double],
   quantiser: Quantiles.Quantiser,
@@ -732,7 +739,9 @@ case class CountMapQuantiles[
   filter: Boolean = true,
   nan: Boolean = false
 )(implicit
-  ev: GT[Q, S]
+  ev1: Length.Aux[Q, L],
+  ev2: Length.Aux[S, M],
+  ev3: GT[L, M]
 ) extends Aggregator[P, S, Q] {
   type T = CountMap.T
   type O[A] = Multiple[A]
@@ -758,16 +767,20 @@ case class CountMapQuantiles[
  * @see http://www.jmlr.org/papers/volume11/ben-haim10a/ben-haim10a.pdf
  */
 sealed case class UniformQuantiles[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList,
+  L <: Nat,
+  M <: Nat
 ](
   count: Long,
   name: Locate.FromSelectedAndOutput[S, Double, Q],
   filter: Boolean = true,
   nan: Boolean = false
 )(implicit
-  ev: GT[Q, S]
+  ev1: Length.Aux[Q, L],
+  ev2: Length.Aux[S, M],
+  ev3: GT[L, M]
 ) extends Aggregator[P, S, Q] {
   type T = StreamingHistogram.T
   type O[A] = Multiple[A]
@@ -793,14 +806,18 @@ sealed case class UniformQuantiles[
  * @note Only use this if all distinct values and their counts fit in memory.
  */
 case class CountMapHistogram[
-  P <: Nat,
-  S <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  Q <: HList,
+  L <: Nat,
+  M <: Nat
 ](
   name: Locate.FromSelectedAndContent[S, Q],
   filter: Boolean = true
 )(implicit
-  ev: GT[Q, S]
+  ev1: Length.Aux[Q, L],
+  ev2: Length.Aux[S, M],
+  ev3: GT[L, M]
 ) extends Aggregator[P, S, Q] {
   type T = Map[Content, Long]
   type O[A] = Multiple[A]

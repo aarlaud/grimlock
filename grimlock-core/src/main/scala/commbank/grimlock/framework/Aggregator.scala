@@ -20,7 +20,8 @@ import commbank.grimlock.framework.position.Position
 
 import scala.reflect.{ classTag, ClassTag }
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.{ GT, GTEq }
 
 /** Trait that encapsulates the result of an aggregation. */
@@ -90,7 +91,7 @@ object Multiple {
 }
 
 /** Trait for aggregations. */
-trait Aggregator[P <: Nat, S <: Nat, Q <: Nat] extends AggregatorWithValue[P, S, Q] { self =>
+trait Aggregator[P <: HList, S <: HList, Q <: HList] extends AggregatorWithValue[P, S, Q] { self =>
   type V = Any
 
   def prepareWithValue(cell: Cell[P], ext: V): Option[T] = prepare(cell)
@@ -161,11 +162,15 @@ trait Aggregator[P <: Nat, S <: Nat, Q <: Nat] extends AggregatorWithValue[P, S,
    * @return An aggregator that runs `this` and then relocates the resulting contents.
    */
   override def andThenRelocate[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     relocator: Locate.FromCell[Q, X]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new Aggregator[P, S, X] {
     type T = self.T
     type O[A] = self.O[A]
@@ -184,44 +189,56 @@ trait Aggregator[P <: Nat, S <: Nat, Q <: Nat] extends AggregatorWithValue[P, S,
 /** Companion object to the `Aggregator` trait. */
 object Aggregator {
   /** Type to validate an aggregator. */
-  type Validate[P <: Nat, S <: Nat, Q <: Nat] = Valid[P, S, Q]
+  type Validate[P <: HList, S <: HList, Q <: HList] = Valid[P, S, Q]
 
   /** Trait for valid aggregators. */
-  trait Valid[P <: Nat, S <: Nat, Q <: Nat] {
+  trait Valid[P <: HList, S <: HList, Q <: HList] {
     def check(aggregators: Seq[Aggregator[P, S, Q]]): Aggregator[P, S, Q]
   }
 
   /** Implicit constraint that ensures that aggregators for which Q > S, can return any value. */
   implicit def qGreaterThanS[
-    P <: Nat,
-    S <: Nat,
-    Q <: Nat
+    P <: HList,
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
   ](implicit
-    ev: GT[Q, S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M]
   ): Valid[P, S, Q] = new Valid[P, S, Q] {
     def check(aggregators: Seq[Aggregator[P, S, Q]]): Aggregator[P, S, Q] = aggregators.toList
   }
 
   /** Implicit constraint that ensures that aggregators for which Q == S, can return only a Single value. */
   implicit def qEqualSWithSingle[
-    P <: Nat,
-    S <: Nat,
-    Q <: Nat
+    P <: HList,
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
   ](implicit
-    ev: Q =:= S
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: L =:= M
   ): Valid[P, S, Q] = new Valid[P, S, Q] {
     def check(aggregators: Seq[Aggregator[P, S, Q]]): Aggregator[P, S, Q] = Validate.check(aggregators)
   }
 
   /** Implicit conversion from `List[Aggregator[P, S, Q]]` to a single `Aggregator[P, S, Q]`. */
   implicit def listToAggregator[
-    P <: Nat,
-    S <: Nat,
-    Q <: Nat
+    P <: HList,
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     aggregators: List[Aggregator[P, S, Q]]
   )(implicit
-    ev: GT[Q, S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M]
   ): Aggregator[P, S, Q] = new Aggregator[P, S, Q] {
     type T = List[(Int, Any)]
     type O[A] = Multiple[A]
@@ -258,7 +275,7 @@ object Aggregator {
 }
 
 /** Trait for aggregations with a user supplied value. */
-trait AggregatorWithValue[P <: Nat, S <: Nat, Q <: Nat] extends java.io.Serializable { self =>
+trait AggregatorWithValue[P <: HList, S <: HList, Q <: HList] extends java.io.Serializable { self =>
   /** Type of the state being aggregated. */
   type T
 
@@ -355,11 +372,15 @@ trait AggregatorWithValue[P <: Nat, S <: Nat, Q <: Nat] extends java.io.Serializ
    * @return An aggregator that runs `this` and then relocates the resulting contents.
    */
   def andThenRelocate[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     relocator: Locate.FromCell[Q, X]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new AggregatorWithValue[P, S, X] {
     type T = self.T
     type V = self.V
@@ -426,11 +447,15 @@ trait AggregatorWithValue[P <: Nat, S <: Nat, Q <: Nat] extends java.io.Serializ
    * @return An aggregator that runs `this` and then relocates the resulting contents.
    */
   def andThenRelocateWithValue[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     relocator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new AggregatorWithValue[P, S, X] {
     type T = self.T
     type V = self.V
@@ -450,10 +475,10 @@ trait AggregatorWithValue[P <: Nat, S <: Nat, Q <: Nat] extends java.io.Serializ
 /** Companion object to the `AggregatorWithValue` trait. */
 object AggregatorWithValue {
   /** Type to validate an aggregator. */
-  type Validate[P <: Nat, S <: Nat, Q <: Nat, W] = Valid[P, S, Q, W]
+  type Validate[P <: HList, S <: HList, Q <: HList, W] = Valid[P, S, Q, W]
 
   /** Trait for valid aggregators. */
-  trait Valid[P <: Nat, S <: Nat, Q <: Nat, W] {
+  trait Valid[P <: HList, S <: HList, Q <: HList, W] {
     def check(
       aggregators: Seq[AggregatorWithValue[P, S, Q] { type V >: W }]
     ): AggregatorWithValue[P, S, Q] { type V >: W }
@@ -461,12 +486,16 @@ object AggregatorWithValue {
 
   /** Implicit constraint that ensures that aggregators for which Q > S, can return any value. */
   implicit def qGreaterThanSWithValue[
-    P <: Nat,
-    S <: Nat,
-    Q <: Nat,
+    P <: HList,
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat,
     W
   ](implicit
-    ev: GT[Q, S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M]
   ): Valid[P, S, Q, W] = new Valid[P, S, Q, W] {
     def check(
       aggregators: Seq[AggregatorWithValue[P, S, Q] { type V >: W }]
@@ -475,12 +504,16 @@ object AggregatorWithValue {
 
   /** Implicit constraint that ensures that aggregators for which Q == S, can return only a Single value. */
   implicit def qEqualSWithSingleWithValue[
-    P <: Nat,
-    S <: Nat,
-    Q <: Nat,
+    P <: HList,
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat,
     W
   ](implicit
-    ev: Q =:= S
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: L =:= M
   ): Valid[P, S, Q, W] = new Valid[P, S, Q, W] {
     def check(
       aggregators: Seq[AggregatorWithValue[P, S, Q] { type V >: W }]
@@ -492,14 +525,18 @@ object AggregatorWithValue {
    * `AggregatorWithValue[P, S, Q] { type V >: W }`
    */
   implicit def listToAggregatorWithValue[
-    P <: Nat,
-    S <: Nat,
-    Q <: Nat,
+    P <: HList,
+    S <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat,
     W
   ](
     aggregators: List[AggregatorWithValue[P, S, Q] { type V >: W }]
   )(implicit
-    ev: GT[Q, S]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M]
   ): AggregatorWithValue[P, S, Q] { type V >: W } = new AggregatorWithValue[P, S, Q] {
     type T = List[(Int, Any)]
     type V = W

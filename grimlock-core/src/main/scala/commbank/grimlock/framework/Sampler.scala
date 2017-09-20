@@ -16,10 +16,10 @@ package commbank.grimlock.framework.sample
 
 import commbank.grimlock.framework.Cell
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for sampling. */
-trait Sampler[P <: Nat] extends SamplerWithValue[P] { self =>
+trait Sampler[P <: HList] extends SamplerWithValue[P] { self =>
   type V = Any
 
   def selectWithValue(cell: Cell[P], ext: V): Boolean = select(cell)
@@ -46,18 +46,18 @@ trait Sampler[P <: Nat] extends SamplerWithValue[P] { self =>
 /** Companion object for the `Sampler` trait. */
 object Sampler {
   /** Converts a `(Cell[P]) => Boolean` to a `Sampler[P]`. */
-  implicit def funcToSampler[P <: Nat](func: (Cell[P]) => Boolean) = new Sampler[P] {
+  implicit def funcToSampler[P <: HList](func: (Cell[P]) => Boolean) = new Sampler[P] {
     def select(cell: Cell[P]): Boolean = func(cell)
   }
 
   /** Converts a `List[Sampler[P]]` to a `Sampler[P]`. */
-  implicit def listToSamples[P <: Nat](samplers: List[Sampler[P]]) = new Sampler[P] {
+  implicit def listToSamples[P <: HList](samplers: List[Sampler[P]]) = new Sampler[P] {
     def select(cell: Cell[P]): Boolean = samplers.map(_.select(cell)).reduce(_ || _)
   }
 }
 
 /** Trait for selecting samples with a user provided value. */
-trait SamplerWithValue[P <: Nat] extends java.io.Serializable { self =>
+trait SamplerWithValue[P <: HList] extends java.io.Serializable { self =>
   /** Type of the external value. */
   type V
 
@@ -87,7 +87,7 @@ trait SamplerWithValue[P <: Nat] extends java.io.Serializable { self =>
 /** Companion object for the `SamplerWithValue` trait. */
 object SamplerWithValue {
   /** Converts a `(Cell[P], W) => Boolean` to a `SamplerWithValue[P]`. */
-  implicit def funcToSamplerWithValue[P <: Nat, W](func: (Cell[P], W) => Boolean) = new SamplerWithValue[P] {
+  implicit def funcToSamplerWithValue[P <: HList, W](func: (Cell[P], W) => Boolean) = new SamplerWithValue[P] {
     type V = W
 
     def selectWithValue(cell: Cell[P], ext: V): Boolean = func(cell, ext)
@@ -95,7 +95,7 @@ object SamplerWithValue {
 
   /** Converts a `List[SamplerWithValue[P] { type V >: W }]` to a `SamplerWithValue[P] { type V >: W }`. */
   implicit def listToSamplerWithValue[
-    P <: Nat,
+    P <: HList,
     W
   ](
     samplers: List[SamplerWithValue[P] { type V >: W }]

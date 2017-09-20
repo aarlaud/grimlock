@@ -22,19 +22,28 @@ import commbank.grimlock.framework.position.Slice
 
 import com.twitter.algebird.Moments
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for computing common statistics from a matrix. */
-trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
+trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
   /**
    * Compute counts.
    *
    * @param slice Encapsulates the dimension(s) to compute counts for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the counts.
+   * @return A `C#U[Cell[S]]` with the counts.
    */
-  def counts[T <: Tuner](slice: Slice[P], tuner: T)(implicit ev: Statistics.CountsTuner[C#U, T]): C#U[Cell[slice.S]]
+  def counts[
+    S <: HList,
+    R <: HList,
+    T <: Tuner
+  ](
+    slice: Slice[P, S, R],
+    tuner: T
+  )(implicit
+    ev: Statistics.CountsTuner[C#U, T]
+  ): C#U[Cell[S]]
 
   /**
    * Compute distinct value counts.
@@ -42,16 +51,18 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param slice Encapsulates the dimension(s) to compute distinct counts for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the distinct counts.
+   * @return A `C#U[Cell[S]]` with the distinct counts.
    */
   def distinctCounts[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(implicit
     ev: Statistics.DistinctCountsTuner[C#U, T]
-  ): C#U[Cell[slice.S]]
+  ): C#U[Cell[S]]
 
   /**
    * Compute predicate counts.
@@ -60,18 +71,20 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param tuner     The tuner for the job.
    * @param predicate The predicate to count.
    *
-   * @return A `C#U[Cell[slice.S]]` with the predicate counts.
+   * @return A `C#U[Cell[S]]` with the predicate counts.
    */
   def predicateCounts[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     predicate: (Content) => Boolean
   )(implicit
     ev: Statistics.PredicateCountsTuner[C#U, T]
-  ): C#U[Cell[slice.S]]
+  ): C#U[Cell[S]]
 
   /**
    * Compute mean values.
@@ -79,9 +92,18 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param slice Encapsulates the dimension(s) to compute mean values for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the mean values.
+   * @return A `C#U[Cell[S]]` with the mean values.
    */
-  def mean[T <: Tuner](slice: Slice[P], tuner: T)(implicit ev: Statistics.MeanTuner[C#U, T]): C#U[Cell[slice.S]]
+  def mean[
+    S <: HList,
+    R <: HList,
+    T <: Tuner
+  ](
+    slice: Slice[P, S, R],
+    tuner: T
+  )(implicit
+    ev: Statistics.MeanTuner[C#U, T]
+  ): C#U[Cell[S]]
 
   /**
    * Compute standard deviation.
@@ -90,18 +112,20 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param tuner  The tuner for the job.
    * @param biased Indicator if biased standard deviation should be computed or not.
    *
-   * @return A `C#U[Cell[slice.S]]` with the standard deviations.
+   * @return A `C#U[Cell[S]]` with the standard deviations.
    */
   def standardDeviation[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     biased: Boolean
   )(implicit
     ev: Statistics.StandardDeviationTuner[C#U, T]
-  ): C#U[Cell[slice.S]]
+  ): C#U[Cell[S]]
 
   /**
    * Compute skewness values.
@@ -109,9 +133,18 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param slice Encapsulates the dimension(s) to compute skewness values for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the skewness values.
+   * @return A `C#U[Cell[S]]` with the skewness values.
    */
-  def skewness[T <: Tuner](slice: Slice[P], tuner: T)(implicit ev: Statistics.SkewnessTuner[C#U, T]): C#U[Cell[slice.S]]
+  def skewness[
+    S <: HList,
+    R <: HList,
+    T <: Tuner
+  ](
+    slice: Slice[P, S, R],
+    tuner: T
+  )(implicit
+    ev: Statistics.SkewnessTuner[C#U, T]
+  ): C#U[Cell[S]]
 
   /**
    * Compute kurtosis values.
@@ -120,18 +153,20 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param tuner  The tuner for the job.
    * @param excess Indicator if excess kurtosis should be computed or not.
    *
-   * @return A `C#U[Cell[slice.S]]` with the kurtosis values.
+   * @return A `C#U[Cell[S]]` with the kurtosis values.
    */
   def kurtosis[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(
     excess: Boolean
   )(implicit
     ev: Statistics.KurtosisTuner[C#U, T]
-  ): C#U[Cell[slice.S]]
+  ): C#U[Cell[S]]
 
   /**
    * Compute minimum values.
@@ -139,9 +174,18 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param slice Encapsulates the dimension(s) to compute minimum values for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the minimum values.
+   * @return A `C#U[Cell[S]]` with the minimum values.
    */
-  def minimum[T <: Tuner](slice: Slice[P], tuner: T)(implicit ev: Statistics.MinimumTuner[C#U, T]): C#U[Cell[slice.S]]
+  def minimum[
+    S <: HList,
+    R <: HList,
+    T <: Tuner
+  ](
+    slice: Slice[P, S, R],
+    tuner: T
+  )(implicit
+    ev: Statistics.MinimumTuner[C#U, T]
+  ): C#U[Cell[S]]
 
   /**
    * Compute maximum values.
@@ -149,9 +193,18 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param slice Encapsulates the dimension(s) to compute maximum values for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the maximum values.
+   * @return A `C#U[Cell[S]]` with the maximum values.
    */
-  def maximum[T <: Tuner](slice: Slice[P], tuner: T)(implicit ev: Statistics.MaximumTuner[C#U, T]): C#U[Cell[slice.S]]
+  def maximum[
+    S <: HList,
+    R <: HList,
+    T <: Tuner
+  ](
+    slice: Slice[P, S, R],
+    tuner: T
+  )(implicit
+    ev: Statistics.MaximumTuner[C#U, T]
+  ): C#U[Cell[S]]
 
   /**
    * Compute maximum absolute values.
@@ -159,16 +212,18 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param slice Encapsulates the dimension(s) to compute maximum absolute values for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the maximum absolute values.
+   * @return A `C#U[Cell[S]]` with the maximum absolute values.
    */
   def maximumAbsolute[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T
   )(implicit
     ev: Statistics.MaximumAbsoluteTuner[C#U, T]
-  ): C#U[Cell[slice.S]]
+  ): C#U[Cell[S]]
 
   /**
    * Compute sum values.
@@ -176,9 +231,18 @@ trait Statistics[P <: Nat, C <: Context[C]] { self: Matrix[P, C] =>
    * @param slice Encapsulates the dimension(s) to compute sum values for.
    * @param tuner The tuner for the job.
    *
-   * @return A `C#U[Cell[slice.S]]` with the sum values.
+   * @return A `C#U[Cell[S]]` with the sum values.
    */
-  def sums[T <: Tuner](slice: Slice[P], tuner: T)(implicit ev: Statistics.SumsTuner[C#U, T]): C#U[Cell[slice.S]]
+  def sums[
+    S <: HList,
+    R <: HList,
+    T <: Tuner
+  ](
+    slice: Slice[P, S, R],
+    tuner: T
+  )(implicit
+    ev: Statistics.SumsTuner[C#U, T]
+  ): C#U[Cell[S]]
 }
 
 /** Companion object to `Statistics`. */

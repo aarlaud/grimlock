@@ -29,14 +29,13 @@ import commbank.grimlock.framework.metadata.{
 import commbank.grimlock.framework.position.Position
 import commbank.grimlock.framework.transform.{ Transformer, TransformerWithValue }
 
-import shapeless.Nat
-import shapeless.nat._1
+import shapeless.HList
 
 private[transform] object Transform {
-  def check[P <: Nat](cell: Cell[P], t: Type): Boolean = cell.content.schema.classification.isOfType(t)
+  def check[P <: HList](cell: Cell[P], t: Type): Boolean = cell.content.schema.classification.isOfType(t)
 
   def presentDouble[
-    P <: Nat
+    P <: HList
   ](
     cell: Cell[P],
     f: (Double) => Double
@@ -46,7 +45,7 @@ private[transform] object Transform {
   }
 
   def presentDoubleWithValue[
-    P <: Nat,
+    P <: HList,
     W
   ](
     cell: Cell[P],
@@ -63,7 +62,7 @@ private[transform] object Transform {
     }
 
   def presentDoubleWithTwoValues[
-    P <: Nat,
+    P <: HList,
     W
   ](
     cell: Cell[P],
@@ -80,7 +79,7 @@ private[transform] object Transform {
 }
 
 /** Create indicator variables. */
-case class Indicator[P <: Nat]() extends Transformer[P, P] {
+case class Indicator[P <: HList]() extends Transformer[P, P] {
   def present(cell: Cell[P]): TraversableOnce[Cell[P]] = List(Cell(cell.position, Content(DiscreteSchema[Long](), 1)))
 }
 
@@ -91,7 +90,7 @@ case class Indicator[P <: Nat]() extends Transformer[P, P] {
  *
  * @note Binarisation is only applied to categorical variables.
  */
-case class Binarise[P <: Nat](pos: Locate.FromCell[P, P]) extends Transformer[P, P] {
+case class Binarise[P <: HList](pos: Locate.FromCell[P, P]) extends Transformer[P, P] {
   def present(cell: Cell[P]): TraversableOnce[Cell[P]] =
     if (Transform.check(cell, CategoricalType)) pos(cell).map(Cell(_, Content(DiscreteSchema[Long](), 1))) else List()
 }
@@ -103,7 +102,7 @@ case class Binarise[P <: Nat](pos: Locate.FromCell[P, P]) extends Transformer[P,
  *
  * @note Normalisation scales a variable in the range [-1, 1]. It is only applied to numerical variables.
  */
-case class Normalise[P <: Nat, W](const: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
+case class Normalise[P <: HList, W](const: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
   type V = W
 
   def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[P]] = Transform.presentDoubleWithValue(
@@ -126,7 +125,7 @@ case class Normalise[P <: Nat, W](const: Extract[P, W, Double]) extends Transfor
  *       variables.
  */
 case class Standardise[
-  P <: Nat,
+  P <: HList,
   W
 ](
   mean: Extract[P, W, Double],
@@ -155,7 +154,7 @@ case class Standardise[
  *       numerical variables.
  */
 case class Clamp[
-  P <: Nat,
+  P <: HList,
   W
 ](
   lower: Extract[P, W, Double],
@@ -181,7 +180,7 @@ case class Clamp[
  * @note Idf is only applied to numerical variables.
  */
 case class Idf[
-  P <: Nat,
+  P <: HList,
   W
 ](
   freq: Extract[P, W, Double],
@@ -202,7 +201,7 @@ case class Idf[
  *
  * @note Boolean tf is only applied to numerical variables.
  */
-case class BooleanTf[P <: Nat]() extends Transformer[P, P] {
+case class BooleanTf[P <: HList]() extends Transformer[P, P] {
   def present(cell: Cell[P]): TraversableOnce[Cell[P]] = Transform.presentDouble(cell, (v) => 1)
 }
 
@@ -213,7 +212,7 @@ case class BooleanTf[P <: Nat]() extends Transformer[P, P] {
  *
  * @note Logarithmic tf is only applied to numerical variables.
  */
-case class LogarithmicTf[P <: Nat](log: (Double) => Double = math.log) extends Transformer[P, P] {
+case class LogarithmicTf[P <: HList](log: (Double) => Double = math.log) extends Transformer[P, P] {
   def present(cell: Cell[P]): TraversableOnce[Cell[P]] = Transform.presentDouble(cell, (tf) => 1 + log(tf))
 }
 
@@ -224,7 +223,7 @@ case class LogarithmicTf[P <: Nat](log: (Double) => Double = math.log) extends T
  *
  * @note Augmented tf is only applied to numerical variables.
  */
-case class AugmentedTf[P <: Nat, W](max: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
+case class AugmentedTf[P <: HList, W](max: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
   type V = W
 
   def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[P]] = Transform.presentDoubleWithValue(
@@ -242,7 +241,7 @@ case class AugmentedTf[P <: Nat, W](max: Extract[P, W, Double]) extends Transfor
  *
  * @note Tf-idf is only applied to numerical variables.
  */
-case class TfIdf[P <: Nat, W](idf: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
+case class TfIdf[P <: HList, W](idf: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
   type V = W
 
   def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[P]] = Transform.presentDoubleWithValue(
@@ -260,7 +259,7 @@ case class TfIdf[P <: Nat, W](idf: Extract[P, W, Double]) extends TransformerWit
  *
  * @note Add is only applied to numerical variables.
  */
-case class Add[P <: Nat, W](value: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
+case class Add[P <: HList, W](value: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
   type V = W
 
   def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[P]] = Transform.presentDoubleWithValue(
@@ -280,7 +279,7 @@ case class Add[P <: Nat, W](value: Extract[P, W, Double]) extends TransformerWit
  * @note Subtract is only applied to numerical variables.
  */
 case class Subtract[
-  P <: Nat,
+  P <: HList,
   W
 ](
   value: Extract[P, W, Double],
@@ -304,7 +303,7 @@ case class Subtract[
  *
  * @note Multiply is only applied to numerical variables.
  */
-case class Multiply[P <: Nat, W](value: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
+case class Multiply[P <: HList, W](value: Extract[P, W, Double]) extends TransformerWithValue[P, P] {
   type V = W
 
   def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[P]] = Transform.presentDoubleWithValue(
@@ -324,7 +323,7 @@ case class Multiply[P <: Nat, W](value: Extract[P, W, Double]) extends Transform
  * @note Fraction is only applied to numerical variables.
  */
 case class Fraction[
-  P <: Nat,
+  P <: HList,
   W
 ](
   value: Extract[P, W, Double],
@@ -348,7 +347,7 @@ case class Fraction[
  *
  * @note Power is only applied to numerical variables.
  */
-case class Power[P <: Nat](power: Double) extends Transformer[P, P] {
+case class Power[P <: HList](power: Double) extends Transformer[P, P] {
   def present(cell: Cell[P]): TraversableOnce[Cell[P]] = Transform.presentDouble(cell, (d) => math.pow(d, power))
 }
 
@@ -357,7 +356,7 @@ case class Power[P <: Nat](power: Double) extends Transformer[P, P] {
  *
  * @note SquareRoot is only applied to numerical variables.
  */
-case class SquareRoot[P <: Nat]() extends Transformer[P, P] {
+case class SquareRoot[P <: HList]() extends Transformer[P, P] {
   def present(cell: Cell[P]): TraversableOnce[Cell[P]] = Transform.presentDouble(cell, (d) => math.sqrt(d))
 }
 
@@ -368,7 +367,7 @@ case class SquareRoot[P <: Nat]() extends Transformer[P, P] {
  *
  * @note Cut is only applied to numerical variables.
  */
-case class Cut[P <: Nat, W](bins: Extract[P, W, List[Double]]) extends TransformerWithValue[P, P] {
+case class Cut[P <: HList, W](bins: Extract[P, W, List[Double]]) extends TransformerWithValue[P, P] {
   type V = W
 
   def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[P]] =
@@ -386,7 +385,7 @@ case class Cut[P <: Nat, W](bins: Extract[P, W, List[Double]]) extends Transform
 trait CutRules[E[_]] {
 
   /** Type of statistics data from which the number of bins is computed. */
-  type Stats = Map[Position[_1], Map[Position[_1], Content]]
+  type Stats[K <: HList, V <: HList] = Map[Position[K], Map[Position[V], Content]]
 
   /**
    * Define range of `k` approximately equal size bins.
@@ -398,19 +397,25 @@ trait CutRules[E[_]] {
    *
    * @return A `E` holding the break values.
    */
-  def fixed(
-    ext: E[Stats],
-    min: Position[_1],
-    max: Position[_1],
+  def fixed[
+    K <: HList,
+    V <: HList
+  ](
+    ext: E[Stats[K, V]],
+    min: Position[V],
+    max: Position[V],
     k: Long
-  ): E[Map[Position[_1], List[Double]]]
+  ): E[Map[Position[K], List[Double]]]
 
-  protected def fixedFromStats(
-    stats: Stats,
-    min: Position[_1],
-    max: Position[_1],
+  protected def fixedFromStats[
+    K <: HList,
+    V <: HList
+  ](
+    stats: Stats[K, V],
+    min: Position[V],
+    max: Position[V],
     k: Long
-  ): Map[Position[_1], List[Double]] = cut(stats, min, max, _ => Option(k))
+  ): Map[Position[K], List[Double]] = cut(stats, min, max, (_: Map[Position[V], Content]) => Option(k))
 
   /**
    * Define range of bins based on the square-root choice.
@@ -422,19 +427,30 @@ trait CutRules[E[_]] {
    *
    * @return A `E` holding the break values.
    */
-  def squareRootChoice(
-    ext: E[Stats],
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1]
-  ): E[Map[Position[_1], List[Double]]]
+  def squareRootChoice[
+    K <: HList,
+    V <: HList
+  ](
+    ext: E[Stats[K, V]],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V]
+  ): E[Map[Position[K], List[Double]]]
 
-  protected def squareRootChoiceFromStats(
-    stats: Stats,
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1]
-  ): Map[Position[_1], List[Double]] = cut(stats, min, max, extract(_, count).map(n => math.round(math.sqrt(n))))
+  protected def squareRootChoiceFromStats[
+    K <: HList,
+    V <: HList
+  ](
+    stats: Stats[K, V],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V]
+  ): Map[Position[K], List[Double]] = cut(
+    stats,
+    min,
+    max,
+    (m: Map[Position[V], Content]) => extract(m, count).map(n => math.round(math.sqrt(n)))
+  )
 
   /**
    * Define range of bins based on Sturges' formula.
@@ -446,19 +462,30 @@ trait CutRules[E[_]] {
    *
    * @return A `E` holding the break values.
    */
-  def sturgesFormula(
-    ext: E[Stats],
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1]
-  ): E[Map[Position[_1], List[Double]]]
+  def sturgesFormula[
+    K <: HList,
+    V <: HList
+  ](
+    ext: E[Stats[K, V]],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V]
+  ): E[Map[Position[K], List[Double]]]
 
-  protected def sturgesFormulaFromStats(
-    stats: Stats,
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1]
-  ): Map[Position[_1], List[Double]] = cut(stats, min, max, extract(_, count).map(n => math.ceil(log2(n) + 1).toLong))
+  protected def sturgesFormulaFromStats[
+    K <: HList,
+    V <: HList
+  ](
+    stats: Stats[K, V],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V]
+  ): Map[Position[K], List[Double]] = cut(
+    stats,
+    min,
+    max,
+    (m: Map[Position[V], Content]) => extract(m, count).map(n => math.ceil(log2(n) + 1).toLong)
+  )
 
   /**
    * Define range of bins based on the Rice rule.
@@ -470,20 +497,30 @@ trait CutRules[E[_]] {
    *
    * @return A `E` holding the break values.
    */
-  def riceRule(
-    ext: E[Stats],
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1]
-  ): E[Map[Position[_1], List[Double]]]
+  def riceRule[
+    K <: HList,
+    V <: HList
+  ](
+    ext: E[Stats[K, V]],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V]
+  ): E[Map[Position[K], List[Double]]]
 
-  protected def riceRuleFromStats(
-    stats: Stats,
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1]
-  ): Map[Position[_1], List[Double]] =
-    cut(stats, min, max, extract(_, count).map(n => math.ceil(2 * math.pow(n, 1.0 / 3.0)).toLong))
+  protected def riceRuleFromStats[
+    K <: HList,
+    V <: HList
+  ](
+    stats: Stats[K, V],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V]
+  ): Map[Position[K], List[Double]] = cut(
+    stats,
+    min,
+    max,
+    (m: Map[Position[V], Content]) => extract(m, count).map(n => math.ceil(2 * math.pow(n, 1.0 / 3.0)).toLong)
+  )
 
   /**
    * Define range of bins based on Doane's formula.
@@ -496,25 +533,36 @@ trait CutRules[E[_]] {
    *
    * @return A `E` holding the break values.
    */
-  def doanesFormula(
-    ext: E[Stats],
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1],
-    skewness: Position[_1]
-  ): E[Map[Position[_1], List[Double]]]
+  def doanesFormula[
+    K <: HList,
+    V <: HList
+  ](
+    ext: E[Stats[K, V]],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V],
+    skewness: Position[V]
+  ): E[Map[Position[K], List[Double]]]
 
-  protected def doanesFormulaFromStats(
-    stats: Stats,
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1],
-    skewness: Position[_1]
-  ): Map[Position[_1], List[Double]] = cut(stats, min, max, m => (extract(m, count), extract(m, skewness)) match {
-    case (Some(n), Some(s)) =>
-      Option(math.round(1 + log2(n) + log2(1 + math.abs(s) / math.sqrt((6 * (n - 2)) / ((n + 1) * (n + 3))))))
-    case _ => None
-  })
+  protected def doanesFormulaFromStats[
+    K <: HList,
+    V <: HList
+  ](
+    stats: Stats[K, V],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V],
+    skewness: Position[V]
+  ): Map[Position[K], List[Double]] = cut(
+    stats,
+    min,
+    max,
+    (m: Map[Position[V], Content]) => (extract(m, count), extract(m, skewness)) match {
+      case (Some(n), Some(s)) =>
+        Option(math.round(1 + log2(n) + log2(1 + math.abs(s) / math.sqrt((6 * (n - 2)) / ((n + 1) * (n + 3))))))
+      case _ => None
+    }
+  )
 
   /**
    * Define range of bins based on Scott's normal reference rule.
@@ -527,49 +575,55 @@ trait CutRules[E[_]] {
    *
    * @return A `E` holding the break values.
    */
-  def scottsNormalReferenceRule(
-    ext: E[Stats],
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1],
-    sd: Position[_1]
-  ): E[Map[Position[_1], List[Double]]]
+  def scottsNormalReferenceRule[
+    K <: HList,
+    V <: HList
+  ](
+    ext: E[Stats[K, V]],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V],
+    sd: Position[V]
+  ): E[Map[Position[K], List[Double]]]
 
-  protected def scottsNormalReferenceRuleFromStats(
-    stats: Stats,
-    count: Position[_1],
-    min: Position[_1],
-    max: Position[_1],
-    sd: Position[_1]
-  ): Map[Position[_1], List[Double]] =
-    cut(stats, min, max, m => (extract(m, count), extract(m, min), extract(m, max), extract(m, sd)) match {
+  protected def scottsNormalReferenceRuleFromStats[
+    K <: HList,
+    V <: HList
+  ](
+    stats: Stats[K, V],
+    count: Position[V],
+    min: Position[V],
+    max: Position[V],
+    sd: Position[V]
+  ): Map[Position[K], List[Double]] = cut(
+    stats,
+    min,
+    max,
+    (m: Map[Position[V], Content]) => (extract(m, count), extract(m, min), extract(m, max), extract(m, sd)) match {
       case (Some(n), Some(l), Some(u), Some(s)) =>
         Option(math.ceil((u - l) / (3.5 * s / math.pow(n, 1.0 / 3.0))).toLong)
       case _ => None
-    })
+    }
+  )
 
   /**
    * Return a `E` holding the user defined break values.
    *
    * @param range A map (holding for each key) the bins range of that feature.
    */
-  def breaks[P <% Position[_1]](range: Map[P, List[Double]]): E[Map[Position[_1], List[Double]]]
-
-  protected def breaksFromMap[P <% Position[_1]](range: Map[P, List[Double]]): Map[Position[_1], List[Double]] = range
-    .map { case (p, l) =>
-      val pos: Position[_1] = p
-
-      (pos, l)
-    }
+  def breaks[P <: HList](range: Map[Position[P], List[Double]]): E[Map[Position[P], List[Double]]]
 
   // TODO: Add 'right' and 'labels' options (analogous to R's)
-  private def cut(
-    stats: Stats,
-    min: Position[_1],
-    max: Position[_1],
-    bins: (Map[Position[_1], Content]) => Option[Long]
-  ): Map[Position[_1], List[Double]] =
-    stats.flatMap { case (pos, map) =>
+  private def cut[
+    K <: HList,
+    V <: HList
+  ](
+    stats: Stats[K, V],
+    min: Position[V],
+    max: Position[V],
+    bins: (Map[Position[V], Content]) => Option[Long]
+  ): Map[Position[K], List[Double]] = stats
+    .flatMap { case (pos, map) =>
       (extract(map, min), extract(map, max), bins(map)) match {
         case (Some(l), Some(u), Some(k)) =>
           val delta = math.abs(u - l)
@@ -580,7 +634,7 @@ trait CutRules[E[_]] {
       }
     }
 
-  private def extract(ext: Map[Position[_1], Content], key: Position[_1]): Option[Double] = ext
+  private def extract[V <: HList](ext: Map[Position[V], Content], key: Position[V]): Option[Double] = ext
     .get(key)
     .flatMap(_.value.asDouble)
 
@@ -594,7 +648,7 @@ trait CutRules[E[_]] {
  *
  * @note The returned cells contain boolean content.
  */
-case class Compare[P <: Nat](comparer: (Cell[P]) => Boolean) extends Transformer[P, P] {
+case class Compare[P <: HList](comparer: (Cell[P]) => Boolean) extends Transformer[P, P] {
   def present(cell: Cell[P]): TraversableOnce[Cell[P]] = List(
     Cell(cell.position, Content(NominalSchema[Boolean](), comparer(cell)))
   )

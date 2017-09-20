@@ -18,7 +18,8 @@ import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.position.Position
 
-import shapeless.Nat
+import shapeless.{ HList, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GTEq
 
 /** Trait for comparing two positions to determine if pairwise operation is to be applied. */
@@ -29,41 +30,90 @@ trait Comparer {
    * @param left  Left position.
    * @param right Right position.
    */
-  def keep[P <: Nat](left: Position[P], right: Position[P]): Boolean
+  def keep[
+    P <: HList
+  ](
+    left: Position[P],
+    right: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Boolean
 }
 
 /** Case object for computing all pairwise combinations. */
 case object All extends Comparer {
-  def keep[P <: Nat](left: Position[P], right: Position[P]): Boolean = true
+  def keep[
+    P <: HList
+  ](
+    left: Position[P],
+    right: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Boolean = true
 }
 
 /** Case object for computing diagonal pairwise combinations (i.e. left == right). */
 case object Diagonal extends Comparer {
-  def keep[P <: Nat](left: Position[P], right: Position[P]): Boolean = left.compare(right) == 0
+  def keep[
+    P <: HList
+  ](
+    left: Position[P],
+    right: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Boolean = left.compare(right) == 0
 }
 
 /** Case object for computing upper triangular pairwise combinations (i.e. right > left). */
 case object Upper extends Comparer {
-  def keep[P <: Nat](left: Position[P], right: Position[P]): Boolean = right.compare(left) > 0
+  def keep[
+    P <: HList
+  ](
+    left: Position[P],
+    right: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Boolean = right.compare(left) > 0
 }
 
 /** Case object for computing upper triangular or diagonal pairwise combinations (i.e. right >= left). */
 case object UpperDiagonal extends Comparer {
-  def keep[P <: Nat](left: Position[P], right: Position[P]): Boolean = right.compare(left) >= 0
+  def keep[
+    P <: HList
+  ](
+    left: Position[P],
+    right: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Boolean = right.compare(left) >= 0
 }
 
 /** Case object for computing lower triangular pairwise combinations (i.e. left > right). */
 case object Lower extends Comparer {
-  def keep[P <: Nat](left: Position[P], right: Position[P]): Boolean = left.compare(right) > 0
+  def keep[
+    P <: HList
+  ](
+    left: Position[P],
+    right: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Boolean = left.compare(right) > 0
 }
 
 /** Case object for computing lower triangular or diagonal pairwise combinations (i.e. left >= right). */
 case object LowerDiagonal extends Comparer {
-  def keep[P <: Nat](left: Position[P], right: Position[P]): Boolean = left.compare(right) >= 0
+  def keep[
+    P <: HList
+  ](
+    left: Position[P],
+    right: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Boolean = left.compare(right) >= 0
 }
 
 /** Trait for computing pairwise values. */
-trait Operator[P <: Nat, Q <: Nat] extends OperatorWithValue[P, Q] { self =>
+trait Operator[P <: HList, Q <: HList] extends OperatorWithValue[P, Q] { self =>
   type V = Any
 
   def computeWithValue(left: Cell[P], right: Cell[P], ext: V): TraversableOnce[Cell[Q]] = compute(left, right)
@@ -110,7 +160,17 @@ trait Operator[P <: Nat, Q <: Nat] extends OperatorWithValue[P, Q] { self =>
    *
    * @return An operator that runs `this` and then relocates the resulting content.
    */
-  override def andThenRelocate[X <: Nat](locator: Locate.FromCell[Q, X])(implicit ev: GTEq[X, Q]) = new Operator[P, X] {
+  override def andThenRelocate[
+    X <: HList,
+    L <: Nat,
+    M <: Nat
+  ](
+    locator: Locate.FromCell[Q, X]
+  )(implicit
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
+  ) = new Operator[P, X] {
     def compute(left: Cell[P], right: Cell[P]): TraversableOnce[Cell[X]] = self
       .compute(left, right)
       .flatMap(c => locator(c).map(Cell(_, c.content)))
@@ -120,23 +180,26 @@ trait Operator[P <: Nat, Q <: Nat] extends OperatorWithValue[P, Q] { self =>
 /** Companion object for the `Operator` trait. */
 object Operator {
   /** Converts a `(Cell[P], Cell[P]) => Cell[Q]` to a `Operator[P, Q]`. */
-  implicit def funcToOperator[P <: Nat, Q <: Nat](func: (Cell[P], Cell[P]) => Cell[Q]) = new Operator[P, Q] {
+  implicit def funcToOperator[P <: HList, Q <: HList](func: (Cell[P], Cell[P]) => Cell[Q]) = new Operator[P, Q] {
     def compute(left: Cell[P], right: Cell[P]): TraversableOnce[Cell[Q]] = List(func(left, right))
   }
 
   /** Converts a `(Cell[P], Cell[P]) => List[Cell[Q]]` to a `Operator[P, Q]`. */
-  implicit def funcListToOperator[P <: Nat, Q <: Nat](func: (Cell[P], Cell[P]) => List[Cell[Q]]) = new Operator[P, Q] {
-    def compute(left: Cell[P], right: Cell[P]): TraversableOnce[Cell[Q]] = func(left, right)
-  }
+  implicit def funcListToOperator[
+    P <: HList,
+    Q <: HList
+  ](
+    func: (Cell[P], Cell[P]) => List[Cell[Q]]
+  ) = new Operator[P, Q] { def compute(left: Cell[P], right: Cell[P]): TraversableOnce[Cell[Q]] = func(left, right) }
 
   /** Converts a `List[Operator[P, Q]]` to a single `Operator[P, Q]`. */
-  implicit def listToOperator[P <: Nat, Q <: Nat](operators: List[Operator[P, Q]]) = new Operator[P, Q] {
+  implicit def listToOperator[P <: HList, Q <: HList](operators: List[Operator[P, Q]]) = new Operator[P, Q] {
     def compute(left: Cell[P], right: Cell[P]): TraversableOnce[Cell[Q]] = operators.flatMap(_.compute(left, right))
   }
 }
 
 /** Trait for computing pairwise values with a user provided value. */
-trait OperatorWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { self =>
+trait OperatorWithValue[P <: HList, Q <: HList] extends java.io.Serializable { self =>
   /** Type of the external value. */
   type V
 
@@ -188,7 +251,17 @@ trait OperatorWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { self 
    *
    * @return An operator that runs `this` and then relocates the resulting content.
    */
-  def andThenRelocate[X <: Nat](locator: Locate.FromCell[Q, X])(implicit ev: GTEq[X, Q]) = new OperatorWithValue[P, X] {
+  def andThenRelocate[
+    X <: HList,
+    L <: Nat,
+    M <: Nat
+  ](
+    locator: Locate.FromCell[Q, X]
+  )(implicit
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
+  ) = new OperatorWithValue[P, X] {
     type V = self.V
 
     def computeWithValue(left: Cell[P], right: Cell[P], ext: V): TraversableOnce[Cell[X]] = self
@@ -233,11 +306,15 @@ trait OperatorWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { self 
    * @return An operator that runs `this` and then relocates the resulting content.
    */
   def andThenRelocateWithValue[
-    X <: Nat
+    X <: HList,
+    L <: Nat,
+    M <: Nat
   ](
     locator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev: GTEq[X, Q]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[X, M],
+    ev3: GTEq[M, L]
   ) = new OperatorWithValue[P, X] {
     type V = self.V
 
@@ -251,8 +328,8 @@ trait OperatorWithValue[P <: Nat, Q <: Nat] extends java.io.Serializable { self 
 object OperatorWithValue {
   /** Converts a `(Cell[P], Cell[P], W) => Cell[Q]` to an `OperatorWithValue[P, Q] { type V >: W }`. */
   implicit def funcToOperatorWithValue[
-    P <: Nat,
-    Q <: Nat,
+    P <: HList,
+    Q <: HList,
     W
   ](
     func: (Cell[P], Cell[P], W) => Cell[Q]
@@ -264,8 +341,8 @@ object OperatorWithValue {
 
   /** Converts a `(Cell[P], Cell[P], W) => List[Cell[Q]]` to an `OperatorWithValue[P, Q] { type V >: W }`. */
   implicit def funcListToOperatorWithValue[
-    P <: Nat,
-    Q <: Nat,
+    P <: HList,
+    Q <: HList,
     W
   ](
     func: (Cell[P], Cell[P], W) => List[Cell[Q]]
@@ -279,8 +356,8 @@ object OperatorWithValue {
    * Converts a `List[OperatorWithValue[P, Q] { type V >: W }]` to a single `OperatorWithValue[P, Q] { type V >: W }`.
    */
   implicit def listToOperatorWithValue[
-    P <: Nat,
-    Q <: Nat,
+    P <: HList,
+    Q <: HList,
     W
   ](
     operators: List[OperatorWithValue[P, Q] { type V >: W }]

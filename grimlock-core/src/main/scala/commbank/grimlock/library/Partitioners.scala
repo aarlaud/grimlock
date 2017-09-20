@@ -15,13 +15,13 @@
 package commbank.grimlock.library.partition
 
 import commbank.grimlock.framework.Cell
-import commbank.grimlock.framework.encoding.{ DateCodec, DateValue }
+import commbank.grimlock.framework.encoding.{ DateCodec, Value }
 import commbank.grimlock.framework.partition.Partitioner
+import commbank.grimlock.framework.position.Position
 
 import java.util.Date
 
-import shapeless.Nat
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.{ HList, Nat }
 
 /**
  * Binary partition based on the hash code of a coordinate.
@@ -36,9 +36,10 @@ import shapeless.ops.nat.{ LTEq, ToInt }
  *       partition if it is less or equal to the `ratio` value.
  */
 case class BinaryHashSplit[
-  D <: Nat : ToInt,
-  P <: Nat,
-  I
+  D <: Nat,
+  P <: HList,
+  I,
+  V <: Value[_]
 ](
   dim: D,
   ratio: Int,
@@ -46,7 +47,7 @@ case class BinaryHashSplit[
   right: I,
   base: Int = 100
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, V]
 ) extends Partitioner[P, I] {
   def assign(cell: Cell[P]): TraversableOnce[I] = List(
     if (math.abs(cell.position(dim).hashCode % base) <= ratio) left else right
@@ -69,9 +70,10 @@ case class BinaryHashSplit[
  *       `right`.
  */
 case class TernaryHashSplit[
-  D <: Nat : ToInt,
-  P <: Nat,
-  I
+  D <: Nat,
+  P <: HList,
+  I,
+  V <: Value[_]
 ](
   dim: D,
   lower: Int,
@@ -81,7 +83,7 @@ case class TernaryHashSplit[
   right: I,
   base: Int = 100
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, V]
 ) extends Partitioner[P, I] {
   def assign(cell: Cell[P]): TraversableOnce[I] = {
     val hash = math.abs(cell.position(dim).hashCode % base)
@@ -102,15 +104,16 @@ case class TernaryHashSplit[
  *       value in tuple).
  */
 case class HashSplit[
-  D <: Nat : ToInt,
-  P <: Nat,
-  I
+  D <: Nat,
+  P <: HList,
+  I,
+  V <: Value[_]
 ](
   dim: D,
   ranges: Map[I, (Int, Int)],
   base: Int = 100
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, V]
 ) extends Partitioner[P, I] {
   def assign(cell: Cell[P]): TraversableOnce[I] = {
     val hash = math.abs(cell.position(dim).hashCode % base)
@@ -132,9 +135,10 @@ case class HashSplit[
  *       otherwise.
  */
 case class BinaryDateSplit[
-  D <: Nat : ToInt,
-  P <: Nat,
-  I
+  D <: Nat,
+  P <: HList,
+  I,
+  V <: Value[Date]
 ](
   dim: D,
   date: Date,
@@ -142,11 +146,11 @@ case class BinaryDateSplit[
   right: I,
   codec: DateCodec
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, V]
 ) extends Partitioner[P, I] {
-  def assign(cell: Cell[P]): TraversableOnce[I] = codec
-    .compare(cell.position(dim), DateValue(date, codec))
-    .map(cmp => if (cmp <= 0) left else right)
+  def assign(cell: Cell[P]): TraversableOnce[I] = List(
+    if (codec.compare(cell.position(dim).value, date) <= 0) left else right
+  )
 }
 
 /**
@@ -164,9 +168,10 @@ case class BinaryDateSplit[
  *       equal to `upper` or else to `right`.
  */
 case class TernaryDateSplit[
-  D <: Nat : ToInt,
-  P <: Nat,
-  I
+  D <: Nat,
+  P <: HList,
+  I,
+  V <: Value[Date]
 ](
   dim: D,
   lower: Date,
@@ -176,14 +181,13 @@ case class TernaryDateSplit[
   right: I,
   codec: DateCodec
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, V]
 ) extends Partitioner[P, I] {
-  def assign(cell: Cell[P]): TraversableOnce[I] =
-    (codec.compare(cell.position(dim), DateValue(lower, codec)),
-     codec.compare(cell.position(dim), DateValue(upper, codec))) match {
-      case (Some(l), Some(u)) => List(if (l <= 0) left else if (u <= 0) middle else right)
-      case _ => List()
-    }
+  def assign(cell: Cell[P]): TraversableOnce[I] = {
+    val date = cell.position(dim).value
+
+    List(if (codec.compare(date, lower) <= 0) left else if (codec.compare(date, upper) <= 0) middle else right)
+  }
 }
 
 /**
@@ -197,23 +201,22 @@ case class TernaryDateSplit[
  *       or equal to the upper value (second value in tuple).
  */
 case class DateSplit[
-  D <: Nat : ToInt,
-  P <: Nat,
-  I
+  D <: Nat,
+  P <: HList,
+  I,
+  V <: Value[Date]
 ](
   dim: D,
   ranges: Map[I, (Date, Date)],
   codec: DateCodec
 )(implicit
-  ev: LTEq[D, P]
+  ev: Position.IndexConstraints[P, D, V]
 ) extends Partitioner[P, I] {
   def assign(cell: Cell[P]): TraversableOnce[I] = ranges
     .flatMap { case (k, (lower, upper)) =>
-      (codec.compare(cell.position(dim), DateValue(lower, codec)),
-       codec.compare(cell.position(dim), DateValue(upper, codec))) match {
-        case (Some(l), Some(u)) if (l > 0 && u <= 0) => Option(k)
-        case _ => None
-      }
+      val date = cell.position(dim).value
+
+      if (codec.compare(date, lower) > 0 && codec.compare(date, upper) <= 0) Option(k) else None
     }
 }
 

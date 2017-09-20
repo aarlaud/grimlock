@@ -84,6 +84,39 @@ object Content {
   def apply[T](schema: Schema[T], value: Value[T]): Content = ContentImpl(schema, value)
 
   /**
+   * Return a decoder from component strings.
+   *
+   * @param codec  The string of the codec to use in the decoder.
+   * @param schema The string of the schema to use in the decoder.
+   *
+   * @return Either an error string or a content decoder.
+   */
+  def decoderFromComponents(codec: String, schema: String): Either[String, Decoder] = {
+    def toDecoder[T](c: Codec[T], s: Schema[T]) = Right((str: String) => parse(str, c, s).right.toOption)
+
+    def schemaToDecoder[T](c: Codec[T]) = {
+      Schema.fromShortString[Schema.DefaultSchemas[T], T](schema, c) match {
+        case Some(Inl(s)) => toDecoder(c, s)
+        case Some(Inr(Inl(s))) => toDecoder(c, s)
+        case Some(Inr(Inr(Inl(s)))) => toDecoder(c, s)
+        case Some(Inr(Inr(Inr(Inl(s))))) => toDecoder(c, s)
+        case Some(Inr(Inr(Inr(Inr(Inl(s)))))) => toDecoder(c, s)
+        case _ => Left(s"Unable to decode schema: '${schema}'")
+      }
+    }
+
+    Codec.fromShortString[Codec.DefaultCodecs](codec) match {
+      case Some(Inl(c)) => schemaToDecoder(c)
+      case Some(Inr(Inl(c))) => schemaToDecoder(c)
+      case Some(Inr(Inr(Inl(c)))) => schemaToDecoder(c)
+      case Some(Inr(Inr(Inr(Inl(c))))) => schemaToDecoder(c)
+      case Some(Inr(Inr(Inr(Inr(Inl(c)))))) => schemaToDecoder(c)
+      case Some(Inr(Inr(Inr(Inr(Inr(Inl(c))))))) => schemaToDecoder(c)
+      case _ => Left(s"Unable to decode codec: '${codec}'")
+    }
+  }
+
+  /**
    * Parse a content from string components.
    *
    * @param codec  The codec string to decode content with.
@@ -317,13 +350,13 @@ object Content {
   }
 
   private def parse(codec: String, schema: String, value: String): Either[String, Content] = {
-    def parseSchemaToContent[T](codec: Codec[T]) = {
-      Schema.fromShortString[Schema.DefaultSchemas[T], T](schema, codec) match {
-        case Some(Inl(s)) => parse(value, codec, s)
-        case Some(Inr(Inl(s))) => parse(value, codec, s)
-        case Some(Inr(Inr(Inl(s)))) => parse(value, codec, s)
-        case Some(Inr(Inr(Inr(Inl(s))))) => parse(value, codec, s)
-        case Some(Inr(Inr(Inr(Inr(Inl(s)))))) => parse(value, codec, s)
+    def parseSchemaToContent[T](c: Codec[T]) = {
+      Schema.fromShortString[Schema.DefaultSchemas[T], T](schema, c) match {
+        case Some(Inl(s)) => parse(value, c, s)
+        case Some(Inr(Inl(s))) => parse(value, c, s)
+        case Some(Inr(Inr(Inl(s)))) => parse(value, c, s)
+        case Some(Inr(Inr(Inr(Inl(s))))) => parse(value, c, s)
+        case Some(Inr(Inr(Inr(Inr(Inl(s)))))) => parse(value, c, s)
         case _ => Left(s"Unable to decode schema: '${schema}'")
       }
     }
@@ -433,11 +466,13 @@ object IndexedContents {
    * @param verbose   Indicator if the string should be self-describing or not.
    * @param separator The separator to use between various fields.
    */
-  def toString[
+  def toShortString[
     P <: HList
   ](
     verbose: Boolean,
     separator: String
+  )(implicit
+    ev: Position.ListConstraints[P]
   ): ((Position[P], Content)) => TraversableOnce[String] = (t: (Position[P], Content)) => List(
     t._1.toShortString(separator) + separator + (if (verbose) t._2.toShortString(separator) else t._2.toShortString)
   )
@@ -457,6 +492,8 @@ object IndexedContents {
     verbose: Boolean,
     separator: String,
     pretty: Boolean = false
+  )(implicit
+    ev: Position.ListConstraints[P]
   ): ((Position[P], Content)) => TraversableOnce[String] = (t: (Position[P], Content)) =>
     List(t._1.toJSON(pretty) + separator + t._2.toJSON(verbose, pretty))
 }

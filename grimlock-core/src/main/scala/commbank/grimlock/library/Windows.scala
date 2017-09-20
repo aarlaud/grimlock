@@ -20,18 +20,18 @@ import commbank.grimlock.framework.metadata.ContinuousSchema
 import commbank.grimlock.framework.position.Position
 import commbank.grimlock.framework.window.Window
 
-import shapeless.Nat
+import shapeless.HList
 
 private[window] object MovingAverage {
   type I = Double
-  type O[R <: Nat] = (Position[R], Double)
+  type O[R <: HList] = (Position[R], Double)
 
-  def prepare[P <: Nat](cell: Cell[P]): I = cell.content.value.asDouble.getOrElse(Double.NaN)
+  def prepare[P <: HList](cell: Cell[P]): I = cell.content.value.asDouble.getOrElse(Double.NaN)
 
   def present[
-    S <: Nat,
-    R <: Nat,
-    Q <: Nat
+    S <: HList,
+    R <: HList,
+    Q <: HList
   ](
     position: Locate.FromSelectedAndRemainder[S, R, Q]
   )(
@@ -41,10 +41,10 @@ private[window] object MovingAverage {
 }
 
 private[window] object BatchMovingAverage {
-  type T[R <: Nat] = List[(Position[R], Double)]
+  type T[R <: HList] = List[(Position[R], Double)]
 
   def initialise[
-    R <: Nat
+    R <: HList
   ](
     all: Boolean
   )(
@@ -53,7 +53,7 @@ private[window] object BatchMovingAverage {
   ): (T[R], TraversableOnce[MovingAverage.O[R]]) = (List((rem, in)), if (all) List((rem, in)) else List())
 
   def update[
-    R <: Nat
+    R <: HList
   ](
     window: Int,
     all: Boolean,
@@ -75,14 +75,14 @@ private[window] object OnlineMovingAverage {
   type T = (Double, Long)
 
   def initialise[
-    R <: Nat
+    R <: HList
   ](
     rem: Position[R],
     in: MovingAverage.I
   ): (T, TraversableOnce[MovingAverage.O[R]]) = ((in, 1), List((rem, in)))
 
   def update[
-    R <: Nat
+    R <: HList
   ](
     compute: (Double, T) => Double
   )(
@@ -104,10 +104,10 @@ private[window] object OnlineMovingAverage {
  * @param all      Indicates if averages should be output when a full window isn't available yet.
  */
 case class SimpleMovingAverage[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
 ](
   window: Int,
   position: Locate.FromSelectedAndRemainder[S, R, Q],
@@ -139,10 +139,10 @@ case class SimpleMovingAverage[
  * @param position Function to extract result position.
  */
 case class CenteredMovingAverage[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
 ](
   width: Int,
   position: Locate.FromSelectedAndRemainder[S, R, Q]
@@ -174,10 +174,10 @@ case class CenteredMovingAverage[
  * @param all      Indicates if averages should be output when a full window isn't available yet.
  */
 case class WeightedMovingAverage[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
 ](
   window: Int,
   position: Locate.FromSelectedAndRemainder[S, R, Q],
@@ -212,10 +212,10 @@ case class WeightedMovingAverage[
  * @param position Function to extract result position.
  */
 case class CumulativeMovingAverage[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
 ](
   position: Locate.FromSelectedAndRemainder[S, R, Q]
 ) extends Window[P, S, R, Q] {
@@ -238,10 +238,10 @@ case class CumulativeMovingAverage[
  * @param position Function to extract result position.
  */
 case class ExponentialMovingAverage[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
 ](
   alpha: Double,
   position: Locate.FromSelectedAndRemainder[S, R, Q]
@@ -265,10 +265,10 @@ case class ExponentialMovingAverage[
  * @param strict   Indicates is non-numeric values should result in NaN.
  */
 case class CumulativeSums[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
 ](
   position: Locate.FromSelectedAndRemainder[S, R, Q],
   strict: Boolean = true
@@ -305,10 +305,10 @@ case class CumulativeSums[
  * @param strict   Indicates is non-numeric values should result in NaN.
  */
 case class BinaryOperator[
-  P <: Nat,
-  S <: Nat,
-  R <: Nat,
-  Q <: Nat
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
 ](
   binop: (Double, Double) => Double,
   position: Locate.FromSelectedAndPairwiseRemainder[S, R, Q],
