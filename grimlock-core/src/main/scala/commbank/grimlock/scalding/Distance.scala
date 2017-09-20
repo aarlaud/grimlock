@@ -26,27 +26,29 @@ import commbank.grimlock.scalding.Persist
 
 import com.twitter.algebird.{ Moments, Monoid }
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Trait for computing pairwise distances from a matrix. */
 trait PairwiseDistance[
-  P <: Nat
+  P <: HList
 ] extends FwPairwiseDistance[P, Context]
   with Persist[Cell[P]] { self: FwMultiDimensionMatrix[P, Context] =>
   def correlation[
-    Q <: Nat,
+    S <: HList,
+    R <: HList,
+    Q <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(
-    name: Locate.FromPairwisePositions[slice.S, Q],
+    name: Locate.FromPairwisePositions[S, Q],
     filter: Boolean,
     strict: Boolean
   )(implicit
     ev: FwPairwiseDistance.CorrelationTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
-    val msj = Option(MapMapSideJoin[Position[slice.S], (Position[slice.R], Double), Double]())
+    val msj = Option(MapMapSideJoin[Position[S], (Position[R], Double), Double]())
 
     val (at, st, rt, ct) = getTuners(tuner)
 
@@ -83,19 +85,21 @@ trait PairwiseDistance[
   }
 
   def mutualInformation[
-    Q <: Nat,
+    S <: HList,
+    R <: HList,
+    Q <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(
-    name: Locate.FromPairwisePositions[slice.S, Q],
+    name: Locate.FromPairwisePositions[S, Q],
     filter: Boolean,
     log: (Double) => Double
   )(implicit
     ev: FwPairwiseDistance.MutualInformationTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
-    val msj = Option(MapMapSideJoin[Position[slice.S], Long, Long]())
+    val msj = Option(MapMapSideJoin[Position[S], Long, Long]())
 
     val (at, st, rt, ct) = getTuners(tuner)
 

@@ -26,7 +26,7 @@ import commbank.grimlock.framework.position.Position
 import commbank.grimlock.scalding.environment.Context
 import commbank.grimlock.scalding.Persist
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Rich wrapper around a `TypedPipe[Content]`. */
 case class Contents(data: Context.U[Content]) extends FwContents[Context] with Persist[Content] {
@@ -44,7 +44,7 @@ case class Contents(data: Context.U[Content]) extends FwContents[Context] with P
 
 /** Rich wrapper around a `TypedPipe[(Position[P], Content]`. */
 case class IndexedContents[
-  P <: Nat
+  P <: HList
 ](
   data: Context.U[(Position[P], Content)]
 ) extends FwIndexedContents[P, Context]

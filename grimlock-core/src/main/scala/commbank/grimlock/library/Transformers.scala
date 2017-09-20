@@ -611,7 +611,7 @@ trait CutRules[E[_]] {
    *
    * @param range A map (holding for each key) the bins range of that feature.
    */
-  def breaks[P <: HList](range: Map[Position[P], List[Double]]): E[Map[Position[P], List[Double]]]
+  def breaks[K <: HList](range: Map[Position[K], List[Double]]): E[Map[Position[K], List[Double]]]
 
   // TODO: Add 'right' and 'labels' options (analogous to R's)
   private def cut[

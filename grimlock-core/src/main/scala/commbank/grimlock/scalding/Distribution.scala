@@ -33,27 +33,33 @@ import commbank.grimlock.scalding.environment.tuner.MapMapSideJoin
 import commbank.grimlock.scalding.environment.tuner.ScaldingImplicits._
 import commbank.grimlock.scalding.Persist
 
-import shapeless.{ =:!=, Nat }
-import shapeless.nat._0
+import shapeless.{ =:!=, HList, HNil, Nat }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT
 
 /** Trait for computing approximate distributions from a matrix. */
 trait ApproximateDistribution[
-  P <: Nat
+  P <: HList
 ] extends FwApproximateDistribution[P, Context]
   with Persist[Cell[P]] { self: FwMatrix[P, Context] =>
   def histogram[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(
-    name: Locate.FromSelectedAndContent[slice.S, Q],
+    name: Locate.FromSelectedAndContent[S, Q],
     filter: Boolean
   )(implicit
-    ev1: GT[Q, slice.S],
-    ev2: FwApproximateDistribution.HistogramTuner[Context.U, T]
+    ev1: Length.Aux[Q, L],
+    ev2: Length.Aux[S, M],
+    ev3: GT[L, M],
+    ev4: FwApproximateDistribution.HistogramTuner[Context.U, T]
   ): Context.U[Cell[Q]] = data
     .filter { case c => (!filter || c.content.schema.classification.isOfType(CategoricalType)) }
     .flatMap { case c => name(slice.selected(c.position), c.content) }
@@ -61,24 +67,30 @@ trait ApproximateDistribution[
     .map { case (p, s) => Cell(p, Content(DiscreteSchema[Long](), s)) }
 
   def quantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(
     probs: List[Double],
     quantiser: Quantiles.Quantiser,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean,
     nan: Boolean
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: FwApproximateDistribution.QuantilesTuner[Context.U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: FwApproximateDistribution.QuantilesTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
-    val msj = Option(MapMapSideJoin[Position[slice.S], Double, Long]())
-    val qnt = QuantileImpl[P, slice.S, Q](probs, quantiser, name, nan)
+    val msj = Option(MapMapSideJoin[Position[S], Double, Long]())
+    val qnt = QuantileImpl[P, S, Q](probs, quantiser, name, nan)
 
     val prep = data
       .collect { case c if (!filter || c.content.schema.classification.isOfType(NumericType)) =>
@@ -95,21 +107,27 @@ trait ApproximateDistribution[
   }
 
   def countMapQuantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(
     probs: List[Double],
     quantiser: Quantiles.Quantiser,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean,
     nan: Boolean
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: FwApproximateDistribution.CountMapQuantilesTuner[Context.U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: FwApproximateDistribution.CountMapQuantilesTuner[Context.U, T]
   ): Context.U[Cell[Q]] = data
     .flatMap { case c =>
       if (!filter || c.content.schema.classification.isOfType(NumericType))
@@ -121,21 +139,27 @@ trait ApproximateDistribution[
     .flatMap { case (pos, t) => CountMap.toCells(t, probs, pos, quantiser, name, nan) }
 
   def tDigestQuantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(
     probs: List[Double],
     compression: Double,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean,
     nan: Boolean
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: FwApproximateDistribution.TDigestQuantilesTuner[Context.U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: FwApproximateDistribution.TDigestQuantilesTuner[Context.U, T]
   ): Context.U[Cell[Q]] = data
     .flatMap { case c =>
       if (!filter || c.content.schema.classification.isOfType(NumericType))
@@ -149,20 +173,26 @@ trait ApproximateDistribution[
     .flatMap { case (pos, t) => TDigest.toCells(t, probs, pos, name, nan) }
 
   def uniformQuantiles[
-    Q <: Nat,
-    T <: Tuner
+    S <: HList,
+    R <: HList,
+    Q <: HList,
+    T <: Tuner,
+    L <: Nat,
+    M <: Nat
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(
     count: Long,
-    name: Locate.FromSelectedAndOutput[slice.S, Double, Q],
+    name: Locate.FromSelectedAndOutput[S, Double, Q],
     filter: Boolean,
     nan: Boolean
   )(implicit
-    ev1: slice.R =:!= _0,
-    ev2: GT[Q, slice.S],
-    ev3: FwApproximateDistribution.UniformQuantilesTuner[Context.U, T]
+    ev1: R =:!= HNil,
+    ev2: Length.Aux[Q, L],
+    ev3: Length.Aux[S, M],
+    ev4: GT[L, M],
+    ev5: FwApproximateDistribution.UniformQuantilesTuner[Context.U, T]
   ): Context.U[Cell[Q]] = data
     .flatMap { case c =>
       if (!filter || c.content.schema.classification.isOfType(NumericType))
