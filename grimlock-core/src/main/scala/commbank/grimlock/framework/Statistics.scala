@@ -18,7 +18,7 @@ import commbank.grimlock.framework.{ Cell, Matrix }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.environment.Context
 import commbank.grimlock.framework.environment.tuner.Tuner
-import commbank.grimlock.framework.position.Slice
+import commbank.grimlock.framework.position.{ Position, Slice }
 
 import com.twitter.algebird.Moments
 
@@ -42,7 +42,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.CountsTuner[C#U, T]
+    ev1: Statistics.CountsTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -61,7 +62,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.DistinctCountsTuner[C#U, T]
+    ev1: Statistics.DistinctCountsTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -83,7 +85,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
   )(
     predicate: (Content) => Boolean
   )(implicit
-    ev: Statistics.PredicateCountsTuner[C#U, T]
+    ev1: Statistics.PredicateCountsTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -102,7 +105,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.MeanTuner[C#U, T]
+    ev1: Statistics.MeanTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -124,7 +128,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
   )(
     biased: Boolean
   )(implicit
-    ev: Statistics.StandardDeviationTuner[C#U, T]
+    ev1: Statistics.StandardDeviationTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -143,7 +148,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.SkewnessTuner[C#U, T]
+    ev1: Statistics.SkewnessTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -165,7 +171,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
   )(
     excess: Boolean
   )(implicit
-    ev: Statistics.KurtosisTuner[C#U, T]
+    ev1: Statistics.KurtosisTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -184,7 +191,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.MinimumTuner[C#U, T]
+    ev1: Statistics.MinimumTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -203,7 +211,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.MaximumTuner[C#U, T]
+    ev1: Statistics.MaximumTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -222,7 +231,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.MaximumAbsoluteTuner[C#U, T]
+    ev1: Statistics.MaximumAbsoluteTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -241,7 +251,8 @@ trait Statistics[P <: HList, C <: Context[C]] { self: Matrix[P, C] =>
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev: Statistics.SumsTuner[C#U, T]
+    ev1: Statistics.SumsTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 }
 

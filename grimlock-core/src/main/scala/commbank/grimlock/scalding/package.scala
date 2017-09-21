@@ -81,8 +81,9 @@ import commbank.grimlock.scalding.content.{ Contents, IndexedContents }
 import commbank.grimlock.scalding.partition.Partitions
 import commbank.grimlock.scalding.position.Positions
 
-import shapeless.{ ::, HList, HNil }
-import shapeless.nat.{ _1, _2, _3, _4, _5, _6, _7, _8, _9 }
+import shapeless.{ ::, HList, HNil, Nat }
+import shapeless.nat.{ _0, _1, _2, _3, _4, _5, _6, _7, _8 }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT
 
 package object environment {
@@ -589,77 +590,178 @@ package object environment {
     ctx: Context
   ): Matrix[P] = ctx.implicits.matrix.toMatrix(data)
 
-  /** Conversion from `TypedPipe[Cell[_1]]` to a `Matrix1D`. */
-  implicit def pipeToMatrix1D(
-    data: Context.U[Cell[_1]]
+  /** Conversion from `TypedPipe[Cell[V1 :: HNil]]` to a `Matrix1D`. */
+  implicit def pipeToMatrix1D[
+    V1 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix1D = ctx.implicits.matrix.toMatrix1D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1] = ctx.implicits.matrix.toMatrix1D(data)
 
-  /** Conversion from `TypedPipe[Cell[_2]]` to a `Matrix2D`. */
-  implicit def pipeToMatrix2D(
-    data: Context.U[Cell[_2]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
+  implicit def pipeToMatrix2D[
+    V1 <: Value[_],
+    V2 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix2D = ctx.implicits.matrix.toMatrix2D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
+  ): Matrix2D[V1, V2] = ctx.implicits.matrix.toMatrix2D(data)
 
-  /** Conversion from `TypedPipe[Cell[_3]]` to a `Matrix3D`. */
-  implicit def pipeToMatrix3D(
-    data: Context.U[Cell[_3]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
+  implicit def pipeToMatrix3D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix3D = ctx.implicits.matrix.toMatrix3D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
+  ): Matrix3D[V1, V2, V3] = ctx.implicits.matrix.toMatrix3D(data)
 
-  /** Conversion from `TypedPipe[Cell[_4]]` to a `Matrix4D`. */
-  implicit def pipeToMatrix4D(
-    data: Context.U[Cell[_4]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
+  implicit def pipeToMatrix4D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix4D = ctx.implicits.matrix.toMatrix4D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
+  ): Matrix4D[V1, V2, V3, V4] = ctx.implicits.matrix.toMatrix4D(data)
 
-  /** Conversion from `TypedPipe[Cell[_5]]` to a `Matrix5D`. */
-  implicit def pipeToMatrix5D(
-    data: Context.U[Cell[_5]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
+  implicit def pipeToMatrix5D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix5D = ctx.implicits.matrix.toMatrix5D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
+  ): Matrix5D[V1, V2, V3, V4, V5] = ctx.implicits.matrix.toMatrix5D(data)
 
-  /** Conversion from `TypedPipe[Cell[_6]]` to a `Matrix6D`. */
-  implicit def pipeToMatrix6D(
-    data: Context.U[Cell[_6]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
+  implicit def pipeToMatrix6D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix6D = ctx.implicits.matrix.toMatrix6D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
+  ): Matrix6D[V1, V2, V3, V4, V5, V6] = ctx.implicits.matrix.toMatrix6D(data)
 
-  /** Conversion from `TypedPipe[Cell[_7]]` to a `Matrix7D`. */
-  implicit def pipeToMatrix7D(
-    data: Context.U[Cell[_7]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
+  implicit def pipeToMatrix7D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix7D = ctx.implicits.matrix.toMatrix7D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
+  ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = ctx.implicits.matrix.toMatrix7D(data)
 
-  /** Conversion from `TypedPipe[Cell[_8]]` to a `Matrix8D`. */
-  implicit def pipeToMatrix8D(
-    data: Context.U[Cell[_8]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
+  implicit def pipeToMatrix8D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix8D = ctx.implicits.matrix.toMatrix8D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
+  ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = ctx.implicits.matrix.toMatrix8D(data)
 
-  /** Conversion from `TypedPipe[Cell[_9]]` to a `Matrix9D`. */
-  implicit def pipeToMatrix9D(
-    data: Context.U[Cell[_9]]
+  /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
+  implicit def pipeToMatrix9D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix9D = ctx.implicits.matrix.toMatrix9D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
+  ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9] = ctx.implicits.matrix.toMatrix9D(data)
 
   /** Conversion from `TypedPipe[Cell[P]]` to a `MultiDimensionMatrix`. */
   implicit def pipeToMultiDimensionMatrix[
-    P <: HList
+    P <: HList,
+    L <: Nat
   ](
     data: Context.U[Cell[P]]
   )(implicit
     ctx: Context,
-    ev: GT[P, _1]
+    ev1: Length.Aux[P, L],
+    ev2: GT[L, _1]
   ): MultiDimensionMatrix[P] = ctx.implicits.matrix.toMultiDimensionMatrix(data)
 
   /** Conversion from `List[Cell[P]]` to a `Matrix`. */
@@ -671,425 +773,703 @@ package object environment {
     ctx: Context
   ): Matrix[P] = ctx.implicits.matrix.listToMatrix(data)
 
-  /** Conversion from `List[Cell[_1]]` to a `Matrix1D`. */
-  implicit def listToPipeMatrix1D(
-    data: List[Cell[_1]]
+  /** Conversion from `List[Cell[V1 :: HNil]]` to a `Matrix1D`. */
+  implicit def listToPipeMatrix1D[
+    V1 <: Value[_]
+  ](
+    data: List[Cell[V1 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix1D = ctx.implicits.matrix.listToMatrix1D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1] = ctx.implicits.matrix.listToMatrix1D(data)
 
-  /** Conversion from `List[Cell[_2]]` to a `Matrix2D`. */
-  implicit def listToPipeMatrix2D(
-    data: List[Cell[_2]]
+  /** Conversion from `List[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
+  implicit def listToPipeMatrix2D[
+    V1 <: Value[_],
+    V2 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix2D = ctx.implicits.matrix.listToMatrix2D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
+  ): Matrix2D[V1, V2] = ctx.implicits.matrix.listToMatrix2D(data)
 
-  /** Conversion from `List[Cell[_3]]` to a `Matrix3D`. */
-  implicit def listToPipeMatrix3D(
-    data: List[Cell[_3]]
+  /** Conversion from `List[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
+  implicit def listToPipeMatrix3D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix3D = ctx.implicits.matrix.listToMatrix3D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
+  ): Matrix3D[V1, V2, V3] = ctx.implicits.matrix.listToMatrix3D(data)
 
-  /** Conversion from `List[Cell[_4]]` to a `Matrix4D`. */
-  implicit def listToPipeMatrix4D(
-    data: List[Cell[_4]]
+  /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
+  implicit def listToPipeMatrix4D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix4D = ctx.implicits.matrix.listToMatrix4D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
+  ): Matrix4D[V1, V2, V3, V4] = ctx.implicits.matrix.listToMatrix4D(data)
 
-  /** Conversion from `List[Cell[_5]]` to a `Matrix5D`. */
-  implicit def listToPipeMatrix5D(
-    data: List[Cell[_5]]
+  /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
+  implicit def listToPipeMatrix5D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix5D = ctx.implicits.matrix.listToMatrix5D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
+  ): Matrix5D[V1, V2, V3, V4, V5] = ctx.implicits.matrix.listToMatrix5D(data)
 
-  /** Conversion from `List[Cell[_6]]` to a `Matrix6D`. */
-  implicit def listToPipeMatrix6D(
-    data: List[Cell[_6]]
+  /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
+  implicit def listToPipeMatrix6D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix6D = ctx.implicits.matrix.listToMatrix6D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
+  ): Matrix6D[V1, V2, V3, V4, V5, V6] = ctx.implicits.matrix.listToMatrix6D(data)
 
-  /** Conversion from `List[Cell[_7]]` to a `Matrix7D`. */
-  implicit def listToPipeMatrix7D(
-    data: List[Cell[_7]]
+  /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
+  implicit def listToPipeMatrix7D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix7D = ctx.implicits.matrix.listToMatrix7D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
+  ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = ctx.implicits.matrix.listToMatrix7D(data)
 
-  /** Conversion from `List[Cell[_8]]` to a `Matrix8D`. */
-  implicit def listToPipeMatrix8D(
-    data: List[Cell[_8]]
+  /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
+  implicit def listToPipeMatrix8D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix8D = ctx.implicits.matrix.listToMatrix8D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
+  ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = ctx.implicits.matrix.listToMatrix8D(data)
 
-  /** Conversion from `List[Cell[_9]]` to a `Matrix9D`. */
-  implicit def listToPipeMatrix9D(
-    data: List[Cell[_9]]
+  /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
+  implicit def listToPipeMatrix9D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix9D = ctx.implicits.matrix.listToMatrix9D(data)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
+  ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9] = ctx.implicits.matrix.listToMatrix9D(data)
 
   /** Conversion from `List[Cell[P]]` to a `MultiDimensionMatrix`. */
   implicit def listToPipeMultiDimensionMatrix[
-    P <: HList
+    P <: HList,
+    L <: Nat
   ](
     data: List[Cell[P]]
   )(implicit
     ctx: Context,
-    ev: GT[P, _1]
+    ev1: Length.Aux[P, L],
+    ev2: GT[L, _1]
   ): MultiDimensionMatrix[P] = ctx.implicits.matrix.listToMultiDimensionMatrix(data)
 
-  /** Conversion from `List[(V, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, Content)]` to a `Matrix`. */
   implicit def tuple1ToPipeMatrix[
-    V <% Value[_]
+    T1 <% V1,
+    V1 <: Value[_]
   ](
-    list: List[(V, Content)]
+    list: List[(T1, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_1] = ctx.implicits.matrix.tuple1ToMatrix(list)
+  ): Matrix[V1 :: HNil] = ctx.implicits.matrix.tuple1ToMatrix(list)
 
-  /** Conversion from `List[(V, Content)]` to a `Matrix1D`. */
+  /** Conversion from `List[(T1, Content)]` to a `Matrix1D`. */
   implicit def tuple1ToPipeMatrix1D[
-    V <% Value[_]
+    T1 <% V1,
+    V1 <: Value[_]
   ](
-    list: List[(V, Content)]
+    list: List[(T1, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix1D = ctx.implicits.matrix.tuple1ToMatrix1D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1] = ctx.implicits.matrix.tuple1ToMatrix1D(list)
 
-  /** Conversion from `List[(V1, V2, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, Content)]` to a `Matrix`. */
   implicit def tuple2ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    V1 <: Value[_],
+    V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_2] = ctx.implicits.matrix.tuple2ToMatrix(list)
+  ): Matrix[V1 :: V2 :: HNil] = ctx.implicits.matrix.tuple2ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, Content)]` to a `Matrix2D`. */
+  /** Conversion from `List[(T1, T2, Content)]` to a `Matrix2D`. */
   implicit def tuple2ToPipeMatrix2D[
-    V1 <% Value[_],
-    V2 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    V1 <: Value[_],
+    V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix2D = ctx.implicits.matrix.tuple2ToMatrix2D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
+  ): Matrix2D[V1, V2] = ctx.implicits.matrix.tuple2ToMatrix2D(list)
 
-  /** Conversion from `List[(V1, V2, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple2ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    V1 <: Value[_],
+    V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_2] = ctx.implicits.matrix.tuple2ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: HNil] = ctx.implicits.matrix.tuple2ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, Content)]` to a `Matrix`. */
   implicit def tuple3ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_3] = ctx.implicits.matrix.tuple3ToMatrix(list)
+  ): Matrix[V1 :: V2 :: V3 :: HNil] = ctx.implicits.matrix.tuple3ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, Content)]` to a `Matrix3D`. */
+  /** Conversion from `List[(T1, T2, T3, Content)]` to a `Matrix3D`. */
   implicit def tuple3ToPipeMatrix3D[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix3D = ctx.implicits.matrix.tuple3ToMatrix3D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
+  ): Matrix3D[V1, V2, V3] = ctx.implicits.matrix.tuple3ToMatrix3D(list)
 
-  /** Conversion from `List[(V1, V2, V3, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple3ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_3] = ctx.implicits.matrix.tuple3ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: HNil] = ctx.implicits.matrix.tuple3ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, Content)]` to a `Matrix`. */
   implicit def tuple4ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_4] = ctx.implicits.matrix.tuple4ToMatrix(list)
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: HNil] = ctx.implicits.matrix.tuple4ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `Matrix4D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, Content)]` to a `Matrix4D`. */
   implicit def tuple4ToPipeMatrix4D[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix4D = ctx.implicits.matrix.tuple4ToMatrix4D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
+  ): Matrix4D[V1, V2, V3, V4] = ctx.implicits.matrix.tuple4ToMatrix4D(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple4ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_4] = ctx.implicits.matrix.tuple4ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: HNil] = ctx.implicits.matrix.tuple4ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, Content)]` to a `Matrix`. */
   implicit def tuple5ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_5] = ctx.implicits.matrix.tuple5ToMatrix(list)
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] = ctx.implicits.matrix.tuple5ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `Matrix5D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, Content)]` to a `Matrix5D`. */
   implicit def tuple5ToPipeMatrix5D[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix5D = ctx.implicits.matrix.tuple5ToMatrix5D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
+  ): Matrix5D[V1, V2, V3, V4, V5] = ctx.implicits.matrix.tuple5ToMatrix5D(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple5ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_5] = ctx.implicits.matrix.tuple5ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] = ctx.implicits.matrix.tuple5ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, Content)]` to a `Matrix`. */
   implicit def tuple6ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_6] = ctx.implicits.matrix.tuple6ToMatrix(list)
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] = ctx.implicits.matrix.tuple6ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `Matrix6D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, Content)]` to a `Matrix6D`. */
   implicit def tuple6ToPipeMatrix6D[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix6D = ctx.implicits.matrix.tuple6ToMatrix6D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
+  ): Matrix6D[V1, V2, V3, V4, V5, V6] = ctx.implicits.matrix.tuple6ToMatrix6D(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple6ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_6] = ctx.implicits.matrix.tuple6ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] = ctx
+    .implicits
+    .matrix
+    .tuple6ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, Content)]` to a `Matrix`. */
   implicit def tuple7ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_7] = ctx.implicits.matrix.tuple7ToMatrix(list)
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] = ctx.implicits.matrix.tuple7ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `Matrix7D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, Content)]` to a `Matrix7D`. */
   implicit def tuple7ToPipeMatrix7D[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix7D = ctx.implicits.matrix.tuple7ToMatrix7D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
+  ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = ctx.implicits.matrix.tuple7ToMatrix7D(list)
 
-  /**
-   * Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `MultiDimensionMatrix`.
-   */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple7ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_7] = ctx.implicits.matrix.tuple7ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] = ctx
+    .implicits
+    .matrix
+    .tuple7ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]` to a `Matrix`. */
   implicit def tuple8ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_],
-    V8 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_8] = ctx.implicits.matrix.tuple8ToMatrix(list)
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] = ctx.implicits.matrix.tuple8ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `Matrix8D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]` to a `Matrix8D`. */
   implicit def tuple8ToPipeMatrix8D[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_],
-    V8 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix8D = ctx.implicits.matrix.tuple8ToMatrix8D(list)
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
+  ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = ctx.implicits.matrix.tuple8ToMatrix8D(list)
 
-  /**
-   * Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a
-   * `MultiDimensionMatrix`.
-   */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple8ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_],
-    V8 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_8] = ctx.implicits.matrix.tuple8ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] = ctx
+    .implicits
+    .matrix
+    .tuple8ToMultiDimensionMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]` to a `Matrix`. */
   implicit def tuple9ToPipeMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_],
-    V8 <% Value[_],
-    V9 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_9] = ctx.implicits.matrix.tuple9ToMatrix(list)
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] = ctx.implicits.matrix.tuple9ToMatrix(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `Matrix9D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]` to a `Matrix9D`. */
   implicit def tuple9ToPipeMatrix9D[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_],
-    V8 <% Value[_],
-    V9 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
     ctx: Context
-  ): Matrix9D = ctx.implicits.matrix.tuple9ToMatrix9D(list)
+  ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9] = ctx.implicits.matrix.tuple9ToMatrix9D(list)
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `MultiDimensionMatrix`.  */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]` to a `MultiDimensionMatrix`.  */
   implicit def tuple9ToPipeMultiDimensionMatrix[
-    V1 <% Value[_],
-    V2 <% Value[_],
-    V3 <% Value[_],
-    V4 <% Value[_],
-    V5 <% Value[_],
-    V6 <% Value[_],
-    V7 <% Value[_],
-    V8 <% Value[_],
-    V9 <% Value[_]
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_9] = ctx.implicits.matrix.tuple9ToMultiDimensionMatrix(list)
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] = ctx
+    .implicits
+    .matrix
+    .tuple9ToMultiDimensionMatrix(list)
 
   /** Conversion from matrix with errors tuple to `MatrixWithParseErrors`. */
   implicit def tupleToPipeParseErrors[
@@ -1110,20 +1490,22 @@ package object environment {
     ctx: Context
   ): Partitions[P, I] = ctx.implicits.partition.toPartitions(data)
 
-  /** Converts a `V` to a `TypedPipe[Position[V :: HNil]]`. */
+  /** Converts a `T` to a `TypedPipe[Position[V :: HNil]]`. */
   implicit def valueToPipe[
-    V <% Value[_]
+    T <% V,
+    V <: Value[_]
   ](
-    v: V
+    t: T
   )(implicit
     ctx: Context
-  ): Context.U[Position[V :: HNil]] = ctx.implicits.position.valueToU(v)
+  ): Context.U[Position[V :: HNil]] = ctx.implicits.position.valueToU(t)
 
-  /** Converts a `List[V]` to a `TypedPipe[Position[V :: HNil]]`. */
+  /** Converts a `List[T]` to a `TypedPipe[Position[V :: HNil]]`. */
   implicit def listValueToPipe[
-    V <% Value[_]
+    T <% V,
+    V <: Value[_]
   ](
-    l: List[V]
+    l: List[T]
   )(implicit
     ctx: Context
   ): Context.U[Position[V :: HNil]] = ctx.implicits.position.listValueToU(l)

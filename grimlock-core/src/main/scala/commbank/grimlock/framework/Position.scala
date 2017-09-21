@@ -1040,7 +1040,8 @@ trait Positions[P <: HList, C <: Context[C]] extends Persist[Position[P], C] {
     tuner: T
   )(implicit
     ev1: S =:!= HNil,
-    ev2: Positions.NamesTuner[C#U, T]
+    ev2: Positions.NamesTuner[C#U, T],
+    ev3: Position.ListConstraints[S]
   ): C#U[Position[S]]
 
   /**

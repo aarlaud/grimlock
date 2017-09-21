@@ -59,7 +59,8 @@ trait ApproximateDistribution[P <: HList, C <: Context[C]] { self: Matrix[P, C] 
     ev1: Length.Aux[Q, L],
     ev2: Length.Aux[S, M],
     ev3: GT[L, M],
-    ev4: ApproximateDistribution.HistogramTuner[C#U, T]
+    ev4: ApproximateDistribution.HistogramTuner[C#U, T],
+    ev5: Position.ListConstraints[Q]
   ): C#U[Cell[Q]]
 
   /**
@@ -98,7 +99,8 @@ trait ApproximateDistribution[P <: HList, C <: Context[C]] { self: Matrix[P, C] 
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: ApproximateDistribution.QuantilesTuner[C#U, T]
+    ev5: ApproximateDistribution.QuantilesTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -137,7 +139,8 @@ trait ApproximateDistribution[P <: HList, C <: Context[C]] { self: Matrix[P, C] 
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: ApproximateDistribution.CountMapQuantilesTuner[C#U, T]
+    ev5: ApproximateDistribution.CountMapQuantilesTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -176,7 +179,8 @@ trait ApproximateDistribution[P <: HList, C <: Context[C]] { self: Matrix[P, C] 
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: ApproximateDistribution.TDigestQuantilesTuner[C#U, T]
+    ev5: ApproximateDistribution.TDigestQuantilesTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -213,7 +217,8 @@ trait ApproximateDistribution[P <: HList, C <: Context[C]] { self: Matrix[P, C] 
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: ApproximateDistribution.UniformQuantilesTuner[C#U, T]
+    ev5: ApproximateDistribution.UniformQuantilesTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 }
 

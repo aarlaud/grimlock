@@ -70,18 +70,21 @@ private[scalding] object ScaldingImplicits {
     ev: Position.ListConstraints[P]
   ) = Position.ordering[P]()
 
-  implicit def serialisePosition[T <: Position[_]](key: T): Array[Byte] = key
-    .toShortString("|")
-    .toCharArray
-    .map { case c => c.toByte }
+  implicit def serialisePosition[
+    P <: HList
+  ](
+    key: Position[P]
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Array[Byte] = key.toShortString("|").toCharArray.map { case c => c.toByte }
 
-  implicit def serialisePairwisePosition[T <: Position[_]](key: (T, T)): Array[Byte] = (
-    key._1.toShortString("|") +
-    "|" +
-    key._2.toShortString("|")
-  )
-    .toCharArray
-    .map { case c => c.toByte }
+  implicit def serialisePairwisePosition[
+    P <: HList
+  ](
+    key: (Position[P], Position[P])
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): Array[Byte] = (key._1.toShortString("|") + "|" + key._2.toShortString("|")).toCharArray.map { case c => c.toByte }
 
   implicit class GroupedTuner[K, V](grouped: Grouped[K, V]) {
     def tunedStream[Q](

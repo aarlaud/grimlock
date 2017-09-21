@@ -34,8 +34,9 @@ import commbank.grimlock.framework.window.{ Window, WindowWithValue }
 import org.apache.hadoop.io.Writable
 
 import shapeless.{ ::, =:!=, HList, HNil, IsDistinctConstraint, Nat }
+import shapeless.nat._0
 import shapeless.ops.hlist.Length
-import shapeless.ops.nat.{ LTEq, GT, GTEq, Pred, ToInt }
+import shapeless.ops.nat.{ GT, GTEq, ToInt }
 
 /** Trait for common matrix operations. */
 trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
@@ -47,7 +48,7 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
    * @param slice     Encapsulates the dimension(s) to change.
    * @param tuner     The tuner for the job.
    * @param positions The position(s) within the dimension(s) to change.
-   * @param schema    The schema to change to.
+   * @param decoder   The content decoder.
    * @param writer    The writer to call in case or change error.
    *
    * @return A `C#U[Cell[P]]` with the changed contents and a `C#U[String]` with errors.
@@ -61,10 +62,11 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     tuner: T
   )(
     positions: C#U[Position[S]],
-    schema: Content.Decoder,
+    decoder: Content.Decoder,
     writer: Persist.TextWriter[Cell[P]]
   )(implicit
-    ev: Matrix.ChangeTuner[C#U, T]
+    ev1: Matrix.ChangeTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): (C#U[Cell[P]], C#U[String])
 
   /**
@@ -98,7 +100,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   )(implicit
     ev1: S =:!= HNil,
     ev2: Compactable[P, V],
-    ev3: Matrix.CompactTuner[C#U, T]
+    ev3: Matrix.CompactTuner[C#U, T],
+    ev4: Position.ListConstraints[S]
   ): C#E[Map[Position[S], V[R]]]
 
   /**
@@ -109,7 +112,15 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[Cell[P]]` of the `positions` together with their content.
    */
-  def get[T <: Tuner](positions: C#U[Position[P]], tuner: T)(implicit ev: Matrix.GetTuner[C#U, T]): C#U[Cell[P]]
+  def get[
+    T <: Tuner
+  ](
+    positions: C#U[Position[P]],
+    tuner: T
+  )(implicit
+    ev1: Matrix.GetTuner[C#U, T],
+    ev2: Position.ListConstraints[P]
+  ): C#U[Cell[P]]
 
   /**
    * Returns the matrix as in in-memory list of cells.
@@ -139,7 +150,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     tuner: T
   )(implicit
     ev1: S =:!= HNil,
-    ev2: Positions.NamesTuner[C#U, T]
+    ev2: Positions.NamesTuner[C#U, T],
+    ev3: Position.ListConstraints[S]
   ): C#U[Position[S]]
 
   /**
@@ -170,7 +182,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[R, M],
     ev4: GT[L, M],
-    ev5: Matrix.PairwiseTuner[C#U, T]
+    ev5: Matrix.PairwiseTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -204,7 +217,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[R, M],
     ev4: GT[L, M],
-    ev5: Matrix.PairwiseTuner[C#U, T]
+    ev5: Matrix.PairwiseTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -237,7 +251,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[R, M],
     ev4: GT[L, M],
-    ev5: Matrix.PairwiseTuner[C#U, T]
+    ev5: Matrix.PairwiseTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -273,7 +288,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[R, M],
     ev4: GT[L, M],
-    ev5: Matrix.PairwiseTuner[C#U, T]
+    ev5: Matrix.PairwiseTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -346,7 +362,15 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[Cell[P]]` with the `values` set.
    */
-  def set[T <: Tuner](values: C#U[Cell[P]], tuner: T)(implicit ev: Matrix.SetTuner[C#U, T]): C#U[Cell[P]]
+  def set[
+    T <: Tuner
+  ](
+    values: C#U[Cell[P]],
+    tuner: T
+  )(implicit
+    ev1: Matrix.SetTuner[C#U, T],
+    ev2: Position.ListConstraints[P]
+  ): C#U[Cell[P]]
 
   /**
    * Returns the shape of the matrix.
@@ -356,7 +380,14 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
    * @return A `C#U[Cell[LongValue :: HNil]]`. The position consists of a long value of the dimension
    *         index. The content has the actual size in it as a discrete variable.
    */
-  def shape[T <: Tuner](tuner: T)(implicit ev: Matrix.ShapeTuner[C#U, T]): C#U[Cell[LongValue :: HNil]]
+  def shape[
+    T <: Tuner
+  ](
+    tuner: T
+  )(implicit
+    ev1: Matrix.ShapeTuner[C#U, T],
+    ev2: Position.ListConstraints[P]
+  ): C#U[Cell[LongValue :: HNil]]
 
   /**
    * Returns the size of the matrix in dimension `dim`.
@@ -370,17 +401,16 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
    *         content has the actual size in it as a discrete variable.
    */
   def size[
-    D <: Nat,
+    D <: Nat : ToInt,
     T <: Tuner,
-    L <: Nat
+    V <: Value[_]
   ](
     dim: D,
     distinct: Boolean = false,
     tuner: T
   )(implicit
-    ev1: Length.Aux[P, L],
-    ev2: LTEq[D, L],
-    ev3: Matrix.SizeTuner[C#U, T]
+    ev1: Position.IndexConstraints[P, D, V],
+    ev2: Matrix.SizeTuner[C#U, T]
   ): C#U[Cell[LongValue :: HNil]]
 
   /**
@@ -404,7 +434,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     keep: Boolean,
     positions: C#U[Position[S]]
   )(implicit
-    ev: Matrix.SliceTuner[C#U, T]
+    ev1: Matrix.SliceTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[P]]
 
   /**
@@ -435,7 +466,9 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: Matrix.SlideTuner[C#U, T]
+    ev5: Matrix.SlideTuner[C#U, T],
+    ev6: Position.ListConstraints[S],
+    ev7: Position.ListConstraints[R]
   ): C#U[Cell[Q]]
 
   /**
@@ -469,7 +502,9 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: Matrix.SlideTuner[C#U, T]
+    ev5: Matrix.SlideTuner[C#U, T],
+    ev6: Position.ListConstraints[S],
+    ev7: Position.ListConstraints[R]
   ): C#U[Cell[Q]]
 
   /**
@@ -551,7 +586,9 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   )(implicit
     ev1: Length.Aux[Q, L],
     ev2: Length.Aux[S, M],
-    ev3: GTEq[L, M]
+    ev3: GTEq[L, M],
+    ev4: Position.ListConstraints[S],
+    ev5: Position.ListConstraints[R]
   ): (C#U[Cell[Q]], C#U[String])
 
   /**
@@ -600,7 +637,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[S, M],
     ev3: GTEq[L, M],
     ev4: Aggregator.Validate[P, S, Q],
-    ev5: Matrix.SummariseTuner[C#U, T]
+    ev5: Matrix.SummariseTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -632,7 +670,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     ev2: Length.Aux[S, M],
     ev3: GTEq[L, M],
     ev4: AggregatorWithValue.Validate[P, S, Q, W],
-    ev5: Matrix.SummariseTuner[C#U, T]
+    ev5: Matrix.SummariseTuner[C#U, T],
+    ev6: Position.ListConstraints[S]
   ): C#U[Cell[Q]]
 
   /**
@@ -660,7 +699,13 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
    *
    * @return A `C#U[CellPosition[_1]]]` where all coordinates have been merged into a single position.
    */
-  def toVector[V <: Value[_]](melt: (List[Value[_]]) => V): C#U[Cell[V :: HNil]]
+  def toVector[
+    V <: Value[_]
+  ](
+    melt: (List[Value[_]]) => V
+  )(implicit
+    ev: Position.ListConstraints[P]
+  ): C#U[Cell[V :: HNil]]
 
   /**
    * Transform the content of a matrix.
@@ -723,7 +768,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
     specific: Boolean
   )(implicit
     ev1: S =:!= HNil,
-    ev2: Matrix.TypesTuner[C#U, T]
+    ev2: Matrix.TypesTuner[C#U, T],
+    ev3: Position.ListConstraints[S]
   ): C#U[Cell[S]]
 
   /**
@@ -787,7 +833,8 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   )(
     predicates: List[(C#U[Position[S]], Cell.Predicate[P])]
   )(implicit
-    ev: Matrix.WhichTuner[C#U, T]
+    ev1: Matrix.WhichTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Position[P]]
 
   // TODO: Add label join operations
@@ -886,7 +933,8 @@ trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance
   )(
     that: C#U[Cell[P]]
   )(implicit
-    ev: Matrix.JoinTuner[C#U, T]
+    ev1: Matrix.JoinTuner[C#U, T],
+    ev2: Position.ListConstraints[S]
   ): C#U[Cell[P]]
 
   /**
@@ -928,22 +976,26 @@ trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance
    * @return A `C#U[Cell[Q]]` with reshaped dimensions.
    */
   def reshape[
-    D <: Nat : ToInt,
+    D <: Nat,
+    V <: Value[_],
     Q <: HList,
     T <: Tuner,
+    W <: Value[_],
     L <: Nat,
     M <: Nat
   ](
     dim: D,
-    coordinate: Value[_],
+    coordinate: V,
     locate: Locate.FromCellAndOptionalValue[P, Q],
     tuner: T
   )(implicit
     ev1: Length.Aux[Q, L],
     ev2: Length.Aux[P, M],
-    ev3: LTEq[D, M],
-    ev4: GT[L, M],
-    ev5: Matrix.ReshapeTuner[C#U, T]
+    ev3: GT[L, M],
+    ev4: Matrix.ReshapeTuner[C#U, T],
+    ev5: Position.IndexConstraints[P, D, W],
+    ev6: Position.RemoveConstraints[P, D, Q],
+    ev7: Position.ListConstraints[Q]
   ): C#U[Cell[Q]]
 
   /**
@@ -959,18 +1011,16 @@ trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance
     D <: Nat,
     Q <: HList,
     T <: Tuner,
-    L <: Nat,
-    M <: Nat
+    V <: Value[_]
   ](
     dim: D,
     squasher: Squasher[P],
     tuner: T
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[P, M],
-    ev3: LTEq[D, M],
-    ev4: Pred.Aux[M, L],
-    ev5: Matrix.SquashTuner[C#U, T]
+    ev1: Matrix.SquashTuner[C#U, T],
+    ev2: Position.IndexConstraints[P, D, V],
+    ev3: Position.RemoveConstraints[P, D, Q],
+    ev4: Position.ListConstraints[Q]
   ): C#U[Cell[Q]]
 
   /**
@@ -984,23 +1034,21 @@ trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance
    * @return A `C#U[Cell[Q]]` with the dimension `dim` removed.
    */
   def squashWithValue[
-    D <: Nat : ToInt,
+    D <: Nat,
     Q <: HList,
     W,
     T <: Tuner,
-    L <: Nat,
-    M <: Nat
+    V <: Value[_]
   ](
     dim: D,
     value: C#E[W],
     squasher: SquasherWithValue[P] { type V >: W },
     tuner: T
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[P, M],
-    ev3: LTEq[D, M],
-    ev4: Pred.Aux[M, L],
-    ev5: Matrix.SquashTuner[C#U, T]
+    ev1: Matrix.SquashTuner[C#U, T],
+    ev2: Position.IndexConstraints[P, D, V],
+    ev3: Position.RemoveConstraints[P, D, Q],
+    ev4: Position.ListConstraints[Q]
   ): C#U[Cell[Q]]
 }
 
@@ -1036,7 +1084,9 @@ trait SetDimensionMatrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C
   )(
     values: C#U[Cell[S]]
   )(implicit
-    ev: Matrix.FillHeterogeneousTuner[C#U, T]
+    ev1: Matrix.FillHeterogeneousTuner[C#U, T],
+    ev2: Position.ListConstraints[S],
+    ev3: Position.ListConstraints[P]
   ): C#U[Cell[P]]
 
   /**
@@ -1053,7 +1103,8 @@ trait SetDimensionMatrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C
     value: Content,
     tuner: T
   )(implicit
-    ev: Matrix.FillHomogeneousTuner[C#U, T]
+    ev1: Matrix.FillHomogeneousTuner[C#U, T],
+    ev2: Position.ListConstraints[P]
   ): C#U[Cell[P]]
 
   /**
@@ -1125,7 +1176,9 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
   def saveAsCSV[
     S <: HList,
     R <: HList,
-    T <: Tuner
+    T <: Tuner,
+    VX <: Value[_],
+    VY <: Value[_]
   ](
     slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
@@ -1139,7 +1192,11 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
     writeRowId: Boolean = true,
     rowId: String = "id"
   )(implicit
-    ev: Matrix.SaveAsCSVTuner[C#U, T]
+    ev1: Matrix.SaveAsCSVTuner[C#U, T],
+    ev2: Position.IndexConstraints[S, _0, VX],
+    ev3: Position.IndexConstraints[R, _0, VY],
+    ev4: Position.ListConstraints[S],
+    ev5: Position.ListConstraints[R]
   ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
@@ -1158,7 +1215,9 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
   def saveAsVW[
     S <: HList,
     R <: HList,
-    T <: Tuner
+    T <: Tuner,
+    VX <: Value[_],
+    VY <: Value[_]
   ](
     slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
@@ -1169,7 +1228,11 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
     tag: Boolean = false,
     separator: String = "|"
   )(implicit
-    ev: Matrix.SaveAsVWTuner[C#U, T]
+    ev1: Matrix.SaveAsVWTuner[C#U, T],
+    ev2: Position.IndexConstraints[S, _0, VX],
+    ev3: Position.IndexConstraints[R, _0, VY],
+    ev4: Position.ListConstraints[S],
+    ev5: Position.ListConstraints[R]
   ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
@@ -1191,7 +1254,9 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
   def saveAsVWWithLabels[
     S <: HList,
     R <: HList,
-    T <: Tuner
+    T <: Tuner,
+    VX <: Value[_],
+    VY <: Value[_]
   ](
     slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
@@ -1203,7 +1268,11 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
     tag: Boolean = false,
     separator: String = "|"
   )(implicit
-    ev: Matrix.SaveAsVWTuner[C#U, T]
+    ev1: Matrix.SaveAsVWTuner[C#U, T],
+    ev2: Position.IndexConstraints[S, _0, VX],
+    ev3: Position.IndexConstraints[R, _0, VY],
+    ev4: Position.ListConstraints[S],
+    ev5: Position.ListConstraints[R]
   ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
@@ -1225,7 +1294,9 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
   def saveAsVWWithImportance[
     S <: HList,
     R <: HList,
-    T <: Tuner
+    T <: Tuner,
+    VX <: Value[_],
+    VY <: Value[_]
   ](
     slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
@@ -1237,7 +1308,11 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
     tag: Boolean = false,
     separator: String = "|"
   )(implicit
-    ev: Matrix.SaveAsVWTuner[C#U, T]
+    ev1: Matrix.SaveAsVWTuner[C#U, T],
+    ev2: Position.IndexConstraints[S, _0, VX],
+    ev3: Position.IndexConstraints[R, _0, VY],
+    ev4: Position.ListConstraints[S],
+    ev5: Position.ListConstraints[R]
   ): C#U[Cell[V1 :: V2 :: HNil]]
 
   /**
@@ -1261,7 +1336,9 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
   def saveAsVWWithLabelsAndImportance[
     S <: HList,
     R <: HList,
-    T <: Tuner
+    T <: Tuner,
+    VX <: Value[_],
+    VY <: Value[_]
   ](
     slice: Slice[V1 :: V2 :: HNil, S, R],
     tuner: T
@@ -1274,7 +1351,11 @@ trait Matrix2D[V1 <: Value[_], V2 <: Value[_], C <: Context[C]] extends SetDimen
     tag: Boolean = false,
     separator: String = "|"
   )(implicit
-    ev: Matrix.SaveAsVWTuner[C#U, T]
+    ev1: Matrix.SaveAsVWTuner[C#U, T],
+    ev2: Position.IndexConstraints[S, _0, VX],
+    ev3: Position.IndexConstraints[R, _0, VY],
+    ev4: Position.ListConstraints[S],
+    ev5: Position.ListConstraints[R]
   ): C#U[Cell[V1 :: V2 :: HNil]]
 }
 

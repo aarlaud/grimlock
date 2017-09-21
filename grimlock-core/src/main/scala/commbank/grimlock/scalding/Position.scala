@@ -40,7 +40,8 @@ case class Positions[
     tuner: T = Default()
   )(implicit
     ev1: S =:!= HNil,
-    ev2: FwPositions.NamesTuner[Context.U, T]
+    ev2: FwPositions.NamesTuner[Context.U, T],
+    ev3: Position.ListConstraints[S]
   ): Context.U[Position[S]] = data.map { case p => slice.selected(p) }.tunedDistinct(tuner)(Position.ordering())
 
   def saveAsText[

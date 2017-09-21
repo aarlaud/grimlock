@@ -46,7 +46,9 @@ trait PairwiseDistance[
     filter: Boolean,
     strict: Boolean
   )(implicit
-    ev: FwPairwiseDistance.CorrelationTuner[Context.U, T]
+    ev1: FwPairwiseDistance.CorrelationTuner[Context.U, T],
+    ev2: Position.ListConstraints[S],
+    ev3: Position.ListConstraints[R]
   ): Context.U[Cell[Q]] = {
     val msj = Option(MapMapSideJoin[Position[S], (Position[R], Double), Double]())
 
@@ -97,7 +99,9 @@ trait PairwiseDistance[
     filter: Boolean,
     log: (Double) => Double
   )(implicit
-    ev: FwPairwiseDistance.MutualInformationTuner[Context.U, T]
+    ev1: FwPairwiseDistance.MutualInformationTuner[Context.U, T],
+    ev2: Position.ListConstraints[S],
+    ev3: Position.ListConstraints[R]
   ): Context.U[Cell[Q]] = {
     val msj = Option(MapMapSideJoin[Position[S], Long, Long]())
 

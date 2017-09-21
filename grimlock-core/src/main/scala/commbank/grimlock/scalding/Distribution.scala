@@ -59,7 +59,8 @@ trait ApproximateDistribution[
     ev1: Length.Aux[Q, L],
     ev2: Length.Aux[S, M],
     ev3: GT[L, M],
-    ev4: FwApproximateDistribution.HistogramTuner[Context.U, T]
+    ev4: FwApproximateDistribution.HistogramTuner[Context.U, T],
+    ev5: Position.ListConstraints[Q]
   ): Context.U[Cell[Q]] = data
     .filter { case c => (!filter || c.content.schema.classification.isOfType(CategoricalType)) }
     .flatMap { case c => name(slice.selected(c.position), c.content) }
@@ -87,7 +88,8 @@ trait ApproximateDistribution[
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: FwApproximateDistribution.QuantilesTuner[Context.U, T]
+    ev5: FwApproximateDistribution.QuantilesTuner[Context.U, T],
+    ev6: Position.ListConstraints[S]
   ): Context.U[Cell[Q]] = {
     val msj = Option(MapMapSideJoin[Position[S], Double, Long]())
     val qnt = QuantileImpl[P, S, Q](probs, quantiser, name, nan)
@@ -127,7 +129,8 @@ trait ApproximateDistribution[
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: FwApproximateDistribution.CountMapQuantilesTuner[Context.U, T]
+    ev5: FwApproximateDistribution.CountMapQuantilesTuner[Context.U, T],
+    ev6: Position.ListConstraints[S]
   ): Context.U[Cell[Q]] = data
     .flatMap { case c =>
       if (!filter || c.content.schema.classification.isOfType(NumericType))
@@ -159,7 +162,8 @@ trait ApproximateDistribution[
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: FwApproximateDistribution.TDigestQuantilesTuner[Context.U, T]
+    ev5: FwApproximateDistribution.TDigestQuantilesTuner[Context.U, T],
+    ev6: Position.ListConstraints[S]
   ): Context.U[Cell[Q]] = data
     .flatMap { case c =>
       if (!filter || c.content.schema.classification.isOfType(NumericType))
@@ -192,7 +196,8 @@ trait ApproximateDistribution[
     ev2: Length.Aux[Q, L],
     ev3: Length.Aux[S, M],
     ev4: GT[L, M],
-    ev5: FwApproximateDistribution.UniformQuantilesTuner[Context.U, T]
+    ev5: FwApproximateDistribution.UniformQuantilesTuner[Context.U, T],
+    ev6: Position.ListConstraints[S]
   ): Context.U[Cell[Q]] = data
     .flatMap { case c =>
       if (!filter || c.content.schema.classification.isOfType(NumericType))

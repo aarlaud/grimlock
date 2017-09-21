@@ -50,7 +50,9 @@ trait PairwiseDistance[P <: HList, C <: Context[C]] { self: MultiDimensionMatrix
     filter: Boolean = true,
     strict: Boolean = true
   )(implicit
-    ev: PairwiseDistance.CorrelationTuner[C#U, T]
+    ev1: PairwiseDistance.CorrelationTuner[C#U, T],
+    ev2: Position.ListConstraints[S],
+    ev3: Position.ListConstraints[R]
   ): C#U[Cell[Q]]
 
   /**
@@ -77,7 +79,9 @@ trait PairwiseDistance[P <: HList, C <: Context[C]] { self: MultiDimensionMatrix
     filter: Boolean = true,
     log: (Double) => Double = (x: Double) => math.log(x) / math.log(2)
   )(implicit
-    ev: PairwiseDistance.MutualInformationTuner[C#U, T]
+    ev1: PairwiseDistance.MutualInformationTuner[C#U, T],
+    ev2: Position.ListConstraints[S],
+    ev3: Position.ListConstraints[R]
   ): C#U[Cell[Q]]
 }
 

@@ -18,7 +18,7 @@ import commbank.grimlock.framework.{ Cell, Matrix => FwMatrix }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.environment.tuner.{ Default, Tuner }
 import commbank.grimlock.framework.metadata.{ ContinuousSchema, DiscreteSchema, NumericType }
-import commbank.grimlock.framework.position.Slice
+import commbank.grimlock.framework.position.{ Position, Slice }
 import commbank.grimlock.framework.statistics.{ Statistics => FwStatistics }
 
 import commbank.grimlock.scalding.environment.Context
@@ -39,7 +39,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.CountsTuner[Context.U, T]
+    ev1: FwStatistics.CountsTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = data
     .map { case c => slice.selected(c.position) }
     .tunedSize(tuner)
@@ -53,7 +54,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.DistinctCountsTuner[Context.U, T]
+    ev1: FwStatistics.DistinctCountsTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = data
     .map { case c => (slice.selected(c.position), c.content.value.toShortString) }
     .tunedSize(tuner)
@@ -71,7 +73,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
   )(
     predicate: (Content) => Boolean
   )(implicit
-    ev: FwStatistics.PredicateCountsTuner[Context.U, T]
+    ev1: FwStatistics.PredicateCountsTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = data
     .collect { case c if (predicate(c.content)) => slice.selected(c.position) }
     .tunedSize(tuner)
@@ -85,7 +88,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.MeanTuner[Context.U, T]
+    ev1: FwStatistics.MeanTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = moments(slice, tuner, m => FwStatistics.mean(m))
 
   def standardDeviation[
@@ -98,7 +102,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
   )(
     biased: Boolean
   )(implicit
-    ev: FwStatistics.StandardDeviationTuner[Context.U, T]
+    ev1: FwStatistics.StandardDeviationTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = moments(slice, tuner, m => FwStatistics.sd(m, biased))
 
   def skewness[
@@ -109,7 +114,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.SkewnessTuner[Context.U, T]
+    ev1: FwStatistics.SkewnessTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = moments(slice, tuner, m => FwStatistics.skewness(m))
 
   def kurtosis[
@@ -122,7 +128,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
   )(
     excess: Boolean
   )(implicit
-    ev: FwStatistics.KurtosisTuner[Context.U, T]
+    ev1: FwStatistics.KurtosisTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = moments(slice, tuner, m => FwStatistics.kurtosis(m, excess))
 
   def minimum[
@@ -133,7 +140,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.MinimumTuner[Context.U, T]
+    ev1: FwStatistics.MinimumTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = range(slice, tuner, Aggregator.min)
 
   def maximum[
@@ -144,7 +152,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.MaximumTuner[Context.U, T]
+    ev1: FwStatistics.MaximumTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = range(slice, tuner, Aggregator.max)
 
   def maximumAbsolute[
@@ -155,7 +164,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.MaximumAbsoluteTuner[Context.U, T]
+    ev1: FwStatistics.MaximumAbsoluteTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = range(slice, tuner, Aggregator.max[Double].composePrepare(d => math.abs(d)))
 
   def sums[
@@ -166,7 +176,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev: FwStatistics.SumsTuner[Context.U, T]
+    ev1: FwStatistics.SumsTuner[Context.U, T],
+    ev2: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = data
     .collect { case c if (c.content.schema.classification.isOfType(NumericType)) =>
       (slice.selected(c.position), c.content.value)
@@ -182,6 +193,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: Tuner,
     extract: (Moments) => Double
+  )(implicit
+    ev: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = data
     .collect { case c if (c.content.schema.classification.isOfType(NumericType)) =>
       (slice.selected(c.position), c.content.value)
@@ -197,6 +210,8 @@ trait Statistics[P <: HList] extends FwStatistics[P, Context] with Persist[Cell[
     slice: Slice[P, S, R],
     tuner: Tuner,
     agg: Aggregator[Double, Double, Double]
+  )(implicit
+    ev: Position.ListConstraints[S]
   ): Context.U[Cell[S]] = data
     .collect { case c if (c.content.schema.classification.isOfType(NumericType)) =>
       (slice.selected(c.position), c.content.value)

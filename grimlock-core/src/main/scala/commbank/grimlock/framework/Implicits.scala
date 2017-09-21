@@ -39,7 +39,7 @@ import commbank.grimlock.framework.position.{ Position, Positions }
 import scala.reflect.ClassTag
 
 import shapeless.{ ::, =:!=, HList, HNil, Nat }
-import shapeless.nat._1
+import shapeless.nat.{ _0, _1, _2, _3, _4, _5, _6, _7, _8 }
 import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT
 
@@ -106,10 +106,24 @@ trait MatrixImplicits[C <: Context[C]] {
   implicit def toMatrix[P <: HList](data: C#U[Cell[P]]): Matrix[P, C]
 
   /** Conversion from `C#U[Cell[V1 :: HNil]]` to a `Matrix1D`. */
-  implicit def toMatrix1D[V1 <: Value[_]](data: C#U[Cell[V1 :: HNil]]): Matrix1D[V1, C]
+  implicit def toMatrix1D[
+    V1 <: Value[_]
+  ](
+    data: C#U[Cell[V1 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
-  implicit def toMatrix2D[V1 <: Value[_], V2 <: Value[_]](data: C#U[Cell[V1 :: V2 :: HNil]]): Matrix2D[V1, V2, C]
+  implicit def toMatrix2D[
+    V1 <: Value[_],
+    V2 <: Value[_]
+  ](
+    data: C#U[Cell[V1 :: V2 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
+  ): Matrix2D[V1, V2, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
   implicit def toMatrix3D[
@@ -118,20 +132,29 @@ trait MatrixImplicits[C <: Context[C]] {
     V3 <: Value[_]
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
   ): Matrix3D[V1, V2, V3, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
-  implicit def toMatrix9D[
+  implicit def toMatrix4D[
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
     V4 <: Value[_]
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
   ): Matrix4D[V1, V2, V3, V4, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
-  implicit def toMatrix9D[
+  implicit def toMatrix5D[
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -139,6 +162,12 @@ trait MatrixImplicits[C <: Context[C]] {
     V5 <: Value[_]
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
   ): Matrix5D[V1, V2, V3, V4, V5, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
@@ -151,6 +180,13 @@ trait MatrixImplicits[C <: Context[C]] {
     V6 <: Value[_]
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
   ): Matrix6D[V1, V2, V3, V4, V5, V6, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
@@ -164,6 +200,14 @@ trait MatrixImplicits[C <: Context[C]] {
     V7 <: Value[_]
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
   ): Matrix7D[V1, V2, V3, V4, V5, V6, V7, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
@@ -178,6 +222,15 @@ trait MatrixImplicits[C <: Context[C]] {
     V8 <: Value[_]
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
   ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8, C]
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
@@ -193,6 +246,16 @@ trait MatrixImplicits[C <: Context[C]] {
     V9 <: Value[_]
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
   ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9, C]
 
   /** Converts a `C#U[Cell[P]]` to a `MultiDimensionMatrix`. */
@@ -210,7 +273,14 @@ trait MatrixImplicits[C <: Context[C]] {
   implicit def listToMatrix[P <: HList](data: List[Cell[P]])(implicit ctx: C): Matrix[P, C]
 
   /** Conversion from `List[Cell[V1 :: HNil]]` to a `Matrix1D`. */
-  implicit def listToMatrix1D[V1 <: Value[_]](data: List[Cell[V1 :: HNil]])(implicit ctx: C): Matrix1D[V1, C]
+  implicit def listToMatrix1D[
+    V1 <: Value[_]
+  ](
+    data: List[Cell[V1 :: HNil]]
+  )(implicit
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
   implicit def listToMatrix2D[
@@ -219,7 +289,9 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
   ): Matrix2D[V1, V2, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
@@ -230,7 +302,10 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
   ): Matrix3D[V1, V2, V3, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
@@ -242,7 +317,11 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
   ): Matrix4D[V1, V2, V3, V4, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
@@ -255,7 +334,12 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
   ): Matrix5D[V1, V2, V3, V4, V5, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
@@ -269,7 +353,13 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
   ): Matrix6D[V1, V2, V3, V4, V5, V6, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
@@ -284,7 +374,14 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
   ): Matrix7D[V1, V2, V3, V4, V5, V6, V7, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
@@ -300,7 +397,15 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
   ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8, C]
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
@@ -317,7 +422,16 @@ trait MatrixImplicits[C <: Context[C]] {
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
   ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9, C]
 
   /** Converts a `List[Cell[P]]` to a `MultiDimensionMatrix`. */
@@ -332,152 +446,229 @@ trait MatrixImplicits[C <: Context[C]] {
     ev2: GT[L, _1]
   ): MultiDimensionMatrix[P, C]
 
-  /** Conversion from `List[(V1, Content)]` to a `Matrix`. */
-  implicit def tuple1ToMatrix[V1 <: Value[_]](list: List[(V1, Content)])(implicit ctx: C): Matrix[V1 :: HNil, C]
+  /** Conversion from `List[(T1, Content)]` to a `Matrix`. */
+  implicit def tuple1ToMatrix[
+    T1 <% V1,
+    V1 <: Value[_]
+  ](
+    list: List[(T1, Content)]
+  )(implicit
+    ctx: C
+  ): Matrix[V1 :: HNil, C]
 
-  /** Conversion from `List[(V1, Content)]` to a `Matrix1D`. */
-  implicit def tuple1ToMatrix1D[V1 <: Value[_]](list: List[(V1, Content)])(implicit ctx: C): Matrix1D[V1, C]
+  /** Conversion from `List[(T1, Content)]` to a `Matrix1D`. */
+  implicit def tuple1ToMatrix1D[
+    T1 <% V1,
+    V1 <: Value[_]
+  ](
+    list: List[(T1, Content)]
+  )(implicit
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1, C]
 
-  /** Conversion from `List[(V1, V2, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, Content)]` to a `Matrix`. */
   implicit def tuple2ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
     V1 <: Value[_],
     V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, Content)]` to a `Matrix2D`. */
+  /** Conversion from `List[(T1, T2, Content)]` to a `Matrix2D`. */
   implicit def tuple2ToMatrix2D[
+    T1 <% V1,
+    T2 <% V2,
     V1 <: Value[_],
     V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
   ): Matrix2D[V1, V2, C]
 
-  /** Conversion from `List[(V1, V2, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, Content)]` to a `Matrix`. */
   implicit def tuple2ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
     V1 <: Value[_],
     V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, Content)]` to a `Matrix`. */
   implicit def tuple3ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: V3 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, Content)]` to a `Matrix3D`. */
+  /** Conversion from `List[(T1, T2, T3, Content)]` to a `Matrix3D`. */
   implicit def tuple3ToMatrix3D[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
   ): Matrix3D[V1, V2, V3, C]
 
-  /** Conversion from `List[(V1, V2, V3, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple3ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: V3 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, Content)]` to a `Matrix`. */
   implicit def tuple4ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
     V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: V3 :: V4 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `Matrix4D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, Content)]` to a `Matrix4D`. */
   implicit def tuple4ToMatrix4D[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
     V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
   ): Matrix4D[V1, V2, V3, V4, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple4ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
     V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, Content)]` to a `Matrix`. */
   implicit def tuple5ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
     V4 <: Value[_],
     V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `Matrix5D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, Content)]` to a `Matrix5D`. */
   implicit def tuple5ToMatrix5D[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
     V4 <: Value[_],
     V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
   ): Matrix5D[V1, V2, V3, V4, V5, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple5ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
     V4 <: Value[_],
     V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, Content)]` to a `Matrix`. */
   implicit def tuple6ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -485,13 +676,19 @@ trait MatrixImplicits[C <: Context[C]] {
     V5 <: Value[_],
     V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `Matrix6D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, Content)]` to a `Matrix6D`. */
   implicit def tuple6ToMatrix6D[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -499,13 +696,25 @@ trait MatrixImplicits[C <: Context[C]] {
     V5 <: Value[_],
     V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
   ): Matrix6D[V1, V2, V3, V4, V5, V6, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple6ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -513,13 +722,20 @@ trait MatrixImplicits[C <: Context[C]] {
     V5 <: Value[_],
     V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, Content)]` to a `Matrix`. */
   implicit def tuple7ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -528,13 +744,20 @@ trait MatrixImplicits[C <: Context[C]] {
     V6 <: Value[_],
     V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `Matrix7D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, Content)]` to a `Matrix7D`. */
   implicit def tuple7ToMatrix7D[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -543,15 +766,27 @@ trait MatrixImplicits[C <: Context[C]] {
     V6 <: Value[_],
     V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
   ): Matrix7D[V1, V2, V3, V4, V5, V6, V7, C]
 
-  /**
-   * Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, Content)]` to a `MultiDimensionMatrix`.
-   */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple7ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -560,13 +795,21 @@ trait MatrixImplicits[C <: Context[C]] {
     V6 <: Value[_],
     V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]` to a `Matrix`. */
   implicit def tuple8ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -576,13 +819,21 @@ trait MatrixImplicits[C <: Context[C]] {
     V7 <: Value[_],
     V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `Matrix8D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]` to a `Matrix8D`. */
   implicit def tuple8ToMatrix8D[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -592,13 +843,29 @@ trait MatrixImplicits[C <: Context[C]] {
     V7 <: Value[_],
     V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
   ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple8ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -608,13 +875,22 @@ trait MatrixImplicits[C <: Context[C]] {
     V7 <: Value[_],
     V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `Matrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]` to a `Matrix`. */
   implicit def tuple9ToMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -625,13 +901,22 @@ trait MatrixImplicits[C <: Context[C]] {
     V8 <: Value[_],
     V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
     ctx: C
   ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `Matrix9D`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]` to a `Matrix9D`. */
   implicit def tuple9ToMatrix9D[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -642,13 +927,31 @@ trait MatrixImplicits[C <: Context[C]] {
     V8 <: Value[_],
     V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
-    ctx: C
+    ctx: C,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
   ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9, C]
 
-  /** Conversion from `List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]` to a `MultiDimensionMatrix`. */
+  /** Conversion from `List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]` to a `MultiDimensionMatrix`. */
   implicit def tuple9ToMultiDimensionMatrix[
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
     V1 <: Value[_],
     V2 <: Value[_],
     V3 <: Value[_],
@@ -659,7 +962,7 @@ trait MatrixImplicits[C <: Context[C]] {
     V8 <: Value[_],
     V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
     ctx: C
   ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, C]
@@ -680,11 +983,11 @@ trait PartitionImplicits[C <: Context[C]] {
 
 /** Defines convenience implicits for dealing with distributed positions. */
 trait PositionImplicits[C <: Context[C]] {
-  /** Converts a `V` to a `C#U[Position[_1]]`. */
-  implicit def valueToU[V <% Value[_]](v: V)(implicit ctx: C): C#U[Position[V :: HNil]]
+  /** Converts a `T` to a `C#U[Position[V :: HNil]]`. */
+  implicit def valueToU[T <% V, V <: Value[_]](t: T)(implicit ctx: C): C#U[Position[V :: HNil]]
 
-  /** Converts a `List[V]` to a `C#U[Position[_1]]`. */
-  implicit def listValueToU[V <% Value[_]](l: List[V])(implicit ctx: C): C#U[Position[V :: HNil]]
+  /** Converts a `List[T]` to a `C#U[Position[V :: HNil]]`. */
+  implicit def listValueToU[T <% V,V <: Value[_]](l: List[T])(implicit ctx: C): C#U[Position[V :: HNil]]
 
   /** Converts a `Position[P]` to a `C#U[Position[P]]`. */
   implicit def positionToU[P <: HList](p: Position[P])(implicit ctx: C): C#U[Position[P]]

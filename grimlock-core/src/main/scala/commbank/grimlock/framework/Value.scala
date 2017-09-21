@@ -187,8 +187,10 @@ object Value {
    *
    * @param ascending Indicator if ordering should be ascending or descending.
    */
-  def ordering[T, V <: Value[T]](ascending: Boolean = true): Ordering[V] = new Ordering[V] {
-    def compare(x: V, y: V): Int = x.compare(y.value) * (if (ascending) 1 else -1)
+  def ordering[V <: Value[_]](ascending: Boolean = true): Ordering[V] = new Ordering[V] {
+    def compare(x: V, y: V): Int = (if (ascending) 1 else -1) * x
+      .compare(y)
+      .getOrElse(throw new Exception("Different types should not be possible"))
   }
 }
 
