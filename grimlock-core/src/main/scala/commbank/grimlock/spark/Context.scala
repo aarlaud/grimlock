@@ -17,7 +17,7 @@ package commbank.grimlock.spark.environment
 import com.twitter.scalding.parquet.scrooge.ScroogeReadSupport
 import com.twitter.scrooge.ThriftStruct
 
-import commbank.grimlock.framework.Cell
+import commbank.grimlock.framework.{ Cell, Persist }
 import commbank.grimlock.framework.environment.{ Context => FwContext }
 
 import commbank.grimlock.spark.environment.implicits.Implicits
@@ -32,7 +32,7 @@ import org.apache.spark.rdd.RDD
 
 import scala.reflect.{ classTag, ClassTag }
 
-import shapeless.Nat
+import shapeless.HList
 
 /**
  * Spark operating context state.
@@ -44,7 +44,12 @@ case class Context(spark: SparkContext) extends FwContext[Context] {
 
   type U[A] = Context.U[A]
 
-  def loadText[P <: Nat](file: String, parser: Cell.TextParser[P]): (Context.U[Cell[P]], Context.U[String]) = {
+  def loadText[
+    P <: HList
+  ](
+    file: String,
+    parser: Persist.TextParser[Cell[P]]
+  ): (Context.U[Cell[P]], Context.U[String]) = {
     val rdd = spark.textFile(file).flatMap { case s => parser(s) }
 
     (rdd.collect { case Right(c) => c }, rdd.collect { case Left(e) => e })
@@ -53,10 +58,10 @@ case class Context(spark: SparkContext) extends FwContext[Context] {
   def loadSequence[
     K <: Writable : Manifest,
     V <: Writable : Manifest,
-    P <: Nat
+    P <: HList
   ](
     file: String,
-    parser: Cell.SequenceParser[K, V, P]
+    parser: Persist.SequenceParser[K, V, Cell[P]]
   ): (Context.U[Cell[P]], Context.U[String]) = {
     val rdd = spark.sequenceFile[K, V](file).flatMap { case (k, v) => parser(k, v) }
 
@@ -65,10 +70,10 @@ case class Context(spark: SparkContext) extends FwContext[Context] {
 
   def loadParquet[
     T <: ThriftStruct : Manifest,
-    P <: Nat
+    P <: HList
   ](
     file: String,
-    parser: Cell.ParquetParser[T, P]
+    parser: Persist.ParquetParser[T, Cell[P]]
   ): (Context.U[Cell[P]], Context.U[String]) = {
     val job = Job.getInstance()
 

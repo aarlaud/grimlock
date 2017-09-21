@@ -70,9 +70,21 @@ case class Implicits() extends FwImplicits[Context] {
 
 /** Implements all cell implicits. */
 case class CellImplicits() extends FwCellImplicits[Context] {
-  implicit def cellToU[P <: HList](c: Cell[P])(implicit ctx: Context): Context.U[Cell[P]] = IterablePipe(List(c))
+  implicit def cellToU[
+    P <: HList
+  ](
+    c: Cell[P]
+  )(implicit
+    ctx: Context
+  ): Context.U[Cell[P]] = IterablePipe(List(c))
 
-  implicit def listCellToU[P <: HList](l: List[Cell[P]])(implicit ctx: Context): Context.U[Cell[P]] = IterablePipe(l)
+  implicit def listCellToU[
+    P <: HList
+  ](
+    l: List[Cell[P]]
+  )(implicit
+    ctx: Context
+  ): Context.U[Cell[P]] = IterablePipe(l)
 }
 
 /** Implements all content implicits. */
@@ -94,7 +106,13 @@ case class EnvironmentImplicits() extends FwEnvironmentImplicits[Context]  {
 
   implicit def valueFunctions[X](value: Context.E[X]): ValueOperations[X] = ValueOperations(value)
 
-  implicit def eToU[X : ClassTag](value: Context.E[X])(implicit ctx: Context): Context.U[X] = value.toTypedPipe
+  implicit def eToU[
+    X : ClassTag
+  ](
+    value: Context.E[X]
+  )(implicit
+    ctx: Context
+  ): Context.U[X] = value.toTypedPipe
 }
 
 /** Implements all matrix implicits. */
@@ -1005,7 +1023,7 @@ case class PositionImplicits() extends FwPositionImplicits[Context] {
     l: List[T]
   )(implicit
     ctx: Context
-  ): Context.U[Position[V :: HNil]] = IterablePipe(l.map { case v => Position(v) })
+  ): Context.U[Position[V :: HNil]] = IterablePipe(l.map { case t => Position(t) })
 
   implicit def positionToU[
     P <: HList

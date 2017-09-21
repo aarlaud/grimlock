@@ -24,11 +24,11 @@ import commbank.grimlock.spark.Persist
 
 import scala.reflect.ClassTag
 
-import shapeless.Nat
+import shapeless.HList
 
 /** Rich wrapper around a `RDD[(I, Cell[P])]`. */
 case class Partitions[
-  P <: Nat,
+  P <: HList,
   I : Ordering
 ](
   data: Context.U[(I, Cell[P])]
@@ -37,7 +37,7 @@ case class Partitions[
   def add(id: I, partition: Context.U[Cell[P]]): Context.U[(I, Cell[P])] = data ++ (partition.map { case c => (id, c) })
 
   def forAll[
-    Q <: Nat,
+    Q <: HList,
     T <: Tuner
   ](
     context: Context,
@@ -57,7 +57,12 @@ case class Partitions[
     forEach(ids, fn)
   }
 
-  def forEach[Q <: Nat](ids: List[I], fn: (I, Context.U[Cell[P]]) => Context.U[Cell[Q]]): Context.U[(I, Cell[Q])] = ids
+  def forEach[
+    Q <: HList
+  ](
+    ids: List[I],
+    fn: (I, Context.U[Cell[P]]) => Context.U[Cell[Q]]
+  ): Context.U[(I, Cell[Q])] = ids
     .map { case i => fn(i, get(i)).map { case c => (i, c) } }
     .reduce[Context.U[(I, Cell[Q])]]((x, y) => x ++ y)
 

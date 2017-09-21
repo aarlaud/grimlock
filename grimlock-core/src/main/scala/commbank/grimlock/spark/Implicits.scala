@@ -51,8 +51,9 @@ import commbank.grimlock.spark.position.Positions
 
 import scala.reflect.ClassTag
 
-import shapeless.{ =:!=, Nat }
-import shapeless.nat.{ _1, _2, _3, _4, _5, _6, _7, _8, _9 }
+import shapeless.{ ::, =:!=, HList, HNil, Nat }
+import shapeless.nat.{ _0, _1, _2, _3, _4, _5, _6, _7, _8 }
+import shapeless.ops.hlist.Length
 import shapeless.ops.nat.GT
 
 /** Implements all implicits. */
@@ -67,10 +68,16 @@ case class Implicits() extends FwImplicits[Context] {
 
 /** Implements all cell implicits. */
 case class CellImplicits() extends FwCellImplicits[Context] {
-  implicit def cellToU[P <: Nat](c: Cell[P])(implicit ctx: Context): Context.U[Cell[P]] = ctx.spark.parallelize(List(c))
+  implicit def cellToU[
+    P <: HList
+  ](
+    c: Cell[P]
+  )(implicit
+    ctx: Context
+  ): Context.U[Cell[P]] = ctx.spark.parallelize(List(c))
 
   implicit def listCellToU[
-    P <: Nat
+    P <: HList
   ](
     l: List[Cell[P]]
   )(implicit
@@ -83,7 +90,7 @@ case class ContentImplicits() extends FwContentImplicits[Context] {
   implicit def toContents(data: Context.U[Content]): Contents = Contents(data)
 
   implicit def toIndexed[
-    P <: Nat
+    P <: HList
   ](
     data: Context.U[(Position[P], Content)]
   ): IndexedContents[P] = IndexedContents[P](data)
@@ -108,484 +115,894 @@ case class EnvironmentImplicits() extends FwEnvironmentImplicits[Context]  {
 
 /** Implements all matrix implicits. */
 case class MatrixImplicits() extends FwMatrixImplicits[Context] {
-  implicit def toMatrix[P <: Nat](data: Context.U[Cell[P]]): Matrix[P] = Matrix(data)
+  implicit def toMatrix[P <: HList](data: Context.U[Cell[P]]): Matrix[P] = Matrix(data)
 
-  implicit def toMatrix1D(data: Context.U[Cell[_1]]): Matrix1D = Matrix1D(data)
+  implicit def toMatrix1D[
+    V1 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1] = Matrix1D(data)
 
-  implicit def toMatrix2D(data: Context.U[Cell[_2]]): Matrix2D = Matrix2D(data)
+  implicit def toMatrix2D[
+    V1 <: Value[_],
+    V2 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
+  ): Matrix2D[V1, V2] = Matrix2D(data)
 
-  implicit def toMatrix3D(data: Context.U[Cell[_3]]): Matrix3D = Matrix3D(data)
+  implicit def toMatrix3D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
+  ): Matrix3D[V1, V2, V3] = Matrix3D(data)
 
-  implicit def toMatrix4D(data: Context.U[Cell[_4]]): Matrix4D = Matrix4D(data)
+  implicit def toMatrix4D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
+  ): Matrix4D[V1, V2, V3, V4] = Matrix4D(data)
 
-  implicit def toMatrix5D(data: Context.U[Cell[_5]]): Matrix5D = Matrix5D(data)
+  implicit def toMatrix5D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
+  ): Matrix5D[V1, V2, V3, V4, V5] = Matrix5D(data)
 
-  implicit def toMatrix6D(data: Context.U[Cell[_6]]): Matrix6D = Matrix6D(data)
+  implicit def toMatrix6D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
+  ): Matrix6D[V1, V2, V3, V4, V5, V6] = Matrix6D(data)
 
-  implicit def toMatrix7D(data: Context.U[Cell[_7]]): Matrix7D = Matrix7D(data)
+  implicit def toMatrix7D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
+  ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = Matrix7D(data)
 
-  implicit def toMatrix8D(data: Context.U[Cell[_8]]): Matrix8D = Matrix8D(data)
+  implicit def toMatrix8D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
+  ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = Matrix8D(data)
 
-  implicit def toMatrix9D(data: Context.U[Cell[_9]]): Matrix9D = Matrix9D(data)
+  implicit def toMatrix9D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
+  ](
+    data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
+  )(implicit
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
+  ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9] = Matrix9D(data)
 
   implicit def toMultiDimensionMatrix[
-    P <: Nat
+    P <: HList,
+    L <: Nat
   ](
     data: Context.U[Cell[P]]
   )(implicit
-    ev: GT[P, _1]
+    ev1: Length.Aux[P, L],
+    ev2: GT[L, _1]
   ): MultiDimensionMatrix[P] = MultiDimensionMatrix(data)
 
   implicit def listToMatrix[
-    P <: Nat
+    P <: HList
   ](
     data: List[Cell[P]]
   )(implicit
     ctx: Context
   ): Matrix[P] = Matrix(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix1D(
-    data: List[Cell[_1]]
+  implicit def listToMatrix1D[
+    V1 <: Value[_]
+  ](
+    data: List[Cell[V1 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix1D = Matrix1D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1] = Matrix1D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix2D(
-    data: List[Cell[_2]]
+  implicit def listToMatrix2D[
+    V1 <: Value[_],
+    V2 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix2D = Matrix2D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
+  ): Matrix2D[V1, V2] = Matrix2D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix3D(
-    data: List[Cell[_3]]
+  implicit def listToMatrix3D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix3D = Matrix3D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
+  ): Matrix3D[V1, V2, V3] = Matrix3D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix4D(
-    data: List[Cell[_4]]
+  implicit def listToMatrix4D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix4D = Matrix4D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
+  ): Matrix4D[V1, V2, V3, V4] = Matrix4D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix5D(
-    data: List[Cell[_5]]
+  implicit def listToMatrix5D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix5D = Matrix5D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
+  ): Matrix5D[V1, V2, V3, V4, V5] = Matrix5D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix6D(
-    data: List[Cell[_6]]
+  implicit def listToMatrix6D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix6D = Matrix6D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
+  ): Matrix6D[V1, V2, V3, V4, V5, V6] = Matrix6D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix7D(
-    data: List[Cell[_7]]
+  implicit def listToMatrix7D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix7D = Matrix7D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
+  ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = Matrix7D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix8D(
-    data: List[Cell[_8]]
+  implicit def listToMatrix8D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix8D = Matrix8D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
+  ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = Matrix8D(ctx.spark.parallelize(data))
 
-  implicit def listToMatrix9D(
-    data: List[Cell[_9]]
+  implicit def listToMatrix9D[
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
+  ](
+    data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
-    ctx: Context
-  ): Matrix9D = Matrix9D(ctx.spark.parallelize(data))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
+  ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9] = Matrix9D(ctx.spark.parallelize(data))
 
   implicit def listToMultiDimensionMatrix[
-    P <: Nat
+    P <: HList,
+    L <: Nat
   ](
     data: List[Cell[P]]
   )(implicit
     ctx: Context,
-    ev: GT[P, _1]
+    ev1: Length.Aux[P, L],
+    ev2: GT[L, _1]
   ): MultiDimensionMatrix[P] = MultiDimensionMatrix(ctx.spark.parallelize(data))
 
   implicit def tuple1ToMatrix[
-    V <% Value
+    T1 <% V1,
+    V1 <: Value[_]
   ](
-    list: List[(V, Content)]
+    list: List[(T1, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_1] = Matrix(ctx.spark.parallelize(list.map { case (v, c) => Cell(Position(v), c) }))
+  ): Matrix[V1 :: HNil] = Matrix(ctx.spark.parallelize(list.map { case (v, c) => Cell(Position(v), c) }))
 
   implicit def tuple1ToMatrix1D[
-    V <% Value
+    T1 <% V1,
+    V1 <: Value[_]
   ](
-    list: List[(V, Content)]
+    list: List[(T1, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix1D = Matrix1D(ctx.spark.parallelize(list.map { case (v, c) => Cell(Position(v), c) }))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: HNil, _0, V1]
+  ): Matrix1D[V1] = Matrix1D(ctx.spark.parallelize(list.map { case (v, c) => Cell(Position(v), c) }))
 
   implicit def tuple2ToMatrix[
-    V1 <% Value,
-    V2 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    V1 <: Value[_],
+    V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_2] = Matrix(ctx.spark.parallelize(list.map { case (v1, v2, c) => Cell(Position(v1, v2), c) }))
+  ): Matrix[V1 :: V2 :: HNil] = Matrix(
+    ctx.spark.parallelize(list.map { case (v1, v2, c) => Cell(Position(v1, v2), c) })
+  )
 
   implicit def tuple2ToMatrix2D[
-    V1 <% Value,
-    V2 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    V1 <: Value[_],
+    V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix2D = Matrix2D(ctx.spark.parallelize(list.map { case (v1, v2, c) => Cell(Position(v1, v2), c) }))
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: HNil, _1, V2]
+  ): Matrix2D[V1, V2] = Matrix2D(ctx.spark.parallelize(list.map { case (v1, v2, c) => Cell(Position(v1, v2), c) }))
 
   implicit def tuple2ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    V1 <: Value[_],
+    V2 <: Value[_]
   ](
-    list: List[(V1, V2, Content)]
+    list: List[(T1, T2, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_2] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(list.map { case (v1, v2, c) => Cell(Position(v1, v2), c) })
   )
 
   implicit def tuple3ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_3] = Matrix(
+  ): Matrix[V1 :: V2 :: V3 :: HNil] = Matrix(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, c) => Cell(Position(v1, v2, v3), c) })
   )
 
   implicit def tuple3ToMatrix3D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix3D = Matrix3D(
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: HNil, _2, V3]
+  ): Matrix3D[V1, V2, V3] = Matrix3D(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, c) => Cell(Position(v1, v2, v3), c) })
   )
 
   implicit def tuple3ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_]
   ](
-    list: List[(V1, V2, V3, Content)]
+    list: List[(T1, T2, T3, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_3] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, c) => Cell(Position(v1, v2, v3), c) })
   )
 
   implicit def tuple4ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_4] = Matrix(
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: HNil] = Matrix(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, v4, c) => Cell(Position(v1, v2, v3, v4), c) })
   )
 
   implicit def tuple4ToMatrix4D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix4D = Matrix4D(
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: HNil, _3, V4]
+  ): Matrix4D[V1, V2, V3, V4] = Matrix4D(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, v4, c) => Cell(Position(v1, v2, v3, v4), c) })
   )
 
   implicit def tuple4ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, Content)]
+    list: List[(T1, T2, T3, T4, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_4] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, v4, c) => Cell(Position(v1, v2, v3, v4), c) })
   )
 
   implicit def tuple5ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_5] = Matrix(
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] = Matrix(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, v4, v5, c) => Cell(Position(v1, v2, v3, v4, v5), c) })
   )
 
   implicit def tuple5ToMatrix5D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix5D = Matrix5D(
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: HNil, _4, V5]
+  ): Matrix5D[V1, V2, V3, V4, V5] = Matrix5D(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, v4, v5, c) => Cell(Position(v1, v2, v3, v4, v5), c) })
   )
 
   implicit def tuple5ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, Content)]
+    list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_5] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(list.map { case (v1, v2, v3, v4, v5, c) => Cell(Position(v1, v2, v3, v4, v5), c) })
   )
 
   implicit def tuple6ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_6] = Matrix(
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] = Matrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, c) => Cell(Position(v1, v2, v3, v4, v5, v6), c) }
     )
   )
 
   implicit def tuple6ToMatrix6D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix6D = Matrix6D(
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil, _5, V6]
+  ): Matrix6D[V1, V2, V3, V4, V5, V6] = Matrix6D(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, c) => Cell(Position(v1, v2, v3, v4, v5, v6), c) }
     )
   )
 
   implicit def tuple6ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_6] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, c) => Cell(Position(v1, v2, v3, v4, v5, v6), c) }
     )
   )
 
   implicit def tuple7ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_7] = Matrix(
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] = Matrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7), c) }
     )
   )
 
   implicit def tuple7ToMatrix7D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix7D = Matrix7D(
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil, _6, V7]
+  ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = Matrix7D(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7), c) }
     )
   )
 
   implicit def tuple7ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_7] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7), c) }
     )
   )
 
   implicit def tuple8ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_8] = Matrix(
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] = Matrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, v8, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7, v8), c) }
     )
   )
 
   implicit def tuple8ToMatrix8D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix8D = Matrix8D(
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, _7, V8]
+  ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = Matrix8D(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, v8, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7, v8), c) }
     )
   )
 
   implicit def tuple8ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_8] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, v8, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7, v8), c) }
     )
   )
 
   implicit def tuple9ToMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
     ctx: Context
-  ): Matrix[_9] = Matrix(
+  ): Matrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] = Matrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, v8, v9, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7, v8, v9), c) }
     )
   )
 
   implicit def tuple9ToMatrix9D[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
-    ctx: Context
-  ): Matrix9D = Matrix9D(
+    ctx: Context,
+    ev1: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _0, V1],
+    ev2: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _1, V2],
+    ev3: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _2, V3],
+    ev4: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _3, V4],
+    ev5: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _4, V5],
+    ev6: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _5, V6],
+    ev7: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _6, V7],
+    ev8: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _7, V8],
+    ev9: Position.IndexConstraints[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil, _8, V9]
+  ): Matrix9D[V1, V2, V3, V4, V5, V6, V7, V8, V9] = Matrix9D(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, v8, v9, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7, v8, v9), c) }
     )
   )
 
   implicit def tuple9ToMultiDimensionMatrix[
-    V1 <% Value,
-    V2 <% Value,
-    V3 <% Value,
-    V4 <% Value,
-    V5 <% Value,
-    V6 <% Value,
-    V7 <% Value,
-    V8 <% Value,
-    V9 <% Value
+    T1 <% V1,
+    T2 <% V2,
+    T3 <% V3,
+    T4 <% V4,
+    T5 <% V5,
+    T6 <% V6,
+    T7 <% V7,
+    T8 <% V8,
+    T9 <% V9,
+    V1 <: Value[_],
+    V2 <: Value[_],
+    V3 <: Value[_],
+    V4 <: Value[_],
+    V5 <: Value[_],
+    V6 <: Value[_],
+    V7 <: Value[_],
+    V8 <: Value[_],
+    V9 <: Value[_]
   ](
-    list: List[(V1, V2, V3, V4, V5, V6, V7, V8, V9, Content)]
+    list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit
     ctx: Context
-  ): MultiDimensionMatrix[_9] = MultiDimensionMatrix(
+  ): MultiDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil] = MultiDimensionMatrix(
     ctx.spark.parallelize(
       list.map { case (v1, v2, v3, v4, v5, v6, v7, v8, v9, c) => Cell(Position(v1, v2, v3, v4, v5, v6, v7, v8, v9), c) }
     )
@@ -595,7 +1012,7 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
 /** Implements all partition implicits. */
 case class PartitionImplicits() extends FwPartitionImplicits[Context] {
   implicit def toPartitions[
-    P <: Nat,
+    P <: HList,
     I : Ordering
   ](
     data: Context.U[(I, Cell[P])]
@@ -605,23 +1022,25 @@ case class PartitionImplicits() extends FwPartitionImplicits[Context] {
 /** Implements all position implicits. */
 case class PositionImplicits() extends FwPositionImplicits[Context] {
   implicit def valueToU[
-    V <% Value
+    T <% V,
+    V <: Value
   ](
-    v: V
+    t: T
   )(implicit
     ctx: Context
-  ): Context.U[Position[_1]] = ctx.spark.parallelize(List(Position(v)))
+  ): Context.U[Position[V :: HNil]] = ctx.spark.parallelize(List(Position(t)))
 
   implicit def listValueToU[
-    V <% Value
+    T <% V,
+    V <: Value
   ](
-    l: List[V]
+    l: List[T]
   )(implicit
     ctx: Context
-  ): Context.U[Position[_1]] = ctx.spark.parallelize(l.map { case v => Position(v) })
+  ): Context.U[Position[V :: HNil]] = ctx.spark.parallelize(l.map { case t => Position(t) })
 
   implicit def positionToU[
-    P <: Nat
+    P <: HList
   ](
     p: Position[P]
   )(implicit
@@ -629,14 +1048,14 @@ case class PositionImplicits() extends FwPositionImplicits[Context] {
   ): Context.U[Position[P]] = ctx.spark.parallelize(List(p))
 
   implicit def listPositionToU[
-    P <: Nat
+    P <: HList
   ](
     l: List[Position[P]]
   )(implicit
     ctx: Context
   ): Context.U[Position[P]] = ctx.spark.parallelize(l)
 
-  implicit def toPositions[P <: Nat](data: Context.U[Position[P]]): Positions[P] = Positions(data)
+  implicit def toPositions[P <: HList](data: Context.U[Position[P]]): Positions[P] = Positions(data)
 }
 
 /** Implements all native operations for `context`. */

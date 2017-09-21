@@ -22,20 +22,27 @@ import commbank.grimlock.spark.environment.Context
 import commbank.grimlock.spark.environment.tuner.SparkImplicits._
 import commbank.grimlock.spark.Persist
 
-import shapeless.{ =:!=, Nat }
-import shapeless.nat._0
+import shapeless.{ =:!=, HList, HNil }
 
 /** Rich wrapper around a `RDD[Position]`. */
-case class Positions[P <: Nat](data: Context.U[Position[P]]) extends FwPositions[P, Context] with Persist[Position[P]] {
+case class Positions[
+  P <: HList
+](
+  data: Context.U[Position[P]]
+) extends FwPositions[P, Context]
+  with Persist[Position[P]] {
   def names[
+    S <: HList,
+    R <: HList,
     T <: Tuner
   ](
-    slice: Slice[P],
+    slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev1: slice.S =:!= _0,
-    ev2: FwPositions.NamesTuner[Context.U, T]
-  ): Context.U[Position[slice.S]] = data.map { case p => slice.selected(p) }.tunedDistinct(tuner)(Position.ordering())
+    ev1: S =:!= HNil,
+    ev2: FwPositions.NamesTuner[Context.U, T],
+    ev3: Position.ListConstraints[S]
+  ): Context.U[Position[S]] = data.map { case p => slice.selected(p) }.tunedDistinct(tuner)(Position.ordering())
 
   def saveAsText[
     T <: Tuner

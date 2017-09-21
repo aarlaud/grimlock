@@ -1510,7 +1510,7 @@ package object environment {
     ctx: Context
   ): Context.U[Position[V :: HNil]] = ctx.implicits.position.listValueToU(l)
 
-  /** Converts a `Position[T]` to a `TypedPipe[Position[T]]`. */
+  /** Converts a `Position[P]` to a `TypedPipe[Position[P]]`. */
   implicit def positionToPipe[
     P <: HList
   ](
@@ -1519,7 +1519,7 @@ package object environment {
     ctx: Context
   ): Context.U[Position[P]] = ctx.implicits.position.positionToU(p)
 
-  /** Converts a `List[Position[T]]` to a `TypedPipe[Position[T]]`. */
+  /** Converts a `List[Position[P]]` to a `TypedPipe[Position[P]]`. */
   implicit def listPositionToPipe[
     P <: HList
   ](
