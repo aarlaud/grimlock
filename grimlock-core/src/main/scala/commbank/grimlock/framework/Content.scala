@@ -44,8 +44,8 @@ trait Content { self =>
   /**
    * Converts the content to a JSON string.
    *
-   * @param pretty      Indicator if the resulting JSON string to be indented.
-   * @param descriptive Indicator if the JSON should be self describing (true) or not.
+   * @param verbose Indicator if the JSON should be self describing or not.
+   * @param pretty  Indicator if the resulting JSON string to be indented.
    */
   def toJSON(verbose: Boolean, pretty: Boolean = false): String = JSON.to(this, Content.writes(verbose), pretty)
 

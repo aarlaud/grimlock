@@ -15,13 +15,15 @@
 package commbank.grimlock.scalding.examples
 
 import commbank.grimlock.framework._
+import commbank.grimlock.framework.encoding._
 import commbank.grimlock.framework.position._
 
 import commbank.grimlock.scalding.environment._
 
 import com.twitter.scalding.{ Args, Job }
 
-import shapeless.nat.{ _1, _2 }
+import shapeless.{ HList, HNil }
+import shapeless.nat.{ _0, _1 }
 
 class BasicOperations(args: Args) extends Job(args) {
 
@@ -33,57 +35,60 @@ class BasicOperations(args: Args) extends Job(args) {
   val output = "scalding"
 
   // Read the data (ignoring errors). This returns a 2D matrix (instance x feature).
-  val (data, _) = ctx.loadText(s"${path}/exampleInput.txt", Cell.parse2D())
+  val (data, _) = ctx.loadText(
+    s"${path}/exampleInput.txt",
+    Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+  )
 
   // Get the number of rows.
   data
-    .size(_1)
-    .saveAsText(ctx, s"./demo.${output}/row_size.out")
+    .size(_0)
+    .saveAsText(ctx, s"./demo.${output}/row_size.out", Cell.toShortString(true, "|") _)
     .toUnit
 
   // Get all dimensions of the matrix.
   data
     .shape()
-    .saveAsText(ctx, s"./demo.${output}/matrix_shape.out")
+    .saveAsText(ctx, s"./demo.${output}/matrix_shape.out", Cell.toShortString(true, "|") _)
     .toUnit
 
   // Get the column names.
   data
-    .names(Over(_2))
-    .saveAsText(ctx, s"./demo.${output}/column_names.out")
+    .names(Over(_1))
+    .saveAsText(ctx, s"./demo.${output}/column_names.out", Position.toShortString("|") _)
     .toUnit
 
   // Get the type of variables of each column.
   data
-    .types(Over(_2))(true)
-    .saveAsText(ctx, s"./demo.${output}/column_types.txt")
+    .types(Over(_1))(true)
+    .saveAsText(ctx, s"./demo.${output}/column_types.txt", Cell.toShortString(true, "|") _)
     .toUnit
 
   // Transpose the matrix.
   data
-    .permute(_2, _1)
-    .saveAsText(ctx, s"./demo.${output}/transposed.out")
+    .permute(_1, _0)
+    .saveAsText(ctx, s"./demo.${output}/transposed.out", Cell.toShortString(true, "|") _)
     .toUnit
 
   // Construct a simple query
-  def simpleQuery(cell: Cell[_2]) = (cell.content.value gtr 995) || (cell.content.value equ "F")
+  def simpleQuery[P <: HList](cell: Cell[P]) = (cell.content.value gtr 995) || (cell.content.value equ "F")
 
   // Find all co-ordinates that match the above simple query.
   val coords = data
     .which(simpleQuery)
-    .saveAsText(ctx, s"./demo.${output}/query.txt")
+    .saveAsText(ctx, s"./demo.${output}/query.txt", Position.toShortString("|") _)
 
   // Get the data for the above coordinates.
   data
     .get(coords)
-    .saveAsText(ctx, s"./demo.${output}/values.txt")
+    .saveAsText(ctx, s"./demo.${output}/values.txt", Cell.toShortString(true, "|") _)
     .toUnit
 
   // Keep columns A and B, and remove row 0221707
   data
-    .slice(Over(_2))(true, List("fid:A", "fid:B"))
-    .slice(Over(_1))(false, "iid:0221707")
-    .saveAsText(ctx, s"./demo.${output}/sliced.txt")
+    .slice(Over(_1))(true, List("fid:A", "fid:B"))
+    .slice(Over(_0))(false, "iid:0221707")
+    .saveAsText(ctx, s"./demo.${output}/sliced.txt", Cell.toShortString(true, "|") _)
     .toUnit
 }
 
