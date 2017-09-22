@@ -66,7 +66,9 @@ import com.twitter.scalding.typed.ValuePipe
 
 import org.apache.hadoop.io.Writable
 
-import shapeless.{ ::, =:!=, HList, HNil, IsDistinctConstraint, Nat }
+import scala.reflect.ClassTag
+
+import shapeless.{ ::, =:!=, HList, HNil, IsDistinctConstraint, Nat, Witness }
 import shapeless.nat.{ _0, _1, _2, _3, _4, _5, _6, _7, _8 }
 import shapeless.ops.hlist.Length
 import shapeless.ops.nat.{ GT, GTEq, ToInt }
@@ -375,7 +377,7 @@ case class Matrix[
   def size[
     D <: Nat : ToInt,
     T <: Tuner,
-    V <: Value[_]
+    V <: Value[_] : ClassTag
   ](
     dim: D,
     distinct: Boolean,
@@ -828,9 +830,9 @@ case class Matrix[
   }
 }
 
-/** Rich wrapper around a `TypedPipe[Cell[V1] :: HNil]`. */
+/** Rich wrapper around a `TypedPipe[Cell[V1 :: HNil]]`. */
 case class Matrix1D[
-  V1 <: Value[_]
+  V1 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: HNil]]
 )(implicit
@@ -861,14 +863,14 @@ case class Matrix1D[
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: HNil]] = coordinates(_0, tuner)
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: HNil]] = coordinates[_0, V1](tuner)
     .map { case c1 => Position(c1) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: HNil]]`. */
 case class Matrix2D[
-  V1 <: Value[_],
-  V2 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: HNil]]
 )(implicit
@@ -1177,16 +1179,16 @@ case class Matrix2D[
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
     .map { case (c1, c2) => Position(c1, c2) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: HNil]]`. */
 case class Matrix3D[
-  V1 <: Value[_],
-  V2 <: Value[_],
-  V3 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag,
+  V3 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]
 )(implicit
@@ -1243,18 +1245,18 @@ case class Matrix3D[
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
-    .tunedCross[V3](tuner, (_, _) => true, coordinates(_2, tuner))
+  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
+    .tunedCross[V3](tuner, (_, _) => true, coordinates[_2, V3](tuner))
     .map { case ((c1, c2), c3) => Position(c1, c2, c3) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]`. */
 case class Matrix4D[
-  V1 <: Value[_],
-  V2 <: Value[_],
-  V3 <: Value[_],
-  V4 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag,
+  V3 <: Value[_] : ClassTag,
+  V4 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
 )(implicit
@@ -1323,20 +1325,22 @@ case class Matrix4D[
     data
   }
 
-  protected def naturalDomain(tuner: Tuner): Context.U[Position[V1 :: V2 :: V3 :: V4 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
-    .tunedCross[V3](tuner, (_, _) => true, coordinates(_2, tuner))
-    .tunedCross[V4](tuner, (_, _) => true, coordinates(_3, tuner))
+  protected def naturalDomain(
+    tuner: Tuner
+  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
+    .tunedCross[V3](tuner, (_, _) => true, coordinates[_2, V3](tuner))
+    .tunedCross[V4](tuner, (_, _) => true, coordinates[_3, V4](tuner))
     .map { case (((c1, c2), c3), c4) => Position(c1, c2, c3, c4) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]`. */
 case class Matrix5D[
-  V1 <: Value[_],
-  V2 <: Value[_],
-  V3 <: Value[_],
-  V4 <: Value[_],
-  V5 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag,
+  V3 <: Value[_] : ClassTag,
+  V4 <: Value[_] : ClassTag,
+  V5 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
 )(implicit
@@ -1421,22 +1425,22 @@ case class Matrix5D[
 
   protected def naturalDomain(
     tuner: Tuner
-   ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
-    .tunedCross[V3](tuner, (_, _) => true, coordinates(_2, tuner))
-    .tunedCross[V4](tuner, (_, _) => true, coordinates(_3, tuner))
-    .tunedCross[V5](tuner, (_, _) => true, coordinates(_4, tuner))
+   ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
+    .tunedCross[V3](tuner, (_, _) => true, coordinates[_2, V3](tuner))
+    .tunedCross[V4](tuner, (_, _) => true, coordinates[_3, V4](tuner))
+    .tunedCross[V5](tuner, (_, _) => true, coordinates[_4, V5](tuner))
     .map { case ((((c1, c2), c3), c4), c5) => Position(c1, c2, c3, c4, c5) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]`. */
 case class Matrix6D[
-  V1 <: Value[_],
-  V2 <: Value[_],
-  V3 <: Value[_],
-  V4 <: Value[_],
-  V5 <: Value[_],
-  V6 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag,
+  V3 <: Value[_] : ClassTag,
+  V4 <: Value[_] : ClassTag,
+  V5 <: Value[_] : ClassTag,
+  V6 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
 )(implicit
@@ -1535,24 +1539,24 @@ case class Matrix6D[
 
   protected def naturalDomain(
     tuner: Tuner
-  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
-    .tunedCross[V3](tuner, (_, _) => true, coordinates(_2, tuner))
-    .tunedCross[V4](tuner, (_, _) => true, coordinates(_3, tuner))
-    .tunedCross[V5](tuner, (_, _) => true, coordinates(_4, tuner))
-    .tunedCross[V6](tuner, (_, _) => true, coordinates(_5, tuner))
+  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
+    .tunedCross[V3](tuner, (_, _) => true, coordinates[_2, V3](tuner))
+    .tunedCross[V4](tuner, (_, _) => true, coordinates[_3, V4](tuner))
+    .tunedCross[V5](tuner, (_, _) => true, coordinates[_4, V5](tuner))
+    .tunedCross[V6](tuner, (_, _) => true, coordinates[_5, V6](tuner))
     .map { case (((((c1, c2), c3), c4), c5), c6) => Position(c1, c2, c3, c4, c5, c6) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]`. */
 case class Matrix7D[
-  V1 <: Value[_],
-  V2 <: Value[_],
-  V3 <: Value[_],
-  V4 <: Value[_],
-  V5 <: Value[_],
-  V6 <: Value[_],
-  V7 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag,
+  V3 <: Value[_] : ClassTag,
+  V4 <: Value[_] : ClassTag,
+  V5 <: Value[_] : ClassTag,
+  V6 <: Value[_] : ClassTag,
+  V7 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
 )(implicit
@@ -1660,26 +1664,26 @@ case class Matrix7D[
 
   protected def naturalDomain(
     tuner: Tuner
-  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
-    .tunedCross[V3](tuner, (_, _) => true, coordinates(_2, tuner))
-    .tunedCross[V4](tuner, (_, _) => true, coordinates(_3, tuner))
-    .tunedCross[V5](tuner, (_, _) => true, coordinates(_4, tuner))
-    .tunedCross[V6](tuner, (_, _) => true, coordinates(_5, tuner))
-    .tunedCross[V7](tuner, (_, _) => true, coordinates(_6, tuner))
+  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
+    .tunedCross[V3](tuner, (_, _) => true, coordinates[_2, V3](tuner))
+    .tunedCross[V4](tuner, (_, _) => true, coordinates[_3, V4](tuner))
+    .tunedCross[V5](tuner, (_, _) => true, coordinates[_4, V5](tuner))
+    .tunedCross[V6](tuner, (_, _) => true, coordinates[_5, V6](tuner))
+    .tunedCross[V7](tuner, (_, _) => true, coordinates[_6, V7](tuner))
     .map { case ((((((c1, c2), c3), c4), c5), c6), c7) => Position(c1, c2, c3, c4, c5, c6, c7) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]`. */
 case class Matrix8D[
-  V1 <: Value[_],
-  V2 <: Value[_],
-  V3 <: Value[_],
-  V4 <: Value[_],
-  V5 <: Value[_],
-  V6 <: Value[_],
-  V7 <: Value[_],
-  V8 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag,
+  V3 <: Value[_] : ClassTag,
+  V4 <: Value[_] : ClassTag,
+  V5 <: Value[_] : ClassTag,
+  V6 <: Value[_] : ClassTag,
+  V7 <: Value[_] : ClassTag,
+  V8 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
 )(implicit
@@ -1796,28 +1800,28 @@ case class Matrix8D[
 
   protected def naturalDomain(
     tuner: Tuner
-  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
-    .tunedCross[V3](tuner, (_, _) => true, coordinates(_2, tuner))
-    .tunedCross[V4](tuner, (_, _) => true, coordinates(_3, tuner))
-    .tunedCross[V5](tuner, (_, _) => true, coordinates(_4, tuner))
-    .tunedCross[V6](tuner, (_, _) => true, coordinates(_5, tuner))
-    .tunedCross[V7](tuner, (_, _) => true, coordinates(_6, tuner))
-    .tunedCross[V8](tuner, (_, _) => true, coordinates(_7, tuner))
+  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
+    .tunedCross[V3](tuner, (_, _) => true, coordinates[_2, V3](tuner))
+    .tunedCross[V4](tuner, (_, _) => true, coordinates[_3, V4](tuner))
+    .tunedCross[V5](tuner, (_, _) => true, coordinates[_4, V5](tuner))
+    .tunedCross[V6](tuner, (_, _) => true, coordinates[_5, V6](tuner))
+    .tunedCross[V7](tuner, (_, _) => true, coordinates[_6, V7](tuner))
+    .tunedCross[V8](tuner, (_, _) => true, coordinates[_7, V8](tuner))
     .map { case (((((((c1, c2), c3), c4), c5), c6), c7), c8) => Position(c1, c2, c3, c4, c5, c6, c7, c8) }
 }
 
 /** Rich wrapper around a `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]`. */
 case class Matrix9D[
-  V1 <: Value[_],
-  V2 <: Value[_],
-  V3 <: Value[_],
-  V4 <: Value[_],
-  V5 <: Value[_],
-  V6 <: Value[_],
-  V7 <: Value[_],
-  V8 <: Value[_],
-  V9 <: Value[_]
+  V1 <: Value[_] : ClassTag,
+  V2 <: Value[_] : ClassTag,
+  V3 <: Value[_] : ClassTag,
+  V4 <: Value[_] : ClassTag,
+  V5 <: Value[_] : ClassTag,
+  V6 <: Value[_] : ClassTag,
+  V7 <: Value[_] : ClassTag,
+  V8 <: Value[_] : ClassTag,
+  V9 <: Value[_] : ClassTag
 ](
   data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
 )(implicit
@@ -1943,15 +1947,15 @@ case class Matrix9D[
 
   protected def naturalDomain(
     tuner: Tuner
-  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]] = coordinates(_0, tuner)
-    .tunedCross[V2](tuner, (_, _) => true, coordinates(_1, tuner))
-    .tunedCross[V3](tuner, (_, _) => true, coordinates(_2, tuner))
-    .tunedCross[V4](tuner, (_, _) => true, coordinates(_3, tuner))
-    .tunedCross[V5](tuner, (_, _) => true, coordinates(_4, tuner))
-    .tunedCross[V6](tuner, (_, _) => true, coordinates(_5, tuner))
-    .tunedCross[V7](tuner, (_, _) => true, coordinates(_6, tuner))
-    .tunedCross[V8](tuner, (_, _) => true, coordinates(_7, tuner))
-    .tunedCross[V9](tuner, (_, _) => true, coordinates(_8, tuner))
+  ): Context.U[Position[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]] = coordinates[_0, V1](tuner)
+    .tunedCross[V2](tuner, (_, _) => true, coordinates[_1, V2](tuner))
+    .tunedCross[V3](tuner, (_, _) => true, coordinates[_2, V3](tuner))
+    .tunedCross[V4](tuner, (_, _) => true, coordinates[_3, V4](tuner))
+    .tunedCross[V5](tuner, (_, _) => true, coordinates[_4, V5](tuner))
+    .tunedCross[V6](tuner, (_, _) => true, coordinates[_5, V6](tuner))
+    .tunedCross[V7](tuner, (_, _) => true, coordinates[_6, V7](tuner))
+    .tunedCross[V8](tuner, (_, _) => true, coordinates[_7, V8](tuner))
+    .tunedCross[V9](tuner, (_, _) => true, coordinates[_8, V9](tuner))
     .map { case ((((((((c1, c2), c3), c4), c5), c6), c7), c8), c9) => Position(c1, c2, c3, c4, c5, c6, c7, c8, c9) }
 }
 
@@ -2016,13 +2020,13 @@ trait MatrixXD[P <: HList] extends Persist[Cell[P]] {
 
   protected def coordinates[
     D <: Nat : ToInt,
-    V <: Value[_]
+    V <: Value[_] : ClassTag
   ](
-    dim: D,
     tuner: Tuner
   )(implicit
-    ev: Position.IndexConstraints[P, D, V]
-  ): Context.U[V] = data.map { case c => c.position(dim) }.tunedDistinct(tuner)(Value.ordering())
+    ev1: Position.IndexConstraints[P, D, V],
+    ev2: Witness.Aux[D]
+  ): Context.U[V] = data.map { case c => c.position(ev2.value) }.tunedDistinct(tuner)(Value.ordering())
 
   protected def getSaveAsIVTuners(tuner: Tuner): (Tuner, Tuner) = tuner match {
     case Binary(j, r) => (j, r)
@@ -2033,7 +2037,7 @@ trait MatrixXD[P <: HList] extends Persist[Cell[P]] {
 
   protected def saveDictionary[
     D <: Nat : ToInt,
-    V <: Value[_]
+    V <: Value[_] : ClassTag
   ](
     dim: D,
     context: Context,
@@ -2042,9 +2046,10 @@ trait MatrixXD[P <: HList] extends Persist[Cell[P]] {
     separator: String,
     tuner: Tuner
   )(implicit
-    ev: Position.IndexConstraints[P, D, V]
+    ev1: Position.IndexConstraints[P, D, V],
+    ev2: Witness.Aux[D]
   ): Context.U[(Position[V :: HNil], Long)] = {
-    val numbered = coordinates(dim, tuner)
+    val numbered = coordinates[D, V](tuner)
       .groupAll
       .mapGroup { case (_, itr) => itr.zipWithIndex }
       .map { case (_, (c, i)) => (Position(c), i.toLong) }

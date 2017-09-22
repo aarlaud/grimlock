@@ -81,6 +81,8 @@ import commbank.grimlock.scalding.content.{ Contents, IndexedContents }
 import commbank.grimlock.scalding.partition.Partitions
 import commbank.grimlock.scalding.position.Positions
 
+import scala.reflect.ClassTag
+
 import shapeless.{ ::, HList, HNil, Nat }
 import shapeless.nat.{ _0, _1, _2, _3, _4, _5, _6, _7, _8 }
 import shapeless.ops.hlist.Length
@@ -592,7 +594,7 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: HNil]]` to a `Matrix1D`. */
   implicit def pipeToMatrix1D[
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: HNil]]
   )(implicit
@@ -602,8 +604,8 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
   implicit def pipeToMatrix2D[
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: HNil]]
   )(implicit
@@ -614,9 +616,9 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
   implicit def pipeToMatrix3D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
@@ -628,10 +630,10 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
   implicit def pipeToMatrix4D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
@@ -644,11 +646,11 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
   implicit def pipeToMatrix5D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
@@ -662,12 +664,12 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
   implicit def pipeToMatrix6D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
@@ -682,13 +684,13 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
   implicit def pipeToMatrix7D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
@@ -704,14 +706,14 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
   implicit def pipeToMatrix8D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
@@ -728,15 +730,15 @@ package object environment {
 
   /** Conversion from `TypedPipe[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
   implicit def pipeToMatrix9D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
@@ -775,7 +777,7 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: HNil]]` to a `Matrix1D`. */
   implicit def listToPipeMatrix1D[
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: HNil]]
   )(implicit
@@ -785,8 +787,8 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
   implicit def listToPipeMatrix2D[
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: HNil]]
   )(implicit
@@ -797,9 +799,9 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
   implicit def listToPipeMatrix3D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
@@ -811,10 +813,10 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
   implicit def listToPipeMatrix4D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
@@ -827,11 +829,11 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
   implicit def listToPipeMatrix5D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
@@ -845,12 +847,12 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
   implicit def listToPipeMatrix6D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
@@ -865,13 +867,13 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
   implicit def listToPipeMatrix7D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
@@ -887,14 +889,14 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
   implicit def listToPipeMatrix8D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
@@ -911,15 +913,15 @@ package object environment {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
   implicit def listToPipeMatrix9D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
@@ -960,7 +962,7 @@ package object environment {
   /** Conversion from `List[(T1, Content)]` to a `Matrix1D`. */
   implicit def tuple1ToPipeMatrix1D[
     T1 <% V1,
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     list: List[(T1, Content)]
   )(implicit
@@ -984,8 +986,8 @@ package object environment {
   implicit def tuple2ToPipeMatrix2D[
     T1 <% V1,
     T2 <% V2,
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, Content)]
   )(implicit
@@ -1025,9 +1027,9 @@ package object environment {
     T1 <% V1,
     T2 <% V2,
     T3 <% V3,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, Content)]
   )(implicit
@@ -1073,10 +1075,10 @@ package object environment {
     T2 <% V2,
     T3 <% V3,
     T4 <% V4,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, Content)]
   )(implicit
@@ -1128,11 +1130,11 @@ package object environment {
     T3 <% V3,
     T4 <% V4,
     T5 <% V5,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
@@ -1190,12 +1192,12 @@ package object environment {
     T4 <% V4,
     T5 <% V5,
     T6 <% V6,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
@@ -1262,13 +1264,13 @@ package object environment {
     T5 <% V5,
     T6 <% V6,
     T7 <% V7,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
@@ -1341,14 +1343,14 @@ package object environment {
     T6 <% V6,
     T7 <% V7,
     T8 <% V8,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
@@ -1427,15 +1429,15 @@ package object environment {
     T7 <% V7,
     T8 <% V8,
     T9 <% V9,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit

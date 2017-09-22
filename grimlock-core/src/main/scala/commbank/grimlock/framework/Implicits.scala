@@ -107,7 +107,7 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: HNil]]` to a `Matrix1D`. */
   implicit def toMatrix1D[
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: HNil]]
   )(implicit
@@ -116,8 +116,8 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
   implicit def toMatrix2D[
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: HNil]]
   )(implicit
@@ -127,9 +127,9 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
   implicit def toMatrix3D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
@@ -140,10 +140,10 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
   implicit def toMatrix4D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
@@ -155,11 +155,11 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
   implicit def toMatrix5D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
@@ -172,12 +172,12 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
   implicit def toMatrix6D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
@@ -191,13 +191,13 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
   implicit def toMatrix7D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
@@ -212,14 +212,14 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
   implicit def toMatrix8D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
@@ -235,15 +235,15 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
   implicit def toMatrix9D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     data: C#U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
@@ -274,7 +274,7 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: HNil]]` to a `Matrix1D`. */
   implicit def listToMatrix1D[
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: HNil]]
   )(implicit
@@ -284,8 +284,8 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: HNil]]` to a `Matrix2D`. */
   implicit def listToMatrix2D[
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: HNil]]
   )(implicit
@@ -296,9 +296,9 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: HNil]]` to a `Matrix3D`. */
   implicit def listToMatrix3D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
@@ -310,10 +310,10 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]` to a `Matrix4D`. */
   implicit def listToMatrix4D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
@@ -326,11 +326,11 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]` to a `Matrix5D`. */
   implicit def listToMatrix5D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
@@ -344,12 +344,12 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]` to a `Matrix6D`. */
   implicit def listToMatrix6D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
@@ -364,13 +364,13 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]` to a `Matrix7D`. */
   implicit def listToMatrix7D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
@@ -386,14 +386,14 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]` to a `Matrix8D`. */
   implicit def listToMatrix8D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
@@ -410,15 +410,15 @@ trait MatrixImplicits[C <: Context[C]] {
 
   /** Conversion from `List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]` to a `Matrix9D`. */
   implicit def listToMatrix9D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
@@ -459,7 +459,7 @@ trait MatrixImplicits[C <: Context[C]] {
   /** Conversion from `List[(T1, Content)]` to a `Matrix1D`. */
   implicit def tuple1ToMatrix1D[
     T1 <% V1,
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     list: List[(T1, Content)]
   )(implicit
@@ -483,8 +483,8 @@ trait MatrixImplicits[C <: Context[C]] {
   implicit def tuple2ToMatrix2D[
     T1 <% V1,
     T2 <% V2,
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, Content)]
   )(implicit
@@ -524,9 +524,9 @@ trait MatrixImplicits[C <: Context[C]] {
     T1 <% V1,
     T2 <% V2,
     T3 <% V3,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, Content)]
   )(implicit
@@ -572,10 +572,10 @@ trait MatrixImplicits[C <: Context[C]] {
     T2 <% V2,
     T3 <% V3,
     T4 <% V4,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, Content)]
   )(implicit
@@ -627,11 +627,11 @@ trait MatrixImplicits[C <: Context[C]] {
     T3 <% V3,
     T4 <% V4,
     T5 <% V5,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
@@ -689,12 +689,12 @@ trait MatrixImplicits[C <: Context[C]] {
     T4 <% V4,
     T5 <% V5,
     T6 <% V6,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
@@ -758,13 +758,13 @@ trait MatrixImplicits[C <: Context[C]] {
     T5 <% V5,
     T6 <% V6,
     T7 <% V7,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
@@ -834,14 +834,14 @@ trait MatrixImplicits[C <: Context[C]] {
     T6 <% V6,
     T7 <% V7,
     T8 <% V8,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
@@ -917,15 +917,15 @@ trait MatrixImplicits[C <: Context[C]] {
     T7 <% V7,
     T8 <% V8,
     T9 <% V9,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit

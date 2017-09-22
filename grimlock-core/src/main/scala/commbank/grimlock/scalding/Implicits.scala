@@ -120,7 +120,7 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   implicit def toMatrix[P <: HList](data: Context.U[Cell[P]]): Matrix[P] = Matrix(data)
 
   implicit def toMatrix1D[
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: HNil]]
   )(implicit
@@ -128,8 +128,8 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix1D[V1] = Matrix1D(data)
 
   implicit def toMatrix2D[
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: HNil]]
   )(implicit
@@ -138,9 +138,9 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix2D[V1, V2] = Matrix2D(data)
 
   implicit def toMatrix3D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
@@ -150,10 +150,10 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix3D[V1, V2, V3] = Matrix3D(data)
 
   implicit def toMatrix4D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
@@ -164,11 +164,11 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix4D[V1, V2, V3, V4] = Matrix4D(data)
 
   implicit def toMatrix5D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
@@ -180,12 +180,12 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix5D[V1, V2, V3, V4, V5] = Matrix5D(data)
 
   implicit def toMatrix6D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
@@ -198,13 +198,13 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix6D[V1, V2, V3, V4, V5, V6] = Matrix6D(data)
 
   implicit def toMatrix7D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
@@ -218,14 +218,14 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = Matrix7D(data)
 
   implicit def toMatrix8D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
@@ -240,15 +240,15 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = Matrix8D(data)
 
   implicit def toMatrix9D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     data: Context.U[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
@@ -282,7 +282,7 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix[P] = Matrix(IterablePipe(data))
 
   implicit def listToMatrix1D[
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: HNil]]
   )(implicit
@@ -291,8 +291,8 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix1D[V1] = Matrix1D(IterablePipe(data))
 
   implicit def listToMatrix2D[
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: HNil]]
   )(implicit
@@ -302,9 +302,9 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix2D[V1, V2] = Matrix2D(IterablePipe(data))
 
   implicit def listToMatrix3D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: HNil]]
   )(implicit
@@ -315,10 +315,10 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix3D[V1, V2, V3] = Matrix3D(IterablePipe(data))
 
   implicit def listToMatrix4D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: HNil]]
   )(implicit
@@ -330,11 +330,11 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix4D[V1, V2, V3, V4] = Matrix4D(IterablePipe(data))
 
   implicit def listToMatrix5D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: HNil]]
   )(implicit
@@ -347,12 +347,12 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix5D[V1, V2, V3, V4, V5] = Matrix5D(IterablePipe(data))
 
   implicit def listToMatrix6D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: HNil]]
   )(implicit
@@ -366,13 +366,13 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix6D[V1, V2, V3, V4, V5, V6] = Matrix6D(IterablePipe(data))
 
   implicit def listToMatrix7D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: HNil]]
   )(implicit
@@ -387,14 +387,14 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix7D[V1, V2, V3, V4, V5, V6, V7] = Matrix7D(IterablePipe(data))
 
   implicit def listToMatrix8D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil]]
   )(implicit
@@ -410,15 +410,15 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   ): Matrix8D[V1, V2, V3, V4, V5, V6, V7, V8] = Matrix8D(IterablePipe(data))
 
   implicit def listToMatrix9D[
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     data: List[Cell[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: V9 :: HNil]]
   )(implicit
@@ -456,7 +456,7 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
 
   implicit def tuple1ToMatrix1D[
     T1 <% V1,
-    V1 <: Value[_]
+    V1 <: Value[_] : ClassTag
   ](
     list: List[(T1, Content)]
   )(implicit
@@ -478,8 +478,8 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
   implicit def tuple2ToMatrix2D[
     T1 <% V1,
     T2 <% V2,
-    V1 <: Value[_],
-    V2 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, Content)]
   )(implicit
@@ -520,9 +520,9 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
     T1 <% V1,
     T2 <% V2,
     T3 <% V3,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, Content)]
   )(implicit
@@ -569,10 +569,10 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
     T2 <% V2,
     T3 <% V3,
     T4 <% V4,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, Content)]
   )(implicit
@@ -627,11 +627,11 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
     T3 <% V3,
     T4 <% V4,
     T5 <% V5,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, Content)]
   )(implicit
@@ -692,12 +692,12 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
     T4 <% V4,
     T5 <% V5,
     T6 <% V6,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, Content)]
   )(implicit
@@ -764,13 +764,13 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
     T5 <% V5,
     T6 <% V6,
     T7 <% V7,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, Content)]
   )(implicit
@@ -845,14 +845,14 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
     T6 <% V6,
     T7 <% V7,
     T8 <% V8,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, T8, Content)]
   )(implicit
@@ -937,15 +937,15 @@ case class MatrixImplicits() extends FwMatrixImplicits[Context] {
     T7 <% V7,
     T8 <% V8,
     T9 <% V9,
-    V1 <: Value[_],
-    V2 <: Value[_],
-    V3 <: Value[_],
-    V4 <: Value[_],
-    V5 <: Value[_],
-    V6 <: Value[_],
-    V7 <: Value[_],
-    V8 <: Value[_],
-    V9 <: Value[_]
+    V1 <: Value[_] : ClassTag,
+    V2 <: Value[_] : ClassTag,
+    V3 <: Value[_] : ClassTag,
+    V4 <: Value[_] : ClassTag,
+    V5 <: Value[_] : ClassTag,
+    V6 <: Value[_] : ClassTag,
+    V7 <: Value[_] : ClassTag,
+    V8 <: Value[_] : ClassTag,
+    V9 <: Value[_] : ClassTag
   ](
     list: List[(T1, T2, T3, T4, T5, T6, T7, T8, T9, Content)]
   )(implicit

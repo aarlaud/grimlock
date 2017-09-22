@@ -33,6 +33,8 @@ import commbank.grimlock.framework.window.{ Window, WindowWithValue }
 
 import org.apache.hadoop.io.Writable
 
+import scala.reflect.ClassTag
+
 import shapeless.{ ::, =:!=, HList, HNil, IsDistinctConstraint, Nat }
 import shapeless.nat._0
 import shapeless.ops.hlist.Length
@@ -403,7 +405,7 @@ trait Matrix[P <: HList, C <: Context[C]] extends Persist[Cell[P], C]
   def size[
     D <: Nat : ToInt,
     T <: Tuner,
-    V <: Value[_]
+    V <: Value[_] : ClassTag
   ](
     dim: D,
     distinct: Boolean = false,
@@ -1586,14 +1588,14 @@ trait Matrix7D[
 
 /** Trait for 8D specific operations. */
 trait Matrix8D[
-  V1,
-  V2,
-  V3,
-  V4,
-  V5,
-  V6,
-  V7,
-  V8,
+  V1 <: Value[_],
+  V2 <: Value[_],
+  V3 <: Value[_],
+  V4 <: Value[_],
+  V5 <: Value[_],
+  V6 <: Value[_],
+  V7 <: Value[_],
+  V8 <: Value[_],
   C <: Context[C]
 ] extends SetDimensionMatrix[V1 :: V2 :: V3 :: V4 :: V5 :: V6 :: V7 :: V8 :: HNil, C] {
   /**
