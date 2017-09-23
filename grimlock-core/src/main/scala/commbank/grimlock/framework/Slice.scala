@@ -20,6 +20,12 @@ import shapeless.{ ::, HList, HNil, Nat }
 
 /** Trait that encapsulates dimension on which to operate. */
 trait Slice[P <: HList, S <: HList, R <: HList] {
+  /** Convenient implicits for `S`. */
+  implicit val slc: Position.ListConstraints[S]
+
+  /** Convenient implicits for `R`. */
+  implicit val rlc: Position.ListConstraints[R]
+
   /** Returns the selected coordinate(s) for the given `pos`. */
   def selected(pos: Position[P]): Position[S]
 
@@ -41,6 +47,8 @@ case class Over[
 ](
   dimension: D
 )(implicit
+  val slc: Position.ListConstraints[V :: HNil],
+  val rlc: Position.ListConstraints[Q],
   ev1: Position.IndexConstraints[P, D, V],
   ev2: Position.RemoveConstraints[P, D, Q]
 ) extends Slice[P, V :: HNil, Q] {
@@ -63,6 +71,8 @@ case class Along[
 ](
   dimension: D
 )(implicit
+  val slc: Position.ListConstraints[Q],
+  val rlc: Position.ListConstraints[V :: HNil],
   ev1: Position.IndexConstraints[P, D, V],
   ev2: Position.RemoveConstraints[P, D, Q]
 ) extends Slice[P, Q, V :: HNil] {

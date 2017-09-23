@@ -22,7 +22,7 @@ import commbank.grimlock.spark.environment.Context
 import commbank.grimlock.spark.environment.tuner.SparkImplicits._
 import commbank.grimlock.spark.Persist
 
-import shapeless.{ =:!=, HList, HNil }
+import shapeless.HList
 
 /** Rich wrapper around a `RDD[Position]`. */
 case class Positions[
@@ -39,7 +39,7 @@ case class Positions[
     slice: Slice[P, S, R],
     tuner: T = Default()
   )(implicit
-    ev1: S =:!= HNil,
+    ev1: Position.NonEmptyConstraints[S],
     ev2: FwPositions.NamesTuner[Context.U, T],
     ev3: Position.ListConstraints[S]
   ): Context.U[Position[S]] = data.map { case p => slice.selected(p) }.tunedDistinct(tuner)(Position.ordering())

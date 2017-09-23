@@ -16,10 +16,9 @@ package commbank.grimlock.framework.transform
 
 import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
+import commbank.grimlock.framework.position.Position
 
-import shapeless.{ HList, Nat }
-import shapeless.ops.hlist.Length
-import shapeless.ops.nat.GTEq
+import shapeless.HList
 
 /** Trait for transformations from `P` to `Q`. */
 trait Transformer[P <: HList, Q <: HList] extends TransformerWithValue[P, Q] { self =>
@@ -77,15 +76,11 @@ trait Transformer[P <: HList, Q <: HList] extends TransformerWithValue[P, Q] { s
    * @return A transformer that runs `this` and then relocates the contents.
    */
   override def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new Transformer[P, X] {
     def present(cell: Cell[P]): TraversableOnce[Cell[X]] = self
       .present(cell)
@@ -187,15 +182,11 @@ trait TransformerWithValue[P <: HList, Q <: HList] extends java.io.Serializable 
    * @return A transformer that runs `this` and then relocates the contents.
    */
   def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new TransformerWithValue[P, X] {
     type V = self.V
 
@@ -241,15 +232,11 @@ trait TransformerWithValue[P <: HList, Q <: HList] extends java.io.Serializable 
    * @return A transformer that runs `this` and then relocates the contents.
    */
   def andThenRelocateWithValue[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new TransformerWithValue[P, X] {
     type V = self.V
 

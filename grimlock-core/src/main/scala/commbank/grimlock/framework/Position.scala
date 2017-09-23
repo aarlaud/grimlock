@@ -50,6 +50,7 @@ import shapeless.ops.hlist.{
   ConstMapper,
   FlatMapper,
   IsHCons,
+  Length,
   Mapper,
   Prepend,
   ReplaceAt,
@@ -58,7 +59,7 @@ import shapeless.ops.hlist.{
   Zip,
   ZipWithIndex
 }
-import shapeless.ops.nat.ToInt
+import shapeless.ops.nat.{ GT, GTEq, ToInt }
 
 
 /**
@@ -266,6 +267,18 @@ object Position {
     implicit val allValue: LUBConstraint[Q, Value[_]]
   }
 
+  /** Type that captures that `Q` should have the same number of coordinates as `P`. */
+  trait EqualConstraints[Q <: HList, P <: HList] extends java.io.Serializable {
+  }
+
+  /** Type that captures that `Q` should have the same or more coordinates than `P`. */
+  trait GreaterEqualConstraints[Q <: HList, P <: HList] extends java.io.Serializable {
+  }
+
+  /** Type that captures that `Q` should have more coordinates than `P`. */
+  trait GreaterThanConstraints[Q <: HList, P <: HList] extends java.io.Serializable {
+  }
+
   /** Type that captures all constraints for indexing a position. */
   trait IndexConstraints[P <: HList, D <: Nat, V <: Value[_]] extends java.io.Serializable {
     implicit val atIndex: At.Aux[P, D, V]
@@ -309,6 +322,10 @@ object Position {
     implicit val createQ: Prepend.Aux[PRE, TAI, Q]
     implicit val isDifferent: IsDistinctConstraint[D :: I :: HNil] // shapeless.=:!= doesn't serialise
     implicit val allValue: LUBConstraint[Q, Value[_]]
+  }
+
+  /** Type that captures that the position needs at least one coordinate. */
+  trait NonEmptyConstraints[P <: HList] extends java.io.Serializable {
   }
 
   /** Type that captures all constraints for removing coordinates from a position. */
@@ -367,6 +384,42 @@ object Position {
     implicit val prependV = ev1
     implicit val allValue = ev2
   }
+
+  /** Implicit that ensures that `Q` has at same number of coordinates as `P`. */
+  implicit def equalConstraints[
+    P <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
+  ](implicit
+    ev1: Length.Aux[P, L],
+    ev2: Length.Aux[Q, M],
+    ev3: L =:= M
+  ): EqualConstraints[Q, P] = new EqualConstraints[Q, P] { }
+
+  /** Implicit that ensures that `Q` has at least as many coordinates as `P`. */
+  implicit def greaterEqualConstraints[
+    P <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
+  ](implicit
+    ev1: Length.Aux[P, L],
+    ev2: Length.Aux[Q, M],
+    ev3: GTEq[M, L]
+  ): GreaterEqualConstraints[Q, P] = new GreaterEqualConstraints[Q, P] { }
+
+  /** Implicit that ensures that `Q` has at more coordinates than `P`. */
+  implicit def greaterThanConstraints[
+    P <: HList,
+    Q <: HList,
+    L <: Nat,
+    M <: Nat
+  ](implicit
+    ev1: Length.Aux[P, L],
+    ev2: Length.Aux[Q, M],
+    ev3: GT[M, L]
+  ): GreaterThanConstraints[Q, P] = new GreaterThanConstraints[Q, P] { }
 
   /** Implicit with all constraints for indexing coordinates in a position. */
   implicit def indexConstraints[
@@ -451,6 +504,13 @@ object Position {
     implicit val isDifferent = ev7
     implicit val allValue = ev8
   }
+
+  /** Implicit for ensuring the position has coordinates. */
+  implicit def nonEmptyConstrains[
+    P <: HList
+  ](implicit
+    ev: P =:!= HNil
+  ): NonEmptyConstraints[P] = new NonEmptyConstraints[P] { }
 
   /** Converts a `Position[P]` to a `List[Position[P]]` */
   implicit def positionToListPosition[P <: HList](p: Position[P]): List[Position[P]] = List(p)
@@ -1039,7 +1099,7 @@ trait Positions[P <: HList, C <: Context[C]] extends Persist[Position[P], C] {
     slice: Slice[P, S, R],
     tuner: T
   )(implicit
-    ev1: S =:!= HNil,
+    ev1: Position.NonEmptyConstraints[S],
     ev2: Positions.NamesTuner[C#U, T],
     ev3: Position.ListConstraints[S]
   ): C#U[Position[S]]

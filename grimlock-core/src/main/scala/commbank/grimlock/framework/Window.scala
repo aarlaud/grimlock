@@ -18,9 +18,7 @@ import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.position.Position
 
-import shapeless.{ HList, Nat }
-import shapeless.ops.hlist.Length
-import shapeless.ops.nat.GTEq
+import shapeless.HList
 
 /**
  * Trait for generating windowed data.
@@ -103,15 +101,11 @@ trait Window[P <: HList, S <: HList, R <: HList, Q <: HList] extends WindowWithV
    * @return A windowed function that runs `this` and then relocates the contents.
    */
   override def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new Window[P, S, R, X] {
     type I = self.I
     type T = self.T
@@ -281,15 +275,11 @@ trait WindowWithValue[P <: HList, S <: HList, R <: HList, Q <: HList] extends ja
    * @return A windowed function that runs `this` and then relocates the contents.
    */
   def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new WindowWithValue[P, S, R, X] {
     type V = self.V
     type I = self.I
@@ -354,15 +344,11 @@ trait WindowWithValue[P <: HList, S <: HList, R <: HList, Q <: HList] extends ja
    * @return A windowed function that runs `this` and then relocates the contents.
    */
   def andThenRelocateWithValue[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new WindowWithValue[P, S, R, X] {
     type V = self.V
     type I = self.I

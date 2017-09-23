@@ -20,9 +20,7 @@ import commbank.grimlock.framework.position.Position
 
 import scala.reflect.{ classTag, ClassTag }
 
-import shapeless.{ HList, Nat }
-import shapeless.ops.hlist.Length
-import shapeless.ops.nat.{ GT, GTEq }
+import shapeless.HList
 
 /** Trait that encapsulates the result of an aggregation. */
 trait Result[A, T[X] <: Result[X, T]] {
@@ -162,15 +160,11 @@ trait Aggregator[P <: HList, S <: HList, Q <: HList] extends AggregatorWithValue
    * @return An aggregator that runs `this` and then relocates the resulting contents.
    */
   override def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     relocator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new Aggregator[P, S, X] {
     type T = self.T
     type O[A] = self.O[A]
@@ -188,11 +182,8 @@ trait Aggregator[P <: HList, S <: HList, Q <: HList] extends AggregatorWithValue
 
 /** Companion object to the `Aggregator` trait. */
 object Aggregator {
-  /** Type to validate an aggregator. */
-  type Validate[P <: HList, S <: HList, Q <: HList] = Valid[P, S, Q]
-
-  /** Trait for valid aggregators. */
-  trait Valid[P <: HList, S <: HList, Q <: HList] {
+  /** Trait to validate an aggregator. */
+  trait Validate[P <: HList, S <: HList, Q <: HList] {
     def check(aggregators: Seq[Aggregator[P, S, Q]]): Aggregator[P, S, Q]
   }
 
@@ -200,14 +191,10 @@ object Aggregator {
   implicit def qGreaterThanS[
     P <: HList,
     S <: HList,
-    Q <: HList,
-    L <: Nat,
-    M <: Nat
+    Q <: HList
   ](implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[S, M],
-    ev3: GT[L, M]
-  ): Valid[P, S, Q] = new Valid[P, S, Q] {
+    ev: Position.GreaterThanConstraints[Q, S]
+  ): Validate[P, S, Q] = new Validate[P, S, Q] {
     def check(aggregators: Seq[Aggregator[P, S, Q]]): Aggregator[P, S, Q] = aggregators.toList
   }
 
@@ -215,14 +202,10 @@ object Aggregator {
   implicit def qEqualSWithSingle[
     P <: HList,
     S <: HList,
-    Q <: HList,
-    L <: Nat,
-    M <: Nat
+    Q <: HList
   ](implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[S, M],
-    ev3: L =:= M
-  ): Valid[P, S, Q] = new Valid[P, S, Q] {
+    ev: Position.EqualConstraints[Q, S]
+  ): Validate[P, S, Q] = new Validate[P, S, Q] {
     def check(aggregators: Seq[Aggregator[P, S, Q]]): Aggregator[P, S, Q] = Validate.check(aggregators)
   }
 
@@ -230,15 +213,11 @@ object Aggregator {
   implicit def listToAggregator[
     P <: HList,
     S <: HList,
-    Q <: HList,
-    L <: Nat,
-    M <: Nat
+    Q <: HList
   ](
     aggregators: List[Aggregator[P, S, Q]]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[S, M],
-    ev3: GT[L, M]
+    ev: Position.GreaterThanConstraints[Q, S]
   ): Aggregator[P, S, Q] = new Aggregator[P, S, Q] {
     type T = List[(Int, Any)]
     type O[A] = Multiple[A]
@@ -372,15 +351,11 @@ trait AggregatorWithValue[P <: HList, S <: HList, Q <: HList] extends java.io.Se
    * @return An aggregator that runs `this` and then relocates the resulting contents.
    */
   def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     relocator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new AggregatorWithValue[P, S, X] {
     type T = self.T
     type V = self.V
@@ -447,15 +422,11 @@ trait AggregatorWithValue[P <: HList, S <: HList, Q <: HList] extends java.io.Se
    * @return An aggregator that runs `this` and then relocates the resulting contents.
    */
   def andThenRelocateWithValue[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     relocator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new AggregatorWithValue[P, S, X] {
     type T = self.T
     type V = self.V
@@ -474,11 +445,8 @@ trait AggregatorWithValue[P <: HList, S <: HList, Q <: HList] extends java.io.Se
 
 /** Companion object to the `AggregatorWithValue` trait. */
 object AggregatorWithValue {
-  /** Type to validate an aggregator. */
-  type Validate[P <: HList, S <: HList, Q <: HList, W] = Valid[P, S, Q, W]
-
-  /** Trait for valid aggregators. */
-  trait Valid[P <: HList, S <: HList, Q <: HList, W] {
+  /** Trait to validate an aggregator. */
+  trait Validate[P <: HList, S <: HList, Q <: HList, W] {
     def check(
       aggregators: Seq[AggregatorWithValue[P, S, Q] { type V >: W }]
     ): AggregatorWithValue[P, S, Q] { type V >: W }
@@ -489,14 +457,10 @@ object AggregatorWithValue {
     P <: HList,
     S <: HList,
     Q <: HList,
-    L <: Nat,
-    M <: Nat,
     W
   ](implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[S, M],
-    ev3: GT[L, M]
-  ): Valid[P, S, Q, W] = new Valid[P, S, Q, W] {
+    ev: Position.GreaterThanConstraints[Q, S]
+  ): Validate[P, S, Q, W] = new Validate[P, S, Q, W] {
     def check(
       aggregators: Seq[AggregatorWithValue[P, S, Q] { type V >: W }]
     ): AggregatorWithValue[P, S, Q] { type V >: W } = aggregators.toList
@@ -507,14 +471,10 @@ object AggregatorWithValue {
     P <: HList,
     S <: HList,
     Q <: HList,
-    L <: Nat,
-    M <: Nat,
     W
   ](implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[S, M],
-    ev3: L =:= M
-  ): Valid[P, S, Q, W] = new Valid[P, S, Q, W] {
+    ev: Position.EqualConstraints[Q, S]
+  ): Validate[P, S, Q, W] = new Validate[P, S, Q, W] {
     def check(
       aggregators: Seq[AggregatorWithValue[P, S, Q] { type V >: W }]
     ): AggregatorWithValue[P, S, Q] { type V >: W } = Validate.check(aggregators)
@@ -528,15 +488,11 @@ object AggregatorWithValue {
     P <: HList,
     S <: HList,
     Q <: HList,
-    L <: Nat,
-    M <: Nat,
     W
   ](
     aggregators: List[AggregatorWithValue[P, S, Q] { type V >: W }]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[S, M],
-    ev3: GT[L, M]
+    ev: Position.GreaterThanConstraints[Q, S]
   ): AggregatorWithValue[P, S, Q] { type V >: W } = new AggregatorWithValue[P, S, Q] {
     type T = List[(Int, Any)]
     type V = W

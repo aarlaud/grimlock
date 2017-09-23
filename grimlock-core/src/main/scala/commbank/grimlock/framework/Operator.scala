@@ -18,9 +18,7 @@ import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
 import commbank.grimlock.framework.position.Position
 
-import shapeless.{ HList, Nat }
-import shapeless.ops.hlist.Length
-import shapeless.ops.nat.GTEq
+import shapeless.HList
 
 /** Trait for comparing two positions to determine if pairwise operation is to be applied. */
 trait Comparer {
@@ -161,15 +159,11 @@ trait Operator[P <: HList, Q <: HList] extends OperatorWithValue[P, Q] { self =>
    * @return An operator that runs `this` and then relocates the resulting content.
    */
   override def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new Operator[P, X] {
     def compute(left: Cell[P], right: Cell[P]): TraversableOnce[Cell[X]] = self
       .compute(left, right)
@@ -252,15 +246,11 @@ trait OperatorWithValue[P <: HList, Q <: HList] extends java.io.Serializable { s
    * @return An operator that runs `this` and then relocates the resulting content.
    */
   def andThenRelocate[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCell[Q, X]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new OperatorWithValue[P, X] {
     type V = self.V
 
@@ -306,15 +296,11 @@ trait OperatorWithValue[P <: HList, Q <: HList] extends java.io.Serializable { s
    * @return An operator that runs `this` and then relocates the resulting content.
    */
   def andThenRelocateWithValue[
-    X <: HList,
-    L <: Nat,
-    M <: Nat
+    X <: HList
   ](
     locator: Locate.FromCellWithValue[Q, X, V]
   )(implicit
-    ev1: Length.Aux[Q, L],
-    ev2: Length.Aux[X, M],
-    ev3: GTEq[M, L]
+    ev: Position.GreaterEqualConstraints[X, Q]
   ) = new OperatorWithValue[P, X] {
     type V = self.V
 
