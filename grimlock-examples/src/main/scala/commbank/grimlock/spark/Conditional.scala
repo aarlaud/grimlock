@@ -28,8 +28,8 @@ import commbank.grimlock.spark.environment._
 
 import org.apache.spark.{ SparkConf, SparkContext }
 
-import shapeless.{ Nat, Succ }
-import shapeless.nat.{ _1, _2 }
+import shapeless.{ HList, HNil }
+import shapeless.nat.{ _0, _1 }
 
 object Conditional {
   def main(args: Array[String]) {
@@ -42,12 +42,20 @@ object Conditional {
 
     // Read the data.
     // 1/ Read the data (ignoring errors), this returns a 2D matrix (row x feature).
-    val (data, _) = ctx.loadText(s"${path}/exampleConditional.txt", Cell.parse2D())
+    val (data, _) = ctx.loadText(
+      s"${path}/exampleConditional.txt",
+      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+    )
 
     // Define function that appends the value as a string, or "missing" if no value is available
-    def cast[P <: Nat](cell: Cell[P], value: Option[Value]): Option[Position[Succ[P]]] = cell
+    def cast[
+      P <: HList,
+      Q <: HList
+    ](implicit
+      ev: Position.AppendConstraints[P, StringValue, Q]
+    ) = (cell: Cell[P], value: Option[Value[_]]) => cell
       .position
-      .append(value.map(_.toShortString).getOrElse[String]("missing"))
+      .append(value.map(_.toShortString).getOrElse("missing"))
       .toOption
 
     // Generate 3D matrix (hair color x eye color x gender)
@@ -58,37 +66,42 @@ object Conditional {
     // 5/ Squash the first dimension (row ids + value). As there is only one value for each
     //    hair/eye/gender triplet, any squash function can be used.
     val heg = data
-      .reshape(_2, "hair", cast)
-      .reshape(_2, "eye", cast)
-      .reshape(_2, "gender", cast)
-      .melt(_2, _1, Value.concatenate("."))
-      .squash(_1, PreservingMaximumPosition())
+      .reshape(_1, "hair", cast _)
+      .reshape(_1, "eye", cast _)
+      .reshape(_1, "gender", cast _)
+      .melt(_1, _0, Value.concatenate[StringValue, StringValue]("."))
+      .squash(_0, PreservingMaximumPosition())
 
     // Define an extractor for getting data out of the gender count (gcount) map.
-    def extractor = ExtractWithDimension[_2, Content](_2).andThenPresent(_.value.asDouble)
+    def extractor[
+      P <: HList,
+      V <: Value[_]
+    ](implicit
+      ev: Position.IndexConstraints[P, _1, V]
+    ) = ExtractWithDimension[P, _1, V, Content](_1).andThenPresent(_.value.asDouble)
 
     // Get the gender counts. Sum out hair and eye color.
     val gcount = heg
-      .summarise(Along(_1))(Sums())
-      .summarise(Along(_1))(Sums())
+      .summarise(Along(_0))(Sums())
+      .summarise(Along(_0))(Sums())
       .compact()
 
     // Get eye color conditional on gender.
     // 1/ Sum out hair color.
     // 2/ Divide each element by the gender's count to get conditional distribution.
     heg
-      .summarise(Along(_1))(Sums())
+      .summarise(Along(_0))(Sums())
       .transformWithValue(gcount, Fraction(extractor))
-      .saveAsText(ctx, s"./demo.${output}/eye.out")
+      .saveAsText(ctx, s"./demo.${output}/eye.out", Cell.toShortString(true, "|") _)
       .toUnit
 
     // Get hair color conditional on gender.
     // 1/ Sum out eye color.
     // 2/ Divide each element by the gender's count to get conditional distribution.
     heg
-      .summarise(Along(_2))(Sums())
+      .summarise(Along(_1))(Sums())
       .transformWithValue(gcount, Fraction(extractor))
-      .saveAsText(ctx, s"./demo.${output}/hair.out")
+      .saveAsText(ctx, s"./demo.${output}/hair.out", Cell.toShortString(true, "|") _)
       .toUnit
   }
 }

@@ -15,6 +15,7 @@
 package commbank.grimlock.spark.examples
 
 import commbank.grimlock.framework._
+import commbank.grimlock.framework.encoding._
 import commbank.grimlock.framework.position._
 
 import commbank.grimlock.library.aggregate._
@@ -23,7 +24,8 @@ import commbank.grimlock.spark.environment._
 
 import org.apache.spark.{ SparkConf, SparkContext }
 
-import shapeless.nat.{ _1, _2 }
+import shapeless.HNil
+import shapeless.nat.{ _0, _1 }
 
 object DataAnalysis {
   def main(args: Array[String]) {
@@ -35,7 +37,10 @@ object DataAnalysis {
     val output = "spark"
 
     // Read the data (ignoring errors). This returns a 2D matrix (instance x feature).
-    val (data, _) = ctx.loadText(s"${path}/exampleInput.txt", Cell.parse2D())
+    val (data, _) = ctx.loadText(
+      s"${path}/exampleInput.txt",
+      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+    )
 
     // For the instances:
     //  1/ Compute the number of features for each instance;
@@ -43,9 +48,9 @@ object DataAnalysis {
     //  3/ Compute the moments of the counts;
     //  4/ Save the moments.
     data
-      .summarise(Over(_1))(Counts())
-      .saveAsText(ctx, s"./demo.${output}/feature_count.out")
-      .summarise(Along(_1))(
+      .summarise(Over(_0))(Counts())
+      .saveAsText(ctx, s"./demo.${output}/feature_count.out", Cell.toShortString(true, "|") _)
+      .summarise(Along(_0))(
         Moments(
           _.append("mean").toOption,
           _.append("sd").toOption,
@@ -53,7 +58,7 @@ object DataAnalysis {
           _.append("kurtosis").toOption
         )
       )
-      .saveAsText(ctx, s"./demo.${output}/feature_density.out")
+      .saveAsText(ctx, s"./demo.${output}/feature_density.out", Cell.toShortString(true, "|") _)
       .toUnit
 
     // For the features:
@@ -62,9 +67,9 @@ object DataAnalysis {
     //  3/ Compute the moments of the counts;
     //  4/ Save the moments.
     data
-      .summarise(Over(_2))(Counts())
-      .saveAsText(ctx, s"./demo.${output}/instance_count.out")
-      .summarise(Along(_1))(
+      .summarise(Over(_1))(Counts())
+      .saveAsText(ctx, s"./demo.${output}/instance_count.out", Cell.toShortString(true, "|") _)
+      .summarise(Along(_0))(
         Moments(
           _.append("mean").toOption,
           _.append("sd").toOption,
@@ -72,7 +77,7 @@ object DataAnalysis {
           _.append("kurtosis").toOption
         )
       )
-      .saveAsText(ctx, s"./demo.${output}/instance_density.out")
+      .saveAsText(ctx, s"./demo.${output}/instance_density.out", Cell.toShortString(true, "|") _)
       .toUnit
   }
 }

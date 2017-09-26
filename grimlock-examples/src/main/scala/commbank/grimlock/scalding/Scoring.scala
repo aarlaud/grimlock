@@ -16,6 +16,7 @@ package commbank.grimlock.scalding.examples
 
 import commbank.grimlock.framework._
 import commbank.grimlock.framework.content._
+import commbank.grimlock.framework.encoding._
 import commbank.grimlock.framework.extract._
 import commbank.grimlock.framework.position._
 
@@ -26,7 +27,8 @@ import commbank.grimlock.scalding.environment._
 
 import com.twitter.scalding.{ Args, Job }
 
-import shapeless.nat.{ _1, _2 }
+import shapeless.{ HList, HNil }
+import shapeless.nat.{ _0, _1 }
 
 class Scoring(args: Args) extends Job(args) {
 
@@ -38,17 +40,47 @@ class Scoring(args: Args) extends Job(args) {
   val output = "scalding"
 
   // Read the data (ignoring errors). This returns a 2D matrix (instance x feature).
-  val (data, _) = ctx.loadText(s"${path}/exampleInput.txt", Cell.parse2D())
+  val (data, _) = ctx
+    .loadText(
+      s"${path}/exampleInput.txt",
+      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+    )
+
   // Read the statistics (ignoring errors) from the PipelineDataPreparation example.
-  val stats = ctx.loadText(s"./demo.${output}/stats.out", Cell.parse2D()).data.compact(Over(_1))
+  val stats = ctx
+    .loadText(
+      s"./demo.${output}/stats.out",
+      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+    )
+    .data
+    .compact(Over(_0))
+
   // Read externally learned weights (ignoring errors).
-  val weights = ctx.loadText(s"${path}/exampleWeights.txt", Cell.parse1D()).data.compact(Over(_1))
+  val weights = ctx
+    .loadText(
+      s"${path}/exampleWeights.txt",
+      Cell.shortStringParser(StringCodec :: HNil, "|") _
+    )
+    .data
+    .compact(Over(_0))
 
   // Define extract object to get data out of statistics map.
-  def extractStat(key: String) = ExtractWithDimensionAndKey[_2, Content](_2, key).andThenPresent(_.value.asDouble)
+  def extractStat[
+    P <: HList,
+    V <: Value[_]
+  ](
+    key: String
+  )(implicit
+    ev: Position.IndexConstraints[P, _1, V]
+  ) = ExtractWithDimensionAndKey[P, _1, V, StringValue, Content](_1, key).andThenPresent(_.value.asDouble)
 
   // Define extract object to get data out of weights map.
-  val extractWeight = ExtractWithDimension[_2, Content](_2).andThenPresent(_.value.asDouble)
+  def extractWeight[
+    P <: HList,
+    V <: Value[_]
+  ](implicit
+    ev: Position.IndexConstraints[P, _1, V]
+  ) = ExtractWithDimension[P, _1, V, Content](_1).andThenPresent(_.value.asDouble)
 
   // For the data do:
   //  1/ Create indicators, binarise categorical, and clamp & standardise numerical features;
@@ -57,13 +89,13 @@ class Scoring(args: Args) extends Job(args) {
   data
     .transformWithValue(
       stats,
-      Indicator().andThenRelocate(Locate.RenameDimension(_2, "%1$s.ind")),
-      Binarise(Locate.RenameDimensionWithContent(_2)),
+      Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")),
+      Binarise(Locate.RenameDimensionWithContent(_1)),
       Clamp(extractStat("min"), extractStat("max"))
         .andThenWithValue(Standardise(extractStat("mean"), extractStat("sd")))
     )
-    .summariseWithValue(Over(_1))(weights, WeightedSums(extractWeight))
-    .saveAsText(ctx, s"./demo.${output}/scores.out")
+    .summariseWithValue(Over(_0))(weights, WeightedSums(extractWeight))
+    .saveAsText(ctx, s"./demo.${output}/scores.out", Cell.toShortString(true, "|") _)
     .toUnit
 }
 

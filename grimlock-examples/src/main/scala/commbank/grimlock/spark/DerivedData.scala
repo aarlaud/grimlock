@@ -25,41 +25,49 @@ import commbank.grimlock.spark.environment._
 
 import org.apache.spark.{ SparkConf, SparkContext }
 
-import shapeless.Nat
-import shapeless.nat.{ _1, _2, _3 }
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.{ HList, HNil }
+import shapeless.nat.{ _0, _1, _2 }
 
 // Simple gradient feature generator
-case class Gradient[D <: Nat : ToInt](dim: D)(implicit ev: LTEq[D, _3]) extends Window[_3, _2, _1, _3] {
-  type I = (Option[Long], Option[Double])
-  type T = (Option[Long], Option[Double], Value)
-  type O = (Option[Double], Value, Value)
+case class Gradient[
+  P <: HList,
+  S <: HList,
+  R <: HList,
+  Q <: HList
+](implicit
+  ev1: Position.IndexConstraints[P, _2, DateValue],
+  ev2: Position.IndexConstraints[R, _0, DateValue],
+  ev3: Position.AppendConstraints[S, StringValue, Q]
+) extends Window[P, S, R, Q] {
+  type I = (Long, Option[Double])
+  type T = (Long, Option[Double], DateValue)
+  type O = (Option[Double], DateValue, DateValue)
 
   val DayInMillis = 1000 * 60 * 60 * 24
 
   // Prepare the sliding window, the state is the time and the value.
-  def prepare(cell: Cell[_3]): I = (cell.position(dim).asDate.map(_.getTime), cell.content.value.asDouble)
+  def prepare(cell: Cell[P]): I = (cell.position(_2).value.getTime, cell.content.value.asDouble)
 
   // Initialise state to the time, value and remainder coordinates.
-  def initialise(rem: Position[_1], in: I): (T, TraversableOnce[O]) = ((in._1, in._2, rem(_1)), List())
+  def initialise(rem: Position[R], in: I): (T, TraversableOnce[O]) = ((in._1, in._2, rem(_0)), List())
 
   // For each new cell, output the difference with the previous cell (contained in `t`).
-  def update(rem: Position[_1], in: I, t: T): (T, TraversableOnce[O]) = {
+  def update(rem: Position[R], in: I, t: T): (T, TraversableOnce[O]) = {
     // Get current date from `in` and previous date from `t` and compute number of days between the dates.
-    val days = in._1.flatMap(dc => t._1.map(dt => (dc - dt) / DayInMillis))
+    val days = (in._1 - t._1) / DayInMillis
 
     // Get the difference between current and previous values.
     val delta = in._2.flatMap(dc => t._2.map(dt => dc - dt))
 
     // Generate the gradient (delta / days).
-    val grad = days.flatMap(td => delta.map(vd => vd / td))
+    val grad = delta.map(vd => vd / days)
 
     // Update state to be current `in` and `rem`, and output the gradient.
-    ((in._1, in._2, rem(_1)), List((grad, rem(_1), t._3)))
+    ((in._1, in._2, rem(_0)), List((grad, rem(_0), t._3)))
   }
 
   // If a gradient is available, output a cell for it.
-  def present(pos: Position[_2], out: O): TraversableOnce[Cell[_3]] = out._1.map(grad =>
+  def present(pos: Position[S], out: O): TraversableOnce[Cell[Q]] = out._1.map(grad =>
     Cell(pos.append(out._3.toShortString + ".to." + out._2.toShortString), Content(ContinuousSchema[Double](), grad))
   )
 }
@@ -80,11 +88,15 @@ object DerivedData {
     // 4/ Melt third dimension (gradients) into second dimension. The result is a 2D matrix (instance x
     //    feature.from.gradient)
     // 5/ Persist 2D gradient features.
-    ctx.loadText(s"${path}/exampleDerived.txt", Cell.parse3D(third = DateCodec()))
+    ctx
+      .loadText(
+        s"${path}/exampleDerived.txt",
+        Cell.shortStringParser(StringCodec :: StringCodec :: DateCodec() :: HNil, "|") _
+      )
       .data
-      .slide(Along(_3))(true, Gradient(_3))
-      .melt(_3, _2, Value.concatenate(".from."))
-      .saveAsText(ctx, s"./demo.${output}/gradient.out")
+      .slide(Along(_2))(true, Gradient())
+      .melt(_2, _1, Value.concatenate[StringValue, StringValue](".from."))
+      .saveAsText(ctx, s"./demo.${output}/gradient.out", Cell.toShortString(true, "|") _)
       .toUnit
   }
 }
