@@ -901,20 +901,22 @@ trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance
    */
   def reshape[
     D <: Nat,
+    X <% V,
     V <: Value[_],
     W <: Value[_],
+    J <: HList,
     Q <: HList,
     T <: Tuner
   ](
     dim: D,
-    coordinate: V,
+    coordinate: X,
     locate: Locate.FromCellAndOptionalValue[P, Q],
     tuner: T
   )(implicit
     ev1: Position.IndexConstraints[P, D, W],
-    ev2: Position.RemoveConstraints[P, D, Q],
+    ev2: Position.RemoveConstraints[P, D, J],
     ev3: Position.GreaterThanConstraints[Q, P],
-    ev4: Position.ListConstraints[Q],
+    ev4: Position.ListConstraints[J],
     ev5: Matrix.ReshapeTuner[C#U, T]
   ): C#U[Cell[Q]]
 
@@ -934,7 +936,7 @@ trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance
     V <: Value[_]
   ](
     dim: D,
-    squasher: Squasher[P, D],
+    squasher: Squasher[P],
     tuner: T
   )(implicit
     ev1: Position.IndexConstraints[P, D, V],
@@ -962,7 +964,7 @@ trait MultiDimensionMatrix[P <: HList, C <: Context[C]] extends PairwiseDistance
   ](
     dim: D,
     value: C#E[W],
-    squasher: SquasherWithValue[P, D] { type V >: W },
+    squasher: SquasherWithValue[P] { type V >: W },
     tuner: T
   )(implicit
     ev1: Position.IndexConstraints[P, D, V],

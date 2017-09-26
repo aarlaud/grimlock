@@ -2073,26 +2073,28 @@ case class MultiDimensionMatrix[
 
   def reshape[
     D <: Nat,
+    X <% V,
     V <: Value[_],
     W <: Value[_],
+    J <: HList,
     Q <: HList,
     T <: Tuner
   ](
     dim: D,
-    coordinate: V,
+    coordinate: X,
     locate: Locate.FromCellAndOptionalValue[P, Q],
     tuner: T = Default()
   )(implicit
     ev1: Position.IndexConstraints[P, D, W],
-    ev2: Position.RemoveConstraints[P, D, Q],
+    ev2: Position.RemoveConstraints[P, D, J],
     ev3: Position.GreaterThanConstraints[Q, P],
-    ev4: Position.ListConstraints[Q],
+    ev4: Position.ListConstraints[J],
     ev5: FwMatrix.ReshapeTuner[Context.U, T]
   ): Context.U[Cell[Q]] = {
-    val msj = Option(MapMapSideJoin[Position[Q], Cell[P], Value[_]]())
+    val msj = Option(MapMapSideJoin[Position[J], Cell[P], Value[_]]())
 
     val keys = data
-      .collect[(Position[Q], Value[_])] { case c if (c.position(dim) equ coordinate) =>
+      .collect[(Position[J], Value[_])] { case c if (c.position(dim) equ coordinate) =>
         (c.position.remove(dim), c.content.value)
       }
 
@@ -2109,7 +2111,7 @@ case class MultiDimensionMatrix[
     V <: Value[_]
   ](
     dim: D,
-    squasher: Squasher[P, D],
+    squasher: Squasher[P],
     tuner: T = Default()
   )(implicit
     ev1: Position.IndexConstraints[P, D, V],
@@ -2132,7 +2134,7 @@ case class MultiDimensionMatrix[
   ](
     dim: D,
     value: Context.E[W],
-    squasher: SquasherWithValue[P, D] { type V >: W },
+    squasher: SquasherWithValue[P] { type V >: W },
     tuner: T = Default()
   )(implicit
     ev1: Position.IndexConstraints[P, D, V],

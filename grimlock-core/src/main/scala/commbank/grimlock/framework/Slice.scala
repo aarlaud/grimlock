@@ -47,10 +47,10 @@ case class Over[
 ](
   dimension: D
 )(implicit
-  val slc: Position.ListConstraints[V :: HNil],
-  val rlc: Position.ListConstraints[Q],
   ev1: Position.IndexConstraints[P, D, V],
-  ev2: Position.RemoveConstraints[P, D, Q]
+  ev2: Position.RemoveConstraints[P, D, Q],
+  val slc: Position.ListConstraints[V :: HNil],
+  val rlc: Position.ListConstraints[Q]
 ) extends Slice[P, V :: HNil, Q] {
   def selected(pos: Position[P]): Position[V :: HNil] = Position(pos(dimension))
   def remainder(pos: Position[P]): Position[Q] = pos.remove(dimension)
@@ -71,10 +71,10 @@ case class Along[
 ](
   dimension: D
 )(implicit
-  val slc: Position.ListConstraints[Q],
-  val rlc: Position.ListConstraints[V :: HNil],
   ev1: Position.IndexConstraints[P, D, V],
-  ev2: Position.RemoveConstraints[P, D, Q]
+  ev2: Position.RemoveConstraints[P, D, Q],
+  val slc: Position.ListConstraints[Q],
+  val rlc: Position.ListConstraints[V :: HNil]
 ) extends Slice[P, Q, V :: HNil] {
   def selected(pos: Position[P]): Position[Q] = pos.remove(dimension)
   def remainder(pos: Position[P]): Position[V :: HNil] = Position(pos(dimension))
