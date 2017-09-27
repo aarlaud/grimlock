@@ -37,38 +37,38 @@ object BasicOperations {
     // Read the data (ignoring errors). This returns a 2D matrix (instance x feature).
     val (data, _) = ctx.loadText(
       s"${path}/exampleInput.txt",
-      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|")
     )
 
 
     // Get the number of rows.
     data
       .size(_0)
-      .saveAsText(ctx, s"./demo.${output}/row_size.out", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/row_size.out", Cell.toShortString(true, "|"))
       .toUnit
 
     // Get all dimensions of the matrix.
     data
       .shape()
-      .saveAsText(ctx, s"./demo.${output}/matrix_shape.out", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/matrix_shape.out", Cell.toShortString(true, "|"))
       .toUnit
 
     // Get the column names.
     data
       .names(Over(_1))
-      .saveAsText(ctx, s"./demo.${output}/column_names.out", Position.toShortString("|") _)
+      .saveAsText(ctx, s"./demo.${output}/column_names.out", Position.toShortString("|"))
       .toUnit
 
     // Get the type of variables of each column.
     data
       .types(Over(_1))(true)
-      .saveAsText(ctx, s"./demo.${output}/column_types.txt", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/column_types.txt", Cell.toShortString(true, "|"))
       .toUnit
 
     // Transpose the matrix.
     data
       .permute(_1, _0)
-      .saveAsText(ctx, s"./demo.${output}/transposed.out", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/transposed.out", Cell.toShortString(true, "|"))
       .toUnit
 
     // Construct a simple query
@@ -77,19 +77,19 @@ object BasicOperations {
     // Find all co-ordinates that match the above simple query.
     val coords = data
       .which(simpleQuery)
-      .saveAsText(ctx, s"./demo.${output}/query.txt", Position.toShortString("|") _)
+      .saveAsText(ctx, s"./demo.${output}/query.txt", Position.toShortString("|"))
 
     // Get the data for the above coordinates.
     data
       .get(coords)
-      .saveAsText(ctx, s"./demo.${output}/values.txt", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/values.txt", Cell.toShortString(true, "|"))
       .toUnit
 
     // Keep columns A and B, and remove row 0221707
     data
       .slice(Over(_1))(true, List("fid:A", "fid:B"))
       .slice(Over(_0))(false, "iid:0221707")
-      .saveAsText(ctx, s"./demo.${output}/sliced.txt", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/sliced.txt", Cell.toShortString(true, "|"))
       .toUnit
   }
 }

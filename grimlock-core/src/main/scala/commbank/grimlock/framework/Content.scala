@@ -86,6 +86,21 @@ object Content {
   /**
    * Return a decoder from component strings.
    *
+   * @param codec  The codec to use in the decoder.
+   * @param schema The schema to use in the decoder.
+   *
+   * @return A content decoder.
+   */
+  def decoder[
+    T
+  ](
+    codec: Codec[T],
+    schema: Schema[T]
+  ): Decoder = (str: String) => parse(str, codec, schema).right.toOption
+
+  /**
+   * Return a decoder from component strings.
+   *
    * @param codec  The string of the codec to use in the decoder.
    * @param schema The string of the schema to use in the decoder.
    *

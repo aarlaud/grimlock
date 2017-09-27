@@ -39,8 +39,8 @@ import commbank.grimlock.library.window._
 
 import scala.io.Source
 
-import shapeless.Nat
-import shapeless.nat.{ _1, _2, _3 }
+import shapeless.{ ::, HNil, Nat }
+import shapeless.nat.{ _0, _1, _2 }
 import shapeless.ops.nat.{ LTEq, ToInt }
 
 object Shared {
@@ -48,7 +48,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -74,7 +74,7 @@ object Shared {
         ),
         Default()
       )
-      .slice(Over(_1), InMemory())(true, "iid:1548763")
+      .slice(Over(_0), InMemory())(true, "iid:1548763")
       .saveAsText(ctx, s"./tmp.${tool}/dat2.out", Cell.toString(verbose = true), Default())
       .toUnit
 
@@ -89,7 +89,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -101,18 +101,18 @@ object Shared {
     import ctx.implicits.matrix._
     import ctx.implicits.position._
 
-    (data.names(Over(_1), Default()) ++ data.names(Over(_2), Default()) ++ data.names(Over(_3), Default()))
+    (data.names(Over(_0), Default()) ++ data.names(Over(_1), Default()) ++ data.names(Over(_2), Default()))
       .saveAsText(ctx, s"./tmp.${tool}/nm0.out", Position.toString(verbose = true), Default())
       .toUnit
 
     data
-      .names(Over(_2), Default())
+      .names(Over(_1), Default())
       .slice(false, "fid:M")
       .saveAsText(ctx, s"./tmp.${tool}/nm2.out", Position.toString(verbose = true), Default())
       .toUnit
 
     data
-      .names(Over(_2), Default())
+      .names(Over(_1), Default())
       .slice(true, """.*[BCD]$""".r)
       .saveAsText(ctx, s"./tmp.${tool}/nm5.out", Position.toString(verbose = true), Default())
       .toUnit
@@ -122,7 +122,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -133,17 +133,17 @@ object Shared {
     import ctx.implicits.matrix._
 
     (
+      data.types(Over(_0), Default())(false) ++
       data.types(Over(_1), Default())(false) ++
-      data.types(Over(_2), Default())(false) ++
-      data.types(Over(_3), Default())(false)
+      data.types(Over(_2), Default())(false)
     )
       .saveAsText(ctx, s"./tmp.${tool}/typ1.out", Cell.toString(verbose = true), Default())
       .toUnit
 
     (
+      data.types(Over(_0), Default())(true) ++
       data.types(Over(_1), Default())(true) ++
-      data.types(Over(_2), Default())(true) ++
-      data.types(Over(_3), Default())(true)
+      data.types(Over(_2), Default())(true)
     )
       .saveAsText(ctx, s"./tmp.${tool}/typ2.out", Cell.toString(verbose = true), Default())
       .toUnit
@@ -153,7 +153,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -167,13 +167,13 @@ object Shared {
     implicit val c = ctx
 
     data
-      .slice(Over(_2), Default())(true, "fid:B")
+      .slice(Over(_1), Default())(true, "fid:B")
       .saveAsText(ctx, s"./tmp.${tool}/scl0.out", Cell.toString(verbose = true), Default())
       .toUnit
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B"))
-      .slice(Over(_1), Default())(true, "iid:0221707")
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B"))
+      .slice(Over(_0), Default())(true, "iid:0221707")
       .saveAsText(ctx, s"./tmp.${tool}/scl1.out", Cell.toString(verbose = true), Default())
       .toUnit
 
@@ -194,7 +194,7 @@ object Shared {
     )
 
     data
-      .slice(Over(_2), Default())(false, data.names(Over(_2), Default()).slice(false, rem))
+      .slice(Over(_1), Default())(false, data.names(Over(_1), Default()).slice(false, rem))
       .saveAsText(ctx, s"./tmp.${tool}/scl2.out", Cell.toString(verbose = true), Default())
       .toUnit
   }
@@ -203,7 +203,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -219,14 +219,14 @@ object Shared {
     implicit val c = ctx
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B"))
-      .slice(Over(_1), Default())(true, "iid:0221707")
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B"))
+      .slice(Over(_0), Default())(true, "iid:0221707")
+      .squash(_2, PreservingMaximumPosition(), Default())
       .saveAsText(ctx, s"./tmp.${tool}/sqs1.out", Cell.toString(verbose = true), Default())
       .toUnit
 
     data
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .squash(_2, PreservingMaximumPosition(), Default())
       .saveAsText(ctx, s"./tmp.${tool}/sqs2.out", Cell.toString(verbose = true), Default())
       .toUnit
 
@@ -244,16 +244,16 @@ object Shared {
     )
 
     data
-      .slice(Over(_1), Default())(true, ids)
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .saveAsCSV(Over(_2), Default())(ctx, s"./tmp.${tool}/sqs3.out")
+      .slice(Over(_0), Default())(true, ids)
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/sqs3.out")
       .toUnit
 
     data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .saveAsCSV(Over(_2), Default())(ctx, s"./tmp.${tool}/sqs4.out")
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/sqs4.out")
       .toUnit
   }
 
@@ -261,7 +261,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -300,7 +300,7 @@ object Shared {
       .saveAsText(ctx, s"./tmp.${tool}/whc4.out", Position.toString(verbose = true), Default())
       .toUnit
 
-    val aggregators: List[Aggregator[_2, _1, _2]] = List(
+    val aggregators: List[Aggregator[_1, _0, _1]] = List(
       Counts().andThenRelocate(_.position.append("count").toOption),
       Mean().andThenRelocate(_.position.append("mean").toOption),
       Minimum().andThenRelocate(_.position.append("min").toOption),
@@ -322,12 +322,12 @@ object Shared {
     )
 
     data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .summarise(Along(_1), Default())(aggregators)
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .summarise(Along(_0), Default())(aggregators)
       .whichByPosition(
-        Over(_2),
+        Over(_1),
         Default()
       )(
         List(("count", c => c.content.value leq 2), ("min", c => c.content.value equ 107))
@@ -340,7 +340,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -373,7 +373,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -391,8 +391,8 @@ object Shared {
     implicit val c = ctx
 
     data
-      .slice(Over(_2), Default())(true, "fid:B")
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .slice(Over(_1), Default())(true, "fid:B")
+      .squash(_2, PreservingMaximumPosition(), Default())
       .unique(Default())
       .saveAsText(ctx, s"./tmp.${tool}/uniq.out", Content.toString(verbose = true), Default())
       .toUnit
@@ -400,30 +400,30 @@ object Shared {
     ctx
       .loadText(path + "/mutualInputfile.txt", Cell.parse2D())
       .data
-      .uniqueByPosition(Over(_2), Default())
+      .uniqueByPosition(Over(_1), Default())
       .saveAsText(ctx, s"./tmp.${tool}/uni2.out", IndexedContents.toString(descriptive = false), Default())
       .toUnit
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/test.csv")
-      .saveAsCSV(Over(_2), Default())(ctx, s"./tmp.${tool}/tset.csv", writeHeader = false, separator = ",")
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/test.csv")
+      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/tset.csv", writeHeader = false, separator = ",")
       .toUnit
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .permute(_2, _1)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .permute(_1, _0)
       .saveAsText(ctx, s"./tmp.${tool}/trs1.out", Cell.toString(verbose = true), Default())
       .toUnit
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .squash(_2, PreservingMaximumPosition(), Default())
       .saveAsText(ctx, s"./tmp.${tool}/data.txt", tuner = Default())
       .toUnit
   }
@@ -432,7 +432,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -446,18 +446,18 @@ object Shared {
 
     implicit val c = ctx
 
-    case class StringPartitioner[D <: Nat : ToInt](dim: D)(implicit ev: LTEq[D, _2]) extends Partitioner[_2, String] {
-      def assign(cell: Cell[_2]): TraversableOnce[String] = List(cell.position(dim) match {
+    case class StringPartitioner[D <: Nat : ToInt](dim: D)(implicit ev: LTEq[D, _1]) extends Partitioner[_1, String] {
+      def assign(cell: Cell[_1]): TraversableOnce[String] = List(cell.position(dim) match {
         case StringValue("fid:A", _) => "training"
         case StringValue("fid:B", _) => "testing"
       }, "scoring")
     }
 
     val prt1 = data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .split(StringPartitioner(_2))
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .split(StringPartitioner(_1))
 
     prt1
       .saveAsText(ctx, s"./tmp.${tool}/prt1.out", Partitions.toString(verbose = true), Default())
@@ -468,19 +468,19 @@ object Shared {
     ](
       dim: D
     )(implicit
-      ev: LTEq[D, _2]
-    ) extends Partitioner[_2, (Int, Int, Int)] {
-      def assign(cell: Cell[_2]): TraversableOnce[(Int, Int, Int)] = List(cell.position(dim) match {
+      ev: LTEq[D, _1]
+    ) extends Partitioner[_1, (Int, Int, Int)] {
+      def assign(cell: Cell[_1]): TraversableOnce[(Int, Int, Int)] = List(cell.position(dim) match {
         case StringValue("fid:A", _) => (1, 0, 0)
         case StringValue("fid:B", _) => (0, 1, 0)
       }, (0, 0, 1))
     }
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .split(IntTuplePartitioner(_2))
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .split(IntTuplePartitioner(_1))
       .saveAsText(ctx, s"./tmp.${tool}/prt2.out", Partitions.toString(verbose = true), Default())
       .toUnit
 
@@ -504,7 +504,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -519,8 +519,8 @@ object Shared {
     implicit val c = ctx
 
     data
-      .summarise(Over(_2), Default())(Mean(false, true, true).andThenRelocate(_.position.append("mean").toOption))
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/agg1.csv")
+      .summarise(Over(_1), Default())(Mean(false, true, true).andThenRelocate(_.position.append("mean").toOption))
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/agg1.csv")
       .toUnit
 
     val ids = List(
@@ -537,13 +537,13 @@ object Shared {
     )
 
     data
-      .slice(Over(_1), Default())(true, ids)
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .summarise(Along(_2), Default())(Counts().andThenRelocate(_.position.append("count").toOption))
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/agg2.csv")
+      .slice(Over(_0), Default())(true, ids)
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .summarise(Along(_1), Default())(Counts().andThenRelocate(_.position.append("count").toOption))
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/agg2.csv")
       .toUnit
 
-    val aggregators: List[Aggregator[_2, _1, _2]] = List(
+    val aggregators: List[Aggregator[_1, _0, _1]] = List(
       Counts().andThenRelocate(_.position.append("count").toOption),
       Mean().andThenRelocate(_.position.append("mean").toOption),
       StandardDeviation(biased = true).andThenRelocate(_.position.append("sd").toOption),
@@ -555,10 +555,10 @@ object Shared {
     )
 
     data
-      .slice(Over(_1), Default())(true, ids)
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .summarise(Along(_1), Default())(aggregators)
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/agg3.csv")
+      .slice(Over(_0), Default())(true, ids)
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .summarise(Along(_0), Default())(aggregators)
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/agg3.csv")
       .toUnit
   }
 
@@ -566,7 +566,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -581,18 +581,18 @@ object Shared {
     implicit val c = ctx
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_2, "%1$s.ind")))
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")))
       .saveAsText(ctx, s"./tmp.${tool}/trn2.out", Cell.toString(verbose = true), Default())
       .toUnit
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .transform(Binarise(Locate.RenameDimensionWithContent(_2)))
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/trn3.out")
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .transform(Binarise(Locate.RenameDimensionWithContent(_1)))
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/trn3.out")
       .toUnit
   }
 
@@ -600,7 +600,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -616,13 +616,13 @@ object Shared {
     implicit val c = ctx
 
     val sliced = data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
 
     sliced
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .squash(_2, PreservingMaximumPosition(), Default())
       .fillHomogeneous(Content(ContinuousSchema[Long](), 0), Default())
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/fll1.out")
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/fll1.out")
       .toUnit
 
     sliced
@@ -635,7 +635,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -667,24 +667,24 @@ object Shared {
     )
 
     val sliced = data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
 
     val inds = sliced
-      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_2, "%1$s.ind")))
+      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")))
       .fillHomogeneous(Content(ContinuousSchema[Long](), 0), Default())
 
     sliced
-      .join(Over(_1), Default())(inds)
+      .join(Over(_0), Default())(inds)
       .fillHomogeneous(Content(ContinuousSchema[Long](), 0), Default())
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/fll2.out")
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/fll2.out")
       .toUnit
 
     sliced
-      .fillHeterogeneous(Over(_2), Default())(data.summarise(Over(_2), Default())(Mean(false, true, true)))
-      .join(Over(_1), Default())(inds)
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/fll4.out")
+      .fillHeterogeneous(Over(_1), Default())(data.summarise(Over(_1), Default())(Mean(false, true, true)))
+      .join(Over(_0), Default())(inds)
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/fll4.out")
       .toUnit
   }
 
@@ -692,7 +692,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -706,9 +706,9 @@ object Shared {
     implicit val c = ctx
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .change(Over(_2), Default())("fid:A", Content.parser(LongCodec, NominalSchema[Long]()))
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .change(Over(_1), Default())("fid:A", Content.parser(LongCodec, NominalSchema[Long]()))
       .data
       .saveAsText(ctx, s"./tmp.${tool}/chg1.out", Cell.toString(verbose = true), Default())
       .toUnit
@@ -718,7 +718,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -734,11 +734,11 @@ object Shared {
     implicit val c = ctx
 
     data
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:C", "fid:E", "fid:G"))
-      .slice(Over(_1), Default())(true, List("iid:0221707", "iid:0364354"))
-      .summarise(Along(_3), Default())(Sums().andThenRelocate(_.position.append("sum").toOption))
-      .melt(_3, _2, Value.concatenate("."))
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/rsh1.out")
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:C", "fid:E", "fid:G"))
+      .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
+      .summarise(Along(_2), Default())(Sums().andThenRelocate(_.position.append("sum").toOption))
+      .melt(_2, _1, Value.concatenate("."))
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/rsh1.out")
       .toUnit
 
     val ids = List(
@@ -755,18 +755,18 @@ object Shared {
     )
 
     val inds = data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_2, "%1$s.ind")))
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/trn1.csv")
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")))
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/trn1.csv")
 
     data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
-      .join(Over(_1), Default())(inds)
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/jn1.csv")
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
+      .join(Over(_0), Default())(inds)
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/jn1.csv")
       .toUnit
   }
 
@@ -774,7 +774,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -782,8 +782,8 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    case class HashSample() extends Sampler[_3] {
-      def select(cell: Cell[_3]): Boolean = (cell.position(_1).toString.hashCode % 25) == 0
+    case class HashSample() extends Sampler[_2] {
+      def select(cell: Cell[_2]): Boolean = (cell.position(_0).toString.hashCode % 25) == 0
     }
 
     data
@@ -796,7 +796,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -825,11 +825,11 @@ object Shared {
     )
 
     val sliced = data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
 
-    val aggregators: List[Aggregator[_2, _1, _2]] = List(
+    val aggregators: List[Aggregator[_1, _0, _1]] = List(
       Counts().andThenRelocate(_.position.append("count").toOption),
       Mean().andThenRelocate(_.position.append("mean").toOption),
       Minimum().andThenRelocate(_.position.append("min").toOption),
@@ -838,30 +838,30 @@ object Shared {
     )
 
     val stats = sliced
-      .summarise(Along(_1), Default())(aggregators)
-      .compact(Over(_1), Default())
+      .summarise(Along(_0), Default())(aggregators)
+      .compact(Over(_0), Default())
 
     sliced
       .transformWithValue(
         stats,
-        Normalise(ExtractWithDimensionAndKey[_2, Content](_2, "max.abs").andThenPresent(_.value.asDouble))
+        Normalise(ExtractWithDimensionAndKey[_1, Content](_1, "max.abs").andThenPresent(_.value.asDouble))
       )
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/trn6.csv")
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/trn6.csv")
       .toUnit
 
-    case class Sample500() extends Sampler[_2] {
-      def select(cell: Cell[_2]): Boolean = cell.content.value gtr 500
+    case class Sample500() extends Sampler[_1] {
+      def select(cell: Cell[_1]): Boolean = cell.content.value gtr 500
     }
 
     sliced
       .subset(Sample500())
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/flt1.csv")
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/flt1.csv")
       .toUnit
 
-    case class RemoveGreaterThanMean[D <: Nat : ToInt](dim: D)(implicit ev: LTEq[D, _2]) extends SamplerWithValue[_2] {
-      type V = Map[Position[_1], Map[Position[_1], Content]]
+    case class RemoveGreaterThanMean[D <: Nat : ToInt](dim: D)(implicit ev: LTEq[D, _1]) extends SamplerWithValue[_1] {
+      type V = Map[Position[_0], Map[Position[_0], Content]]
 
-      def selectWithValue(cell: Cell[_2], ext: V): Boolean =
+      def selectWithValue(cell: Cell[_1], ext: V): Boolean =
         if (cell.content.schema.classification.isOfType(NumericType))
           cell.content.value leq ext(Position(cell.position(dim)))(Position("mean")).value
         else
@@ -869,8 +869,8 @@ object Shared {
     }
 
     sliced
-      .subsetWithValue(stats, RemoveGreaterThanMean(_2))
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/flt2.csv")
+      .subsetWithValue(stats, RemoveGreaterThanMean(_1))
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/flt2.csv")
       .toUnit
   }
 
@@ -878,7 +878,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -908,11 +908,11 @@ object Shared {
     )
 
     val sliced = data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
 
-    val aggregators: List[Aggregator[_2, _1, _2]] = List(
+    val aggregators: List[Aggregator[_1, _0, _1]] = List(
       Counts().andThenRelocate(_.position.append("count").toOption),
       Mean().andThenRelocate(_.position.append("mean").toOption),
       Minimum().andThenRelocate(_.position.append("min").toOption),
@@ -921,15 +921,15 @@ object Shared {
     )
 
     val stats = sliced
-      .summarise(Along(_1), Default())(aggregators)
+      .summarise(Along(_0), Default())(aggregators)
 
     val rem = stats
-      .whichByPosition(Over(_2), Default())(("count", (c: Cell[_2]) => c.content.value leq 2))
-      .names(Over(_1), Default())
+      .whichByPosition(Over(_1), Default())(("count", (c: Cell[_1]) => c.content.value leq 2))
+      .names(Over(_0), Default())
 
     sliced
-      .slice(Over(_2), Default())(false, rem)
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/flt3.csv")
+      .slice(Over(_1), Default())(false, rem)
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/flt3.csv")
       .toUnit
   }
 
@@ -937,7 +937,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -969,9 +969,9 @@ object Shared {
     )
 
     val raw = data
-      .slice(Over(_1), Default())(true, ids)
-      .slice(Over(_2), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
-      .squash(_3, PreservingMaximumPosition(), Default())
+      .slice(Over(_0), Default())(true, ids)
+      .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
+      .squash(_2, PreservingMaximumPosition(), Default())
 
     case class CustomPartition[
       D <: Nat : ToInt
@@ -980,11 +980,11 @@ object Shared {
       left: String,
       right: String
     )(implicit
-      ev: LTEq[D, _2]
-    ) extends Partitioner[_2, String] {
+      ev: LTEq[D, _1]
+    ) extends Partitioner[_1, String] {
       val bhs = BinaryHashSplit(dim, 7, left, right, base = 10)
 
-      def assign(cell: Cell[_2]): TraversableOnce[String] =
+      def assign(cell: Cell[_1]): TraversableOnce[String] =
         if (cell.position(dim).toShortString == "iid:0364354")
           List(right)
         else
@@ -992,34 +992,34 @@ object Shared {
     }
 
     val parts = raw
-      .split(CustomPartition(_1, "train", "test"))
+      .split(CustomPartition(_0, "train", "test"))
 
-    val aggregators: List[Aggregator[_2, _1, _2]] = List(
+    val aggregators: List[Aggregator[_1, _0, _1]] = List(
       Counts().andThenRelocate(_.position.append("count").toOption),
       MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
     )
 
     val stats = parts
       .get("train")
-      .summarise(Along(_1), Default())(aggregators)
+      .summarise(Along(_0), Default())(aggregators)
 
     val rem = stats
-      .which(c => (c.position(_2) equ "count") && (c.content.value leq 2))
-      .names(Over(_1), Default())
+      .which(c => (c.position(_1) equ "count") && (c.content.value leq 2))
+      .names(Over(_0), Default())
 
-    type W = Map[Position[_1], Map[Position[_1], Content]]
+    type W = Map[Position[_0], Map[Position[_0], Content]]
 
-    val transforms: List[TransformerWithValue[_2, _2] { type V >: W }] = List(
-      Indicator().andThenRelocate(Locate.RenameDimension(_2, "%1$s.ind")),
-      Binarise(Locate.RenameDimensionWithContent(_2)),
-      Normalise(ExtractWithDimensionAndKey[_2, Content](_2, "max.abs").andThenPresent(_.value.asDouble))
+    val transforms: List[TransformerWithValue[_1, _1] { type V >: W }] = List(
+      Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")),
+      Binarise(Locate.RenameDimensionWithContent(_1)),
+      Normalise(ExtractWithDimensionAndKey[_1, Content](_1, "max.abs").andThenPresent(_.value.asDouble))
     )
 
-    def cb(key: String, pipe: C#U[Cell[_2]]): C#U[Cell[_2]] = pipe
-      .slice(Over(_2), Default())(false, rem)
-      .transformWithValue(stats.compact(Over(_1), Default()), transforms)
+    def cb(key: String, pipe: C#U[Cell[_1]]): C#U[Cell[_1]] = pipe
+      .slice(Over(_1), Default())(false, rem)
+      .transformWithValue(stats.compact(Over(_0), Default()), transforms)
       .fillHomogeneous(Content(ContinuousSchema[Long](), 0), Default())
-      .saveAsCSV(Over(_1), Default())(ctx, s"./tmp.${tool}/pln_" + key + ".csv")
+      .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/pln_" + key + ".csv")
 
     parts
       .forEach(List("train", "test"), cb)
@@ -1040,7 +1040,7 @@ object Shared {
     val (dictionary, _) = Dictionary.load(Source.fromFile(path + "/dict.txt"))
 
     ctx
-      .loadText(path + "/ivoryInputfile1.txt", Cell.parse3DWithDictionary(dictionary, _2, third = DateCodec()))
+      .loadText(path + "/ivoryInputfile1.txt", Cell.parse3DWithDictionary(dictionary, _1, third = DateCodec()))
       .data
       .saveAsText(ctx, s"./tmp.${tool}/ivr1.out", tuner = Default())
       .toUnit
@@ -1050,7 +1050,7 @@ object Shared {
     C <: Context[C]
   ](
     ctx: C,
-    data: C#U[Cell[_3]],
+    data: C#U[Cell[StringValue :: StringValue :: DateValue :: HNil]],
     path: String,
     tool: String
   )(implicit
@@ -1066,17 +1066,17 @@ object Shared {
       .toUnit
 
     data
-      .size(_1, tuner = Default())
+      .size(_0, tuner = Default())
       .saveAsText(ctx, s"./tmp.${tool}/siz1.out", tuner = Default())
       .toUnit
 
     data
-      .size(_2, tuner = Default())
+      .size(_1, tuner = Default())
       .saveAsText(ctx, s"./tmp.${tool}/siz2.out", tuner = Default())
       .toUnit
 
     data
-      .size(_3, tuner = Default())
+      .size(_2, tuner = Default())
       .saveAsText(ctx, s"./tmp.${tool}/siz3.out", tuner = Default())
       .toUnit
   }
@@ -1095,21 +1095,21 @@ object Shared {
 
     val (data, _) = ctx.loadText(path + "/numericInputfile.txt", Cell.parse2D())
 
-    case class Diff() extends Window[_2, _1, _1, _2] {
+    case class Diff() extends Window[_1, _0, _0, _1] {
       type I = Option[Double]
-      type T = (Option[Double], Position[_1])
-      type O = (Double, Position[_1], Position[_1])
+      type T = (Option[Double], Position[_0])
+      type O = (Double, Position[_0], Position[_0])
 
-      def prepare(cell: Cell[_2]): I = cell.content.value.asDouble
+      def prepare(cell: Cell[_1]): I = cell.content.value.asDouble
 
-      def initialise(rem: Position[_1], in: I): (T, TraversableOnce[O]) = ((in, rem), List())
+      def initialise(rem: Position[_0], in: I): (T, TraversableOnce[O]) = ((in, rem), List())
 
-      def update(rem: Position[_1], in: I, t: T): (T, TraversableOnce[O]) = ((in, rem), (in, t._1) match {
+      def update(rem: Position[_0], in: I, t: T): (T, TraversableOnce[O]) = ((in, rem), (in, t._1) match {
         case (Some(c), Some(l)) => List((c - l, rem,  t._2))
         case _ => List()
       })
 
-      def present(pos: Position[_1], out: O): TraversableOnce[Cell[_2]] = List(
+      def present(pos: Position[_0], out: O): TraversableOnce[Cell[_1]] = List(
         Cell(
           pos.append(out._2.toShortString("") + "-" + out._3.toShortString("")),
           Content(ContinuousSchema[Double](), out._1)
@@ -1118,13 +1118,13 @@ object Shared {
     }
 
     data
-      .slide(Over(_1), Default())(true, Diff())
+      .slide(Over(_0), Default())(true, Diff())
       .saveAsText(ctx, s"./tmp.${tool}/dif1.out", tuner = Default())
       .toUnit
 
     data
-      .slide(Over(_2), Default())(true, Diff())
-      .permute(_2, _1)
+      .slide(Over(_1), Default())(true, Diff())
+      .permute(_1, _0)
       .saveAsText(ctx, s"./tmp.${tool}/dif2.out", tuner = Default())
       .toUnit
   }
@@ -1143,15 +1143,15 @@ object Shared {
 
     val (data, _) = ctx.loadText(path + "/somePairwise.txt", Cell.parse2D())
 
-    case class DiffSquared() extends Operator[_2, _2] {
-      def compute(left: Cell[_2], right: Cell[_2]): TraversableOnce[Cell[_2]] = {
-        val xc = left.position(_2).toShortString
-        val yc = right.position(_2).toShortString
+    case class DiffSquared() extends Operator[_1, _1] {
+      def compute(left: Cell[_1], right: Cell[_1]): TraversableOnce[Cell[_1]] = {
+        val xc = left.position(_1).toShortString
+        val yc = right.position(_1).toShortString
 
-        if (left.position(_1) == right.position(_1))
+        if (left.position(_0) == right.position(_0))
           List(
             Cell(
-              right.position.remove(_2).append("(" + xc + "-" + yc + ")^2"),
+              right.position.remove(_1).append("(" + xc + "-" + yc + ")^2"),
               Content(
                 ContinuousSchema[Double](),
                 math.pow(left.content.value.asLong.get - right.content.value.asLong.get, 2)
@@ -1164,7 +1164,7 @@ object Shared {
     }
 
     data
-      .pairwise(Over(_2), Default())(Upper, DiffSquared())
+      .pairwise(Over(_1), Default())(Upper, DiffSquared())
       .saveAsText(ctx, s"./tmp.${tool}/pws1.out", tuner = Default())
       .toUnit
   }
@@ -1195,7 +1195,7 @@ object Shared {
     )
 
     data
-      .correlation(Over(_2), Default())(locate, true)
+      .correlation(Over(_1), Default())(locate, true)
       .saveAsText(ctx, s"./tmp.${tool}/pws2.out", tuner = Default())
       .toUnit
 
@@ -1208,7 +1208,7 @@ object Shared {
     val (data2, _) = ctx.loadText(path + "/somePairwise3.txt", Cell.parseTable(schema2, separator = "|"))
 
     data2
-      .correlation(Over(_2), Default())(locate, true)
+      .correlation(Over(_1), Default())(locate, true)
       .saveAsText(ctx, s"./tmp.${tool}/pws3.out", tuner = Default())
       .toUnit
   }
@@ -1234,14 +1234,14 @@ object Shared {
     ctx
       .loadText(path + "/mutualInputfile.txt", Cell.parse2D())
       .data
-      .mutualInformation(Over(_2), Default())(locate, true)
+      .mutualInformation(Over(_1), Default())(locate, true)
       .saveAsText(ctx, s"./tmp.${tool}/mi.out", tuner = Default())
       .toUnit
 
     ctx
       .loadText(path + "/mutualInputfile.txt", Cell.parse2D())
       .data
-      .mutualInformation(Along(_1), Default())(locate, true)
+      .mutualInformation(Along(_0), Default())(locate, true)
       .saveAsText(ctx, s"./tmp.${tool}/im.out", tuner = Default())
       .toUnit
   }
@@ -1262,10 +1262,10 @@ object Shared {
     val (right, _) = ctx.loadText(path + "/algebraInputfile2.txt", Cell.parse2D())
 
     left
-      .pairwiseBetween(Over(_1), Default())(
+      .pairwiseBetween(Over(_0), Default())(
         All,
         right,
-        Times(Locate.PrependPairwiseSelectedStringToRemainder(Over(_1), "(%1$s*%2$s)"))
+        Times(Locate.PrependPairwiseSelectedStringToRemainder(Over(_0), "(%1$s*%2$s)"))
       )
       .saveAsText(ctx, s"./tmp.${tool}/alg.out", tuner = Default())
       .toUnit
@@ -1288,35 +1288,35 @@ object Shared {
     ctx
       .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
       .data
-      .slide(Over(_2), Default())(true, SimpleMovingAverage(5, Locate.AppendRemainderDimension(_1)))
+      .slide(Over(_1), Default())(true, SimpleMovingAverage(5, Locate.AppendRemainderDimension(_0)))
       .saveAsText(ctx, s"./tmp.${tool}/sma1.out", tuner = Default())
       .toUnit
 
     ctx
       .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
       .data
-      .slide(Over(_2), Default())(true, SimpleMovingAverage(5, Locate.AppendRemainderDimension(_1), all = true))
+      .slide(Over(_1), Default())(true, SimpleMovingAverage(5, Locate.AppendRemainderDimension(_0), all = true))
       .saveAsText(ctx, s"./tmp.${tool}/sma2.out", tuner = Default())
       .toUnit
 
     ctx
       .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
       .data
-      .slide(Over(_2), Default())(true, CenteredMovingAverage(2, Locate.AppendRemainderDimension(_1)))
+      .slide(Over(_1), Default())(true, CenteredMovingAverage(2, Locate.AppendRemainderDimension(_0)))
       .saveAsText(ctx, s"./tmp.${tool}/tma.out", tuner = Default())
       .toUnit
 
     ctx
       .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
       .data
-      .slide(Over(_2), Default())(true, WeightedMovingAverage(5, Locate.AppendRemainderDimension(_1)))
+      .slide(Over(_1), Default())(true, WeightedMovingAverage(5, Locate.AppendRemainderDimension(_0)))
       .saveAsText(ctx, s"./tmp.${tool}/wma1.out", tuner = Default())
       .toUnit
 
     ctx
       .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
       .data
-      .slide(Over(_2), Default())(true, WeightedMovingAverage(5, Locate.AppendRemainderDimension(_1), all = true))
+      .slide(Over(_1), Default())(true, WeightedMovingAverage(5, Locate.AppendRemainderDimension(_0), all = true))
       .saveAsText(ctx, s"./tmp.${tool}/wma2.out", tuner = Default())
       .toUnit
 
@@ -1325,7 +1325,7 @@ object Shared {
     ctx
       .loadText(path + "/cumMovAvgInputfile.txt", Cell.parse1D())
       .data
-      .slide(Along(_1), Default())(true, CumulativeMovingAverage(Locate.AppendRemainderDimension(_1)))
+      .slide(Along(_0), Default())(true, CumulativeMovingAverage(Locate.AppendRemainderDimension(_0)))
       .saveAsText(ctx, s"./tmp.${tool}/cma.out", tuner = Default())
       .toUnit
 
@@ -1334,7 +1334,7 @@ object Shared {
     ctx
       .loadText(path + "/expMovAvgInputfile.txt", Cell.parse1D())
       .data
-      .slide(Along(_1), Default())(true, ExponentialMovingAverage(0.33, Locate.AppendRemainderDimension(_1)))
+      .slide(Along(_0), Default())(true, ExponentialMovingAverage(0.33, Locate.AppendRemainderDimension(_0)))
       .saveAsText(ctx, s"./tmp.${tool}/ema.out", tuner = Default())
       .toUnit
   }
@@ -1363,7 +1363,7 @@ object Shared {
         )
       }
 
-    val aggregators: List[Aggregator[_2, _1, _2]] = List(
+    val aggregators: List[Aggregator[_1, _0, _1]] = List(
       Counts().andThenRelocate(_.position.append("count").toOption),
       Minimum().andThenRelocate(_.position.append("min").toOption),
       Maximum().andThenRelocate(_.position.append("max").toOption),
@@ -1373,10 +1373,10 @@ object Shared {
     )
 
     val stats = data
-      .summarise(Along(_1), Default())(aggregators)
-      .compact(Over(_1), Default())
+      .summarise(Along(_0), Default())(aggregators)
+      .compact(Over(_0), Default())
 
-    val extractor = ExtractWithDimension[_2, List[Double]](_2)
+    val extractor = ExtractWithDimension[_1, List[Double]](_1)
 
     data
       .transformWithValue(rules.fixed(stats, "min", "max", 4), Cut(extractor))
@@ -1386,7 +1386,7 @@ object Shared {
     data
       .transformWithValue(
         rules.squareRootChoice(stats, "count", "min", "max"),
-        Cut(extractor).andThenRelocate(Locate.RenameDimension(_2, "%s.square"))
+        Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.square"))
       )
       .saveAsText(ctx, s"./tmp.${tool}/cut2.out", tuner = Default())
       .toUnit
@@ -1394,7 +1394,7 @@ object Shared {
     data
       .transformWithValue(
         rules.sturgesFormula(stats, "count", "min", "max"),
-        Cut(extractor).andThenRelocate(Locate.RenameDimension(_2, "%s.sturges"))
+        Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.sturges"))
       )
       .saveAsText(ctx, s"./tmp.${tool}/cut3.out", tuner = Default())
       .toUnit
@@ -1402,7 +1402,7 @@ object Shared {
     data
       .transformWithValue(
         rules.riceRule(stats, "count", "min", "max"),
-        Cut(extractor).andThenRelocate(Locate.RenameDimension(_2, "%s.rice"))
+        Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.rice"))
       )
       .saveAsText(ctx, s"./tmp.${tool}/cut4.out", tuner = Default())
       .toUnit
@@ -1410,7 +1410,7 @@ object Shared {
     data
       .transformWithValue(
         rules.doanesFormula(stats, "count", "min", "max", "skewness"),
-        Cut(extractor).andThenRelocate(Locate.RenameDimension(_2, "%s.doane"))
+        Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.doane"))
       )
       .saveAsText(ctx, s"./tmp.${tool}/cut5.out", tuner = Default())
       .toUnit
@@ -1418,7 +1418,7 @@ object Shared {
     data
       .transformWithValue(
         rules.scottsNormalReferenceRule(stats, "count", "min", "max", "sd"),
-        Cut(extractor).andThenRelocate(Locate.RenameDimension(_2, "%s.scott"))
+        Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.scott"))
       )
       .saveAsText(ctx, s"./tmp.${tool}/cut6.out", tuner = Default())
       .toUnit
@@ -1426,7 +1426,7 @@ object Shared {
     data
       .transformWithValue(
         rules.breaks(Map("fid:A" -> List(-1, 4, 8, 12, 16))),
-        Cut(extractor).andThenRelocate(Locate.RenameDimension(_2, "%s.break"))
+        Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.break"))
       )
       .saveAsText(ctx, s"./tmp.${tool}/cut7.out", tuner = Default())
       .toUnit
@@ -1612,24 +1612,24 @@ object Shared {
     )
 
     data
-      .saveAsVW(Over(_1), Default())(ctx, s"./tmp.${tool}/vw0.out", tag = false)
+      .saveAsVW(Over(_0), Default())(ctx, s"./tmp.${tool}/vw0.out", tag = false)
       .toUnit
 
     data
-      .saveAsVW(Over(_1), Default())(ctx, s"./tmp.${tool}/vw1.out", tag = true)
+      .saveAsVW(Over(_0), Default())(ctx, s"./tmp.${tool}/vw1.out", tag = true)
       .toUnit
 
     data
-      .saveAsVWWithLabels(Over(_1), Default())(ctx, s"./tmp.${tool}/vw2.out", labels, tag = false)
+      .saveAsVWWithLabels(Over(_0), Default())(ctx, s"./tmp.${tool}/vw2.out", labels, tag = false)
       .toUnit
 
     data
-      .saveAsVWWithImportance(Over(_1), Default())(ctx, s"./tmp.${tool}/vw3.out", importance, tag = true)
+      .saveAsVWWithImportance(Over(_0), Default())(ctx, s"./tmp.${tool}/vw3.out", importance, tag = true)
       .toUnit
 
     data
       .saveAsVWWithLabelsAndImportance(
-        Over(_1),
+        Over(_0),
         Default()
       )(
         ctx,
@@ -1664,12 +1664,12 @@ object Shared {
       ("c", "three", Content(DiscreteSchema[Long](), 123))
     )
 
-    def writer(values: List[Option[Cell[_2]]]) = List(
+    def writer(values: List[Option[Cell[_1]]]) = List(
       values.map(_.map(_.content.value.toShortString).getOrElse("")).mkString("|")
     )
 
     val (_, errors) = data
-      .streamByPosition(Over(_1))("sh ./parrot.sh", List("parrot.sh"), writer, Cell.parse1D(), 5)
+      .streamByPosition(Over(_0))("sh ./parrot.sh", List("parrot.sh"), writer, Cell.parse1D(), 5)
 
     errors
       .saveAsText(ctx, s"./tmp.${tool}/sbp.out", Redistribute(1))

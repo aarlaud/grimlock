@@ -44,7 +44,7 @@ trait Schema[T] {
    */
   def validate(value: Value[T]): Boolean
 
-  protected def paramString(short: Boolean, f: (T) => String): String
+  protected def paramString(short: Boolean, f: (T) => String): String = ""
 
   private def round(str: String): String = if (str.isEmpty) str else "(" + str + ")"
 }

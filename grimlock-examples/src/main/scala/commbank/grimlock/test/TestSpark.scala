@@ -16,7 +16,7 @@ package commbank.grimlock.test
 
 import commbank.grimlock.framework.Cell
 import commbank.grimlock.framework.content.Content
-import commbank.grimlock.framework.encoding.{ DateCodec, DateValue, DoubleCodec, LongCodec, StringCodec }
+import commbank.grimlock.framework.encoding.{ DateCodec, DateValue, DoubleCodec, LongCodec, StringCodec, StringValue }
 import commbank.grimlock.framework.metadata.{ ContinuousSchema, NominalSchema }
 import commbank.grimlock.framework.position.Position
 
@@ -27,35 +27,36 @@ import commbank.grimlock.test.TestSparkReader._
 
 import org.apache.spark.{ SparkContext, SparkConf }
 
-import shapeless.nat._3
+import shapeless.{ ::, HNil }
 
 object TestSparkReader {
-  def load4TupleDataAddDate(ctx: Context, file: String): ctx.U[Cell[_3]] = {
-    def hashDate(v: String) = {
-      val cal = java.util.Calendar.getInstance()
+  def load4TupleDataAddDate(
+    ctx: Context,
+    file: String
+  ): ctx.U[Cell[StringValue :: StringValue :: DateValue :: HNil]] = ctx.spark.textFile(file)
+    .flatMap {
+      _.trim.split(java.util.regex.Pattern.quote("|"), 4) match {
+        case Array(i, f, e, v) =>
+          val content = e match {
+            case "string" => StringCodec.decode(v).map(c => Content(NominalSchema[String](), c))
+            case _ => scala.util.Try(v.toLong).toOption match {
+              case Some(_) => LongCodec.decode(v).map(c => Content(ContinuousSchema[Long](), c))
+              case None => DoubleCodec.decode(v).map(c => Content(ContinuousSchema[Double](), c))
+            }
+          }
 
-      cal.setTime((new java.text.SimpleDateFormat("yyyy-MM-dd")).parse("2014-05-14"))
-      cal.add(java.util.Calendar.DATE, -(v.hashCode % 21)) // Generate 3 week window prior to date
-
-      DateValue(cal.getTime(), DateCodec())
+          content.map(c => Cell(Position(i, f, hashDate(v)), c))
+        case _ => None
+      }
     }
 
-    ctx.spark.textFile(file)
-      .flatMap {
-        _.trim.split(java.util.regex.Pattern.quote("|"), 4) match {
-          case Array(i, f, e, v) =>
-            val content = e match {
-              case "string" => StringCodec.decode(v).map(c => Content(NominalSchema[String](), c))
-              case _ => scala.util.Try(v.toLong).toOption match {
-                case Some(_) => LongCodec.decode(v).map(c => Content(ContinuousSchema[Long](), c))
-                case None => DoubleCodec.decode(v).map(c => Content(ContinuousSchema[Double](), c))
-              }
-            }
+  private def hashDate(v: String) = {
+    val cal = java.util.Calendar.getInstance()
 
-            content.map(c => Cell(Position(i, f, hashDate(v)), c))
-          case _ => None
-        }
-      }
+    cal.setTime((new java.text.SimpleDateFormat("yyyy-MM-dd")).parse("2014-05-14"))
+    cal.add(java.util.Calendar.DATE, -(v.hashCode % 21)) // Generate 3 week window prior to date
+
+    DateValue(cal.getTime(), DateCodec())
   }
 }
 

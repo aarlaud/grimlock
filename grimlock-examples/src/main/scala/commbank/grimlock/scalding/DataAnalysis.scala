@@ -39,7 +39,7 @@ class DataAnalysis(args: Args) extends Job(args) {
   // Read the data (ignoring errors). This returns a 2D matrix (instance x feature).
   val (data, _) = ctx.loadText(
     s"${path}/exampleInput.txt",
-    Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+    Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|")
   )
 
   // For the instances:
@@ -49,7 +49,7 @@ class DataAnalysis(args: Args) extends Job(args) {
   //  4/ Save the moments.
   data
     .summarise(Over(_0))(Counts())
-    .saveAsText(ctx, s"./demo.${output}/feature_count.out", Cell.toShortString(true, "|") _)
+    .saveAsText(ctx, s"./demo.${output}/feature_count.out", Cell.toShortString(true, "|"))
     .summarise(Along(_0))(
       Moments(
         _.append("mean").toOption,
@@ -58,7 +58,7 @@ class DataAnalysis(args: Args) extends Job(args) {
         _.append("kurtosis").toOption
       )
     )
-    .saveAsText(ctx, s"./demo.${output}/feature_density.out", Cell.toShortString(true, "|") _)
+    .saveAsText(ctx, s"./demo.${output}/feature_density.out", Cell.toShortString(true, "|"))
     .toUnit
 
   // For the features:
@@ -68,7 +68,7 @@ class DataAnalysis(args: Args) extends Job(args) {
   //  4/ Save the moments.
   data
     .summarise(Over(_1))(Counts())
-    .saveAsText(ctx, s"./demo.${output}/instance_count.out", Cell.toShortString(true, "|") _)
+    .saveAsText(ctx, s"./demo.${output}/instance_count.out", Cell.toShortString(true, "|"))
     .summarise(Along(_0))(
       Moments(
         _.append("mean").toOption,
@@ -77,7 +77,7 @@ class DataAnalysis(args: Args) extends Job(args) {
         _.append("kurtosis").toOption
       )
     )
-    .saveAsText(ctx, s"./demo.${output}/instance_density.out", Cell.toShortString(true, "|") _)
+    .saveAsText(ctx, s"./demo.${output}/instance_density.out", Cell.toShortString(true, "|"))
     .toUnit
 }
 

@@ -41,26 +41,17 @@ class Scoring(args: Args) extends Job(args) {
 
   // Read the data (ignoring errors). This returns a 2D matrix (instance x feature).
   val (data, _) = ctx
-    .loadText(
-      s"${path}/exampleInput.txt",
-      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
-    )
+    .loadText(s"${path}/exampleInput.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
 
   // Read the statistics (ignoring errors) from the PipelineDataPreparation example.
   val stats = ctx
-    .loadText(
-      s"./demo.${output}/stats.out",
-      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
-    )
+    .loadText(s"./demo.${output}/stats.out", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
     .data
     .compact(Over(_0))
 
   // Read externally learned weights (ignoring errors).
   val weights = ctx
-    .loadText(
-      s"${path}/exampleWeights.txt",
-      Cell.shortStringParser(StringCodec :: HNil, "|") _
-    )
+    .loadText(s"${path}/exampleWeights.txt", Cell.shortStringParser(StringCodec :: HNil, "|"))
     .data
     .compact(Over(_0))
 
@@ -95,7 +86,7 @@ class Scoring(args: Args) extends Job(args) {
         .andThenWithValue(Standardise(extractStat("mean"), extractStat("sd")))
     )
     .summariseWithValue(Over(_0))(weights, WeightedSums(extractWeight))
-    .saveAsText(ctx, s"./demo.${output}/scores.out", Cell.toShortString(true, "|") _)
+    .saveAsText(ctx, s"./demo.${output}/scores.out", Cell.toShortString(true, "|"))
     .toUnit
 }
 

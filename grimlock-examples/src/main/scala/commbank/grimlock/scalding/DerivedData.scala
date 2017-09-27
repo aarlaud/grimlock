@@ -91,12 +91,12 @@ class DerivedData(args: Args) extends Job(args) {
   ctx
     .loadText(
       s"${path}/exampleDerived.txt",
-      Cell.shortStringParser(StringCodec :: StringCodec :: DateCodec() :: HNil, "|") _
+      Cell.shortStringParser(StringCodec :: StringCodec :: DateCodec() :: HNil, "|")
     )
     .data
     .slide(Along(_2))(true, Gradient())
     .melt(_2, _1, Value.concatenate[StringValue, StringValue](".from."))
-    .saveAsText(ctx, s"./demo.${output}/gradient.out", Cell.toShortString(true, "|") _)
+    .saveAsText(ctx, s"./demo.${output}/gradient.out", Cell.toShortString(true, "|"))
     .toUnit
 }
 

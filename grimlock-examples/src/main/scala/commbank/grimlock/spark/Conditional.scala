@@ -44,7 +44,7 @@ object Conditional {
     // 1/ Read the data (ignoring errors), this returns a 2D matrix (row x feature).
     val (data, _) = ctx.loadText(
       s"${path}/exampleConditional.txt",
-      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|") _
+      Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|")
     )
 
     // Define function that appends the value as a string, or "missing" if no value is available
@@ -66,9 +66,9 @@ object Conditional {
     // 5/ Squash the first dimension (row ids + value). As there is only one value for each
     //    hair/eye/gender triplet, any squash function can be used.
     val heg = data
-      .reshape(_1, "hair", cast _)
-      .reshape(_1, "eye", cast _)
-      .reshape(_1, "gender", cast _)
+      .reshape(_1, "hair", cast)
+      .reshape(_1, "eye", cast)
+      .reshape(_1, "gender", cast)
       .melt(_1, _0, Value.concatenate[StringValue, StringValue]("."))
       .squash(_0, PreservingMaximumPosition())
 
@@ -92,7 +92,7 @@ object Conditional {
     heg
       .summarise(Along(_0))(Sums())
       .transformWithValue(gcount, Fraction(extractor))
-      .saveAsText(ctx, s"./demo.${output}/eye.out", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/eye.out", Cell.toShortString(true, "|"))
       .toUnit
 
     // Get hair color conditional on gender.
@@ -101,7 +101,7 @@ object Conditional {
     heg
       .summarise(Along(_1))(Sums())
       .transformWithValue(gcount, Fraction(extractor))
-      .saveAsText(ctx, s"./demo.${output}/hair.out", Cell.toShortString(true, "|") _)
+      .saveAsText(ctx, s"./demo.${output}/hair.out", Cell.toShortString(true, "|"))
       .toUnit
   }
 }
