@@ -39,7 +39,7 @@ import commbank.grimlock.library.window._
 
 import scala.io.Source
 
-import shapeless.{ ::, HNil, Nat }
+import shapeless.{ ::, HList, HNil, Nat }
 import shapeless.nat.{ _0, _1, _2 }
 import shapeless.ops.nat.{ LTEq, ToInt }
 
@@ -63,25 +63,28 @@ object Shared {
     implicit val c = ctx
 
     data
-      .saveAsText(ctx, s"./tmp.${tool}/dat1.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/dat1.out", (c) => List(c.toString), Default())
       .toUnit
 
     data
       .set(
         Cell(
-          Position("iid:1548763", "fid:Y", DateCodec().decode("2014-04-26").get),
+          Position("iid:1548763", "fid:Y", DateValue(DateCodec().decode("2014-04-26").get, DateCodec())),
           Content(ContinuousSchema[Long](), 1234)
         ),
         Default()
       )
       .slice(Over(_0), InMemory())(true, "iid:1548763")
-      .saveAsText(ctx, s"./tmp.${tool}/dat2.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/dat2.out", (c) => List(c.toString), Default())
       .toUnit
 
     ctx
-      .loadText(path + "/smallInputfile.txt", Cell.parse3D(third = DateCodec()))
+      .loadText(
+        path + "/smallInputfile.txt",
+        Cell.shortStringParser(StringCodec :: StringCodec :: DateCodec() :: HNil, "|")
+      )
       .data
-      .saveAsText(ctx, s"./tmp.${tool}/dat3.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/dat3.out", (c) => List(c.toString), Default())
       .toUnit
   }
 
@@ -102,19 +105,19 @@ object Shared {
     import ctx.implicits.position._
 
     (data.names(Over(_0), Default()) ++ data.names(Over(_1), Default()) ++ data.names(Over(_2), Default()))
-      .saveAsText(ctx, s"./tmp.${tool}/nm0.out", Position.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/nm0.out", (p) => List(p.toString), Default())
       .toUnit
 
     data
       .names(Over(_1), Default())
       .slice(false, "fid:M")
-      .saveAsText(ctx, s"./tmp.${tool}/nm2.out", Position.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/nm2.out", (p) => List(p.toString), Default())
       .toUnit
 
     data
       .names(Over(_1), Default())
       .slice(true, """.*[BCD]$""".r)
-      .saveAsText(ctx, s"./tmp.${tool}/nm5.out", Position.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/nm5.out", (p) => List(p.toString), Default())
       .toUnit
   }
 
@@ -133,19 +136,19 @@ object Shared {
     import ctx.implicits.matrix._
 
     (
-      data.types(Over(_0), Default())(false) ++
-      data.types(Over(_1), Default())(false) ++
-      data.types(Over(_2), Default())(false)
+      data.types(Over(_0), Default())(false).map(_.toString) ++
+      data.types(Over(_1), Default())(false).map(_.toString) ++
+      data.types(Over(_2), Default())(false).map(_.toString)
     )
-      .saveAsText(ctx, s"./tmp.${tool}/typ1.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/typ1.out", Default())
       .toUnit
 
     (
-      data.types(Over(_0), Default())(true) ++
-      data.types(Over(_1), Default())(true) ++
-      data.types(Over(_2), Default())(true)
+      data.types(Over(_0), Default())(true).map(_.toString) ++
+      data.types(Over(_1), Default())(true).map(_.toString) ++
+      data.types(Over(_2), Default())(true).map(_.toString)
     )
-      .saveAsText(ctx, s"./tmp.${tool}/typ2.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/typ2.out", Default())
       .toUnit
   }
 
@@ -168,13 +171,13 @@ object Shared {
 
     data
       .slice(Over(_1), Default())(true, "fid:B")
-      .saveAsText(ctx, s"./tmp.${tool}/scl0.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/scl0.out", (c) => List(c.toString), Default())
       .toUnit
 
     data
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B"))
       .slice(Over(_0), Default())(true, "iid:0221707")
-      .saveAsText(ctx, s"./tmp.${tool}/scl1.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/scl1.out", (c) => List(c.toString), Default())
       .toUnit
 
     val rem = List(
@@ -195,7 +198,7 @@ object Shared {
 
     data
       .slice(Over(_1), Default())(false, data.names(Over(_1), Default()).slice(false, rem))
-      .saveAsText(ctx, s"./tmp.${tool}/scl2.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/scl2.out", (c) => List(c.toString), Default())
       .toUnit
   }
 
@@ -222,12 +225,12 @@ object Shared {
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B"))
       .slice(Over(_0), Default())(true, "iid:0221707")
       .squash(_2, PreservingMaximumPosition(), Default())
-      .saveAsText(ctx, s"./tmp.${tool}/sqs1.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/sqs1.out", (c) => List(c.toString), Default())
       .toUnit
 
     data
       .squash(_2, PreservingMaximumPosition(), Default())
-      .saveAsText(ctx, s"./tmp.${tool}/sqs2.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/sqs2.out", (c) => List(c.toString), Default())
       .toUnit
 
     val ids = List(
@@ -279,12 +282,12 @@ object Shared {
 
     data
       .which(c => c.content.schema.classification.isOfType(NumericType))
-      .saveAsText(ctx, s"./tmp.${tool}/whc1.out", Position.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/whc1.out", (p) => List(p.toString), Default())
       .toUnit
 
     data
       .which(c => !c.content.value.isInstanceOf[StringValue])
-      .saveAsText(ctx, s"./tmp.${tool}/whc2.out", Position.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/whc2.out", (p) => List(p.toString), Default())
       .toUnit
 
     data
@@ -292,21 +295,13 @@ object Shared {
         data.which(c => (c.content.value equ 666) || (c.content.value leq 11.0) || (c.content.value equ "KQUPKFEH")),
         Default()
       )
-      .saveAsText(ctx, s"./tmp.${tool}/whc3.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/whc3.out", (c) => List(c.toString), Default())
       .toUnit
 
     data
       .which(c => c.content.value.isInstanceOf[LongValue])
-      .saveAsText(ctx, s"./tmp.${tool}/whc4.out", Position.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/whc4.out", (p) => List(p.toString), Default())
       .toUnit
-
-    val aggregators: List[Aggregator[_1, _0, _1]] = List(
-      Counts().andThenRelocate(_.position.append("count").toOption),
-      Mean().andThenRelocate(_.position.append("mean").toOption),
-      Minimum().andThenRelocate(_.position.append("min").toOption),
-      Maximum().andThenRelocate(_.position.append("max").toOption),
-      MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
-    )
 
     val ids = List(
       "iid:0064402",
@@ -325,14 +320,20 @@ object Shared {
       .slice(Over(_0), Default())(true, ids)
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
       .squash(_2, PreservingMaximumPosition(), Default())
-      .summarise(Along(_0), Default())(aggregators)
+      .summarise(Along(_0), Default())(
+        Counts().andThenRelocate(_.position.append("count").toOption),
+        Mean().andThenRelocate(_.position.append("mean").toOption),
+        Minimum().andThenRelocate(_.position.append("min").toOption),
+        Maximum().andThenRelocate(_.position.append("max").toOption),
+        MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
+      )
       .whichByPosition(
         Over(_1),
         Default()
       )(
         List(("count", c => c.content.value leq 2), ("min", c => c.content.value equ 107))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/whc5.out", Position.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/whc5.out", (p) => List(p.toString), Default())
       .toUnit
   }
 
@@ -353,19 +354,19 @@ object Shared {
     implicit val c = ctx
 
     data
-      .get(Position("iid:1548763", "fid:Y", DateCodec().decode("2014-04-26").get), Default())
-      .saveAsText(ctx, s"./tmp.${tool}/get1.out", Cell.toString(verbose = true), Default())
+      .get(Position("iid:1548763", "fid:Y", DateValue(DateCodec().decode("2014-04-26").get, DateCodec())), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/get1.out", (c) => List(c.toString), Default())
       .toUnit
 
     data
       .get(
         List(
-          Position("iid:1548763", "fid:Y", DateCodec().decode("2014-04-26").get),
-          Position("iid:1303823", "fid:A", DateCodec().decode("2014-05-05").get)
+          Position("iid:1548763", "fid:Y", DateValue(DateCodec().decode("2014-04-26").get, DateCodec())),
+          Position("iid:1303823", "fid:A", DateValue(DateCodec().decode("2014-05-05").get, DateCodec()))
         ),
         Default()
       )
-      .saveAsText(ctx, s"./tmp.${tool}/get2.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/get2.out", (c) => List(c.toString), Default())
       .toUnit
   }
 
@@ -394,14 +395,14 @@ object Shared {
       .slice(Over(_1), Default())(true, "fid:B")
       .squash(_2, PreservingMaximumPosition(), Default())
       .unique(Default())
-      .saveAsText(ctx, s"./tmp.${tool}/uniq.out", Content.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/uniq.out", (c) => List(c.toString), Default())
       .toUnit
 
     ctx
-      .loadText(path + "/mutualInputfile.txt", Cell.parse2D())
+      .loadText(path + "/mutualInputfile.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
       .data
       .uniqueByPosition(Over(_1), Default())
-      .saveAsText(ctx, s"./tmp.${tool}/uni2.out", IndexedContents.toString(descriptive = false), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/uni2.out", IndexedContents.toShortString(false, "|"), Default())
       .toUnit
 
     data
@@ -417,14 +418,14 @@ object Shared {
       .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
       .squash(_2, PreservingMaximumPosition(), Default())
       .permute(_1, _0)
-      .saveAsText(ctx, s"./tmp.${tool}/trs1.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/trs1.out", (c) => List(c.toString), Default())
       .toUnit
 
     data
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
       .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
       .squash(_2, PreservingMaximumPosition(), Default())
-      .saveAsText(ctx, s"./tmp.${tool}/data.txt", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/data.txt", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -446,8 +447,16 @@ object Shared {
 
     implicit val c = ctx
 
-    case class StringPartitioner[D <: Nat : ToInt](dim: D)(implicit ev: LTEq[D, _1]) extends Partitioner[_1, String] {
-      def assign(cell: Cell[_1]): TraversableOnce[String] = List(cell.position(dim) match {
+    case class StringPartitioner[
+      P <: HList,
+      D <: Nat,
+      V <: Value[_]
+    ](
+      dim: D
+    )(implicit
+      ev: Position.IndexConstraints[P, D, V]
+    ) extends Partitioner[P, String] {
+      def assign(cell: Cell[P]): TraversableOnce[String] = List(cell.position(dim) match {
         case StringValue("fid:A", _) => "training"
         case StringValue("fid:B", _) => "testing"
       }, "scoring")
@@ -460,17 +469,19 @@ object Shared {
       .split(StringPartitioner(_1))
 
     prt1
-      .saveAsText(ctx, s"./tmp.${tool}/prt1.out", Partitions.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/prt1.out", (p) => List(p.toString), Default())
       .toUnit
 
     case class IntTuplePartitioner[
-      D <: Nat : ToInt
+      P <: HList,
+      D <: Nat,
+      V <: Value[_]
     ](
       dim: D
     )(implicit
-      ev: LTEq[D, _1]
-    ) extends Partitioner[_1, (Int, Int, Int)] {
-      def assign(cell: Cell[_1]): TraversableOnce[(Int, Int, Int)] = List(cell.position(dim) match {
+      ev: Position.IndexConstraints[P, D, V]
+    ) extends Partitioner[P, (Int, Int, Int)] {
+      def assign(cell: Cell[P]): TraversableOnce[(Int, Int, Int)] = List(cell.position(dim) match {
         case StringValue("fid:A", _) => (1, 0, 0)
         case StringValue("fid:B", _) => (0, 1, 0)
       }, (0, 0, 1))
@@ -481,22 +492,22 @@ object Shared {
       .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
       .squash(_2, PreservingMaximumPosition(), Default())
       .split(IntTuplePartitioner(_1))
-      .saveAsText(ctx, s"./tmp.${tool}/prt2.out", Partitions.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/prt2.out", (p) => List(p.toString), Default())
       .toUnit
 
     prt1
       .get("training")
-      .saveAsText(ctx, s"./tmp.${tool}/train.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/train.out", (c) => List(c.toString), Default())
       .toUnit
 
     prt1
       .get("testing")
-      .saveAsText(ctx, s"./tmp.${tool}/test.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/test.out", (c) => List(c.toString), Default())
       .toUnit
 
     prt1
       .get("scoring")
-      .saveAsText(ctx, s"./tmp.${tool}/score.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/score.out", (c) => List(c.toString), Default())
       .toUnit
   }
 
@@ -543,21 +554,22 @@ object Shared {
       .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/agg2.csv")
       .toUnit
 
-    val aggregators: List[Aggregator[_1, _0, _1]] = List(
-      Counts().andThenRelocate(_.position.append("count").toOption),
-      Mean().andThenRelocate(_.position.append("mean").toOption),
-      StandardDeviation(biased = true).andThenRelocate(_.position.append("sd").toOption),
-      Skewness().andThenRelocate(_.position.append("skewness").toOption),
-      Kurtosis().andThenRelocate(_.position.append("kurtosis").toOption),
-      Minimum().andThenRelocate(_.position.append("min").toOption),
-      Maximum().andThenRelocate(_.position.append("max").toOption),
-      MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
-    )
-
     data
       .slice(Over(_0), Default())(true, ids)
       .squash(_2, PreservingMaximumPosition(), Default())
-      .summarise(Along(_0), Default())(aggregators)
+      .summarise(
+        Along(_0),
+        Default()
+      )(
+        Counts().andThenRelocate(_.position.append("count").toOption),
+        Mean().andThenRelocate(_.position.append("mean").toOption),
+        StandardDeviation(biased = true).andThenRelocate(_.position.append("sd").toOption),
+        Skewness().andThenRelocate(_.position.append("skewness").toOption),
+        Kurtosis().andThenRelocate(_.position.append("kurtosis").toOption),
+        Minimum().andThenRelocate(_.position.append("min").toOption),
+        Maximum().andThenRelocate(_.position.append("max").toOption),
+        MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
+      )
       .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/agg3.csv")
       .toUnit
   }
@@ -584,7 +596,7 @@ object Shared {
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
       .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
       .transform(Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")))
-      .saveAsText(ctx, s"./tmp.${tool}/trn2.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/trn2.out", (c) => List(c.toString), Default())
       .toUnit
 
     data
@@ -627,7 +639,7 @@ object Shared {
 
     sliced
       .fillHomogeneous(Content(ContinuousSchema[Long](), 0), Default())
-      .saveAsText(ctx, s"./tmp.${tool}/fll3.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/fll3.out", (c) => List(c.toString), Default())
       .toUnit
   }
 
@@ -708,9 +720,16 @@ object Shared {
     data
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:Y", "fid:Z"))
       .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
-      .change(Over(_1), Default())("fid:A", Content.parser(LongCodec, NominalSchema[Long]()))
+      .change(
+        Over(_1),
+        Default()
+      )(
+        "fid:A",
+        Content.decoder(LongCodec, NominalSchema[Long]()),
+        Cell.toShortString(true, "|")
+      )
       .data
-      .saveAsText(ctx, s"./tmp.${tool}/chg1.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/chg1.out", (c) => List(c.toString), Default())
       .toUnit
   }
 
@@ -737,7 +756,7 @@ object Shared {
       .slice(Over(_1), Default())(true, List("fid:A", "fid:C", "fid:E", "fid:G"))
       .slice(Over(_0), Default())(true, List("iid:0221707", "iid:0364354"))
       .summarise(Along(_2), Default())(Sums().andThenRelocate(_.position.append("sum").toOption))
-      .melt(_2, _1, Value.concatenate("."))
+      .melt(_2, _1, Value.concatenate[StringValue, StringValue]("."))
       .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/rsh1.out")
       .toUnit
 
@@ -788,7 +807,7 @@ object Shared {
 
     data
       .subset(HashSample())
-      .saveAsText(ctx, s"./tmp.${tool}/smp1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/smp1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -829,16 +848,17 @@ object Shared {
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
       .squash(_2, PreservingMaximumPosition(), Default())
 
-    val aggregators: List[Aggregator[_1, _0, _1]] = List(
-      Counts().andThenRelocate(_.position.append("count").toOption),
-      Mean().andThenRelocate(_.position.append("mean").toOption),
-      Minimum().andThenRelocate(_.position.append("min").toOption),
-      Maximum().andThenRelocate(_.position.append("max").toOption),
-      MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
-    )
-
     val stats = sliced
-      .summarise(Along(_0), Default())(aggregators)
+      .summarise(
+        Along(_0),
+        Default()
+      )(
+        Counts().andThenRelocate(_.position.append("count").toOption),
+        Mean().andThenRelocate(_.position.append("mean").toOption),
+        Minimum().andThenRelocate(_.position.append("min").toOption),
+        Maximum().andThenRelocate(_.position.append("max").toOption),
+        MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
+      )
       .compact(Over(_0), Default())
 
     sliced
@@ -858,10 +878,18 @@ object Shared {
       .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/flt1.csv")
       .toUnit
 
-    case class RemoveGreaterThanMean[D <: Nat : ToInt](dim: D)(implicit ev: LTEq[D, _1]) extends SamplerWithValue[_1] {
-      type V = Map[Position[_0], Map[Position[_0], Content]]
+    case class RemoveGreaterThanMean[
+      P <: HList,
+      D <: Nat,
+      V <: Value[_]
+    ](
+      dim: D
+    )(implicit
+      ev: Position.IndexConstraints[P, D, V]
+    ) extends SamplerWithValue[P] {
+      type V = Map[Position[V :: HNil], Map[Position[StringValue :: HNil], Content]]
 
-      def selectWithValue(cell: Cell[_1], ext: V): Boolean =
+      def selectWithValue(cell: Cell[P], ext: V): Boolean =
         if (cell.content.schema.classification.isOfType(NumericType))
           cell.content.value leq ext(Position(cell.position(dim)))(Position("mean")).value
         else
@@ -912,16 +940,17 @@ object Shared {
       .slice(Over(_1), Default())(true, List("fid:A", "fid:B", "fid:C", "fid:D", "fid:E", "fid:F", "fid:G"))
       .squash(_2, PreservingMaximumPosition(), Default())
 
-    val aggregators: List[Aggregator[_1, _0, _1]] = List(
-      Counts().andThenRelocate(_.position.append("count").toOption),
-      Mean().andThenRelocate(_.position.append("mean").toOption),
-      Minimum().andThenRelocate(_.position.append("min").toOption),
-      Maximum().andThenRelocate(_.position.append("max").toOption),
-      MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
-    )
-
     val stats = sliced
-      .summarise(Along(_0), Default())(aggregators)
+      .summarise(
+        Along(_0),
+        Default()
+      )(
+        Counts().andThenRelocate(_.position.append("count").toOption),
+        Mean().andThenRelocate(_.position.append("mean").toOption),
+        Minimum().andThenRelocate(_.position.append("min").toOption),
+        Maximum().andThenRelocate(_.position.append("max").toOption),
+        MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
+      )
 
     val rem = stats
       .whichByPosition(Over(_1), Default())(("count", (c: Cell[_1]) => c.content.value leq 2))
@@ -994,14 +1023,15 @@ object Shared {
     val parts = raw
       .split(CustomPartition(_0, "train", "test"))
 
-    val aggregators: List[Aggregator[_1, _0, _1]] = List(
-      Counts().andThenRelocate(_.position.append("count").toOption),
-      MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
-    )
-
     val stats = parts
       .get("train")
-      .summarise(Along(_0), Default())(aggregators)
+      .summarise(
+        Along(_0),
+        Default()
+      )(
+        Counts().andThenRelocate(_.position.append("count").toOption),
+        MaximumAbsolute().andThenRelocate(_.position.append("max.abs").toOption)
+      )
 
     val rem = stats
       .which(c => (c.position(_1) equ "count") && (c.content.value leq 2))
@@ -1040,9 +1070,12 @@ object Shared {
     val (dictionary, _) = Dictionary.load(Source.fromFile(path + "/dict.txt"))
 
     ctx
-      .loadText(path + "/ivoryInputfile1.txt", Cell.parse3DWithDictionary(dictionary, _1, third = DateCodec()))
+      .loadText(
+        path + "/ivoryInputfile1.txt",
+        Cell.shortStringParser(StringCodec :: StringCodec :: DateCodec() :: HNil, dictionary, _1, "|")
+      )
       .data
-      .saveAsText(ctx, s"./tmp.${tool}/ivr1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/ivr1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1062,22 +1095,22 @@ object Shared {
 
     data
       .shape(Default())
-      .saveAsText(ctx, s"./tmp.${tool}/siz0.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/siz0.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
       .size(_0, tuner = Default())
-      .saveAsText(ctx, s"./tmp.${tool}/siz1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/siz1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
       .size(_1, tuner = Default())
-      .saveAsText(ctx, s"./tmp.${tool}/siz2.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/siz2.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
       .size(_2, tuner = Default())
-      .saveAsText(ctx, s"./tmp.${tool}/siz3.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/siz3.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1093,7 +1126,8 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    val (data, _) = ctx.loadText(path + "/numericInputfile.txt", Cell.parse2D())
+    val (data, _) = ctx
+      .loadText(path + "/numericInputfile.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
 
     case class Diff() extends Window[_1, _0, _0, _1] {
       type I = Option[Double]
@@ -1119,13 +1153,13 @@ object Shared {
 
     data
       .slide(Over(_0), Default())(true, Diff())
-      .saveAsText(ctx, s"./tmp.${tool}/dif1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/dif1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
       .slide(Over(_1), Default())(true, Diff())
       .permute(_1, _0)
-      .saveAsText(ctx, s"./tmp.${tool}/dif2.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/dif2.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1141,7 +1175,8 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    val (data, _) = ctx.loadText(path + "/somePairwise.txt", Cell.parse2D())
+    val (data, _) = ctx
+      .loadText(path + "/somePairwise.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
 
     case class DiffSquared() extends Operator[_1, _1] {
       def compute(left: Cell[_1], right: Cell[_1]): TraversableOnce[Cell[_1]] = {
@@ -1165,7 +1200,7 @@ object Shared {
 
     data
       .pairwise(Over(_1), Default())(Upper, DiffSquared())
-      .saveAsText(ctx, s"./tmp.${tool}/pws1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/pws1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1190,13 +1225,13 @@ object Shared {
     )
     val (data, _) = ctx.loadText(path + "/somePairwise2.txt", Cell.parseTable(schema, separator = "|"))
 
-    def locate[P <: Nat] = (l: Position[P], r: Position[P]) => Option(
+    def locate[P <: Nat](implicit ev: Position.ListConstraints[P])  = (l: Position[P], r: Position[P]) => Option(
       Position(s"(${l.toShortString("|")}*${r.toShortString("|")})")
     )
 
     data
       .correlation(Over(_1), Default())(locate, true)
-      .saveAsText(ctx, s"./tmp.${tool}/pws2.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/pws2.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     val schema2 = List(
@@ -1209,7 +1244,7 @@ object Shared {
 
     data2
       .correlation(Over(_1), Default())(locate, true)
-      .saveAsText(ctx, s"./tmp.${tool}/pws3.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/pws3.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1227,22 +1262,22 @@ object Shared {
 
     // see http://www.eecs.harvard.edu/cs286r/courses/fall10/papers/Chapter2.pdf example 2.2.1 for data
 
-    def locate[P <: Nat] = (l: Position[P], r: Position[P]) => Option(
+    def locate[P <: HList](implicit ev: Position.ListConstraints[P]) = (l: Position[P], r: Position[P]) => Option(
       Position(s"${r.toShortString("|")},${l.toShortString("|")}")
     )
 
     ctx
-      .loadText(path + "/mutualInputfile.txt", Cell.parse2D())
+      .loadText(path + "/mutualInputfile.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
       .data
       .mutualInformation(Over(_1), Default())(locate, true)
-      .saveAsText(ctx, s"./tmp.${tool}/mi.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/mi.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     ctx
-      .loadText(path + "/mutualInputfile.txt", Cell.parse2D())
+      .loadText(path + "/mutualInputfile.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
       .data
       .mutualInformation(Along(_0), Default())(locate, true)
-      .saveAsText(ctx, s"./tmp.${tool}/im.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/im.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1258,8 +1293,10 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    val (left, _) = ctx.loadText(path + "/algebraInputfile1.txt", Cell.parse2D())
-    val (right, _) = ctx.loadText(path + "/algebraInputfile2.txt", Cell.parse2D())
+    val (left, _) = ctx
+      .loadText(path + "/algebraInputfile1.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
+    val (right, _) = ctx
+      .loadText(path + "/algebraInputfile2.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
 
     left
       .pairwiseBetween(Over(_0), Default())(
@@ -1267,7 +1304,7 @@ object Shared {
         right,
         Times(Locate.PrependPairwiseSelectedStringToRemainder(Over(_0), "(%1$s*%2$s)"))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/alg.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/alg.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1286,56 +1323,56 @@ object Shared {
     // http://www.statisticshowto.com/moving-average/
 
     ctx
-      .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
+      .loadText(path + "/simMovAvgInputfile.txt", Cell.shortStringParser(LongCodec :: StringCodec :: HNil, "|"))
       .data
       .slide(Over(_1), Default())(true, SimpleMovingAverage(5, Locate.AppendRemainderDimension(_0)))
-      .saveAsText(ctx, s"./tmp.${tool}/sma1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/sma1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     ctx
-      .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
+      .loadText(path + "/simMovAvgInputfile.txt", Cell.shortStringParser(LongCodec :: StringCodec :: HNil, "|"))
       .data
       .slide(Over(_1), Default())(true, SimpleMovingAverage(5, Locate.AppendRemainderDimension(_0), all = true))
-      .saveAsText(ctx, s"./tmp.${tool}/sma2.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/sma2.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     ctx
-      .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
+      .loadText(path + "/simMovAvgInputfile.txt", Cell.shortStringParser(LongCodec :: StringCodec :: HNil, "|"))
       .data
       .slide(Over(_1), Default())(true, CenteredMovingAverage(2, Locate.AppendRemainderDimension(_0)))
-      .saveAsText(ctx, s"./tmp.${tool}/tma.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/tma.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     ctx
-      .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
+      .loadText(path + "/simMovAvgInputfile.txt", Cell.shortStringParser(LongCodec :: StringCodec :: HNil, "|"))
       .data
       .slide(Over(_1), Default())(true, WeightedMovingAverage(5, Locate.AppendRemainderDimension(_0)))
-      .saveAsText(ctx, s"./tmp.${tool}/wma1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/wma1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     ctx
-      .loadText(path + "/simMovAvgInputfile.txt", Cell.parse2D(first = LongCodec))
+      .loadText(path + "/simMovAvgInputfile.txt", Cell.shortStringParser(LongCodec :: StringCodec :: HNil, "|"))
       .data
       .slide(Over(_1), Default())(true, WeightedMovingAverage(5, Locate.AppendRemainderDimension(_0), all = true))
-      .saveAsText(ctx, s"./tmp.${tool}/wma2.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/wma2.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     // http://stackoverflow.com/questions/11074665/how-to-calculate-the-cumulative-average-for-some-numbers
 
     ctx
-      .loadText(path + "/cumMovAvgInputfile.txt", Cell.parse1D())
+      .loadText(path + "/cumMovAvgInputfile.txt", Cell.shortStringParser(StringCodec :: HNil, "|"))
       .data
       .slide(Along(_0), Default())(true, CumulativeMovingAverage(Locate.AppendRemainderDimension(_0)))
-      .saveAsText(ctx, s"./tmp.${tool}/cma.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cma.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     // http://www.incrediblecharts.com/indicators/exponential_moving_average.php
 
     ctx
-      .loadText(path + "/expMovAvgInputfile.txt", Cell.parse1D())
+      .loadText(path + "/expMovAvgInputfile.txt", Cell.shortStringParser(StringCodec :: HNil, "|"))
       .data
       .slide(Along(_0), Default())(true, ExponentialMovingAverage(0.33, Locate.AppendRemainderDimension(_0)))
-      .saveAsText(ctx, s"./tmp.${tool}/ema.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/ema.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1363,24 +1400,25 @@ object Shared {
         )
       }
 
-    val aggregators: List[Aggregator[_1, _0, _1]] = List(
-      Counts().andThenRelocate(_.position.append("count").toOption),
-      Minimum().andThenRelocate(_.position.append("min").toOption),
-      Maximum().andThenRelocate(_.position.append("max").toOption),
-      Mean().andThenRelocate(_.position.append("mean").toOption),
-      StandardDeviation(biased = true).andThenRelocate(_.position.append("sd").toOption),
-      Skewness().andThenRelocate(_.position.append("skewness").toOption)
-    )
-
     val stats = data
-      .summarise(Along(_0), Default())(aggregators)
+      .summarise(
+        Along(_0),
+        Default()
+      )(
+        Counts().andThenRelocate(_.position.append("count").toOption),
+        Minimum().andThenRelocate(_.position.append("min").toOption),
+        Maximum().andThenRelocate(_.position.append("max").toOption),
+        Mean().andThenRelocate(_.position.append("mean").toOption),
+        StandardDeviation(biased = true).andThenRelocate(_.position.append("sd").toOption),
+        Skewness().andThenRelocate(_.position.append("skewness").toOption)
+      )
       .compact(Over(_0), Default())
 
     val extractor = ExtractWithDimension[_1, List[Double]](_1)
 
     data
       .transformWithValue(rules.fixed(stats, "min", "max", 4), Cut(extractor))
-      .saveAsText(ctx, s"./tmp.${tool}/cut1.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cut1.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
@@ -1388,7 +1426,7 @@ object Shared {
         rules.squareRootChoice(stats, "count", "min", "max"),
         Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.square"))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/cut2.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cut2.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
@@ -1396,7 +1434,7 @@ object Shared {
         rules.sturgesFormula(stats, "count", "min", "max"),
         Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.sturges"))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/cut3.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cut3.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
@@ -1404,7 +1442,7 @@ object Shared {
         rules.riceRule(stats, "count", "min", "max"),
         Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.rice"))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/cut4.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cut4.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
@@ -1412,7 +1450,7 @@ object Shared {
         rules.doanesFormula(stats, "count", "min", "max", "skewness"),
         Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.doane"))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/cut5.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cut5.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
@@ -1420,7 +1458,7 @@ object Shared {
         rules.scottsNormalReferenceRule(stats, "count", "min", "max", "sd"),
         Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.scott"))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/cut6.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cut6.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
     data
@@ -1428,7 +1466,7 @@ object Shared {
         rules.breaks(Map("fid:A" -> List(-1, 4, 8, 12, 16))),
         Cut(extractor).andThenRelocate(Locate.RenameDimension(_1, "%s.break"))
       )
-      .saveAsText(ctx, s"./tmp.${tool}/cut7.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/cut7.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1460,12 +1498,12 @@ object Shared {
       .stream(
         "Rscript double.R",
         List("double.R"),
-        Cell.toString(false, "|", true),
-        Cell.parse2D("#", StringCodec, LongCodec),
+        Cell.toShortString(true, "|"),
+        Cell.shortStringParser(StringCodec :: LongCodec :: HNil, "#"),
         Reducers(1)
       )
       .data
-      .saveAsText(ctx, s"./tmp.${tool}/strm.out", tuner = Default())
+      .saveAsText(ctx, s"./tmp.${tool}/strm.out", Cell.toShortString(true, "|"), Default())
       .toUnit
   }
 
@@ -1481,10 +1519,14 @@ object Shared {
     import ctx.implicits.environment._
     import ctx.implicits.matrix._
 
-    val (data, errors) = ctx.loadText(path + "/badInputfile.txt", Cell.parse3D(third = DateCodec()))
+    val (data, errors) = ctx
+      .loadText(
+        path + "/badInputfile.txt",
+        Cell.shortStringParser(StringCodec :: StringCodec :: DateCodec() :: HNil, "|")
+      )
 
     data
-      .saveAsText(ctx, s"./tmp.${tool}/yok.out", Cell.toString(verbose = true), Default())
+      .saveAsText(ctx, s"./tmp.${tool}/yok.out", (c) => List(c.toString), Default())
       .toUnit
 
     errors
@@ -1664,12 +1706,20 @@ object Shared {
       ("c", "three", Content(DiscreteSchema[Long](), 123))
     )
 
-    def writer(values: List[Option[Cell[_1]]]) = List(
+    def writer[P <: HList](values: List[Option[Cell[P]]]) = List(
       values.map(_.map(_.content.value.toShortString).getOrElse("")).mkString("|")
     )
 
     val (_, errors) = data
-      .streamByPosition(Over(_0))("sh ./parrot.sh", List("parrot.sh"), writer, Cell.parse1D(), 5)
+      .streamByPosition(
+        Over(_0)
+      )(
+        "sh ./parrot.sh",
+        List("parrot.sh"),
+        writer,
+        Cell.shortStringParser(StringCodec :: HNil, "|"),
+        5
+      )
 
     errors
       .saveAsText(ctx, s"./tmp.${tool}/sbp.out", Redistribute(1))

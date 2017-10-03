@@ -16,6 +16,7 @@ package commbank.grimlock.scalding.examples
 
 import commbank.grimlock.framework._
 import commbank.grimlock.framework.content._
+import commbank.grimlock.framework.encoding._
 import commbank.grimlock.framework.extract._
 //import commbank.grimlock.framework.metadata._
 import commbank.grimlock.framework.partition._
@@ -29,22 +30,23 @@ import commbank.grimlock.scalding.environment._
 import com.twitter.scalding.{ Args, Job }
 import com.twitter.scalding.typed.TypedPipe
 
-import shapeless.Nat
-import shapeless.nat.{ _1, _2 }
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.{ ::, HList, HNil, Nat }
+import shapeless.nat.{ _0, _1 }
 
 // Define a custom partition. If the instance is 'iid:0364354' or 'iid:0216406' then assign it to the right (test)
 // partition. In all other cases assing it to the left (train) partition.
 case class CustomPartition[
-  D <: Nat : ToInt
+  P <: HList,
+  D <: Nat,
+  V <: Value[_]
 ](
   dim: D,
   left: String,
   right: String
 )(implicit
-  ev: LTEq[D, _2]
-) extends Partitioner[_2, String] {
-  def assign(cell: Cell[_2]): TraversableOnce[String] = {
+  ev: Position.IndexConstraints[P, D, V]
+) extends Partitioner[P, String] {
+  def assign(cell: Cell[P]): TraversableOnce[String] = {
     val pos = cell.position(dim).toShortString
 
     if (pos == "iid:0364354" || pos == "iid:0216406") List(right) else List(left)
@@ -61,11 +63,12 @@ class PipelineDataPreparation(args: Args) extends Job(args) {
   val output = "scalding"
 
   // Read the data (ignoring errors). This returns a 2D matrix (instance x feature).
-  val (data, _) = ctx.loadText(s"${path}/exampleInput.txt", Cell.parse2D())
+  val (data, _) = ctx
+    .loadText(s"${path}/exampleInput.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil,  "|"))
 
   // Perform a split of the data into a training and test set.
   val parts = data
-    .split(CustomPartition(_1, "train", "test"))
+    .split(CustomPartition(_0, "train", "test"))
 
   // Get the training data
   val train = parts
@@ -73,7 +76,7 @@ class PipelineDataPreparation(args: Args) extends Job(args) {
 
   // Compute descriptive statistics on the training data.
   val descriptive = train
-    .summarise(Along(_1))(
+    .summarise(Along(_0))(
       Counts().andThenRelocate(_.position.append("count").toOption),
       Moments(
         _.append("mean").toOption,
@@ -87,19 +90,24 @@ class PipelineDataPreparation(args: Args) extends Job(args) {
 
   // Compute histogram on the categorical features in the training data.
   val histogram = train
-    .histogram(Along(_1))(Locate.AppendDimensionAndContentString(_1))
+    .histogram(Along(_0))(Locate.AppendDimensionAndContentString(_0))
 
   // Compute the counts for each categorical features.
   val counts = histogram
-    .summarise(Over(_1))(Sums())
+    .summarise(Over(_0))(Sums())
     .compact()
 
   // Define extractor to extract counts from the map.
-  val extractCount = ExtractWithDimension[_2, Content](_1).andThenPresent(_.value.asDouble)
+  def extractCount[
+    P <: HList,
+    V <: Value[_]
+  ](implicit
+    ev: Position.IndexConstraints[P, _1, V]
+  ) = ExtractWithDimension[P, _1, V, Content](_1).andThenPresent(_.value.asDouble)
 
   // Compute summary statisics on the histogram.
   val summary = histogram
-    .summariseWithValue(Over(_1))(
+    .summariseWithValue(Over(_0))(
       counts,
       Counts().andThenRelocate(_.position.append("num.cat").toOption),
       Entropy(extractCount).andThenRelocate(_.position.append("entropy").toOption),
@@ -108,31 +116,38 @@ class PipelineDataPreparation(args: Args) extends Job(args) {
 
   // Combine all statistics and write result to file
   val stats = (descriptive ++ histogram ++ summary)
-    .saveAsText(ctx, s"./demo.${output}/stats.out")
+    .saveAsText(ctx, s"./demo.${output}/stats.out", Cell.toShortString(true, "|"))
 
   // Determine which features to filter based on statistics. In this case remove all features that occur for 2 or
   // fewer instances. These are removed first to prevent indicator features from being created.
   val rem1 = stats
-    .which(cell => (cell.position(_2) equ "count") && (cell.content.value leq 2))
-    .names(Over(_1))
+    .which(cell => (cell.position(_1) equ "count") && (cell.content.value leq 2))
+    .names(Over(_0))
 
   // Also remove constant features (standard deviation is 0, or 1 category). These are removed after indicators have
   // been created.
   val rem2 = stats
     .which(cell =>
-      ((cell.position(_2) equ "sd") && (cell.content.value equ 0)) ||
-      ((cell.position(_2) equ "num.cat") && (cell.content.value equ 1))
+      ((cell.position(_1) equ "sd") && (cell.content.value equ 0)) ||
+      ((cell.position(_1) equ "num.cat") && (cell.content.value equ 1))
     )
-    .names(Over(_1))
+    .names(Over(_0))
 
   // Finally remove categoricals for which an individual category has only 1 value. These are removed after binarized
   // features have been created.
   val rem3 = stats
-    .which(cell => (cell.position(_2) like ".*=.*".r) && (cell.content.value equ 1))
-    .names(Over(_2))
+    .which(cell => (cell.position(_1) like ".*=.*".r) && (cell.content.value equ 1))
+    .names(Over(_1))
 
   // Define extract object to get data out of statistics map.
-  def extractStat(key: String) = ExtractWithDimensionAndKey[_2, Content](_2, key).andThenPresent(_.value.asDouble)
+  def extractStat[
+    P <: HList,
+    V <: Value[_]
+  ](
+    key: String
+  )(implicit
+    ev: Position.IndexConstraints[P, _1, V]
+  ) = ExtractWithDimensionAndKey[P, _1, V, StringValue, Content](_1, key).andThenPresent(_.value.asDouble)
 
   // For each partition:
   //  1/  Remove sparse features;
@@ -143,26 +158,29 @@ class PipelineDataPreparation(args: Args) extends Job(args) {
   //  4a/ Combine preprocessed data sets;
   //  4b/ Optionally fill the matrix (note: this is expensive);
   //  4c/ Save the result as pipe separated CSV for use in modelling.
-  def prepare(key: String, partition: TypedPipe[Cell[_2]]): TypedPipe[Cell[_2]] = {
+  def prepare(
+    key: String,
+    partition: TypedPipe[Cell[StringValue :: StringValue :: HNil]]
+  ): TypedPipe[Cell[StringValue :: StringValue :: HNil]] = {
     val d = partition
-      .slice(Over(_2))(false, rem1)
+      .slice(Over(_1))(false, rem1)
 
     val ind = d
-      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_2, "%1$s.ind")))
+      .transform(Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")))
 
     val csb = d
-      .slice(Over(_2))(false, rem2)
+      .slice(Over(_1))(false, rem2)
       .transformWithValue(
-        stats.compact(Over(_1)),
+        stats.compact(Over(_0)),
         Clamp(extractStat("min"), extractStat("max"))
           .andThenWithValue(Standardise(extractStat("mean"), extractStat("sd"))),
-        Binarise(Locate.RenameDimensionWithContent(_2))
+        Binarise(Locate.RenameDimensionWithContent(_1))
       )
-      .slice(Over(_2))(false, rem3)
+      .slice(Over(_1))(false, rem3)
 
     (ind ++ csb)
       //.fillHomogeneous(Content(ContinuousSchema[Double](), 0.0))
-      .saveAsCSV(Over(_1))(ctx, s"./demo.${output}/${key}.csv")
+      .saveAsCSV(Over(_0))(ctx, s"./demo.${output}/${key}.csv", Cell.toShortString(true, "|"))
   }
 
   // Prepare each partition.

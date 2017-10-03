@@ -29,16 +29,21 @@ import commbank.grimlock.spark.environment._
 
 import org.apache.spark.{ SparkConf, SparkContext }
 
-import shapeless.Nat
-import shapeless.nat.{ _1, _2, _3 }
+import shapeless.{ ::, HList, HNil }
+import shapeless.nat.{ _0, _1 }
 
 // Simple transformer that adds weight to a label.
-case class AddWeight() extends TransformerWithValue[_2, _3] {
-  type V = Map[Position[_1], Content]
+case class AddWeight[
+  P <: HList,
+  Q <: HList
+](implicit
+  ev: Position.AppendConstraints[P, StringValue, Q]
+) extends TransformerWithValue[P, Q] {
+  type V = Map[Position[StringValue :: HNil], Content]
 
   // Adding the weight is a straight forward lookup by the value of the content. Also return this cell
   // (cell.position.append("label"), cell.content) so no additional join is needed with the original label data.
-  def presentWithValue(cell: Cell[_2], ext: V): TraversableOnce[Cell[_3]] = List(
+  def presentWithValue(cell: Cell[P], ext: V): TraversableOnce[Cell[Q]] = List(
     Cell(cell.position.append("label"), cell.content),
     Cell(cell.position.append("weight"), ext(Position(cell.content.value.toShortString)))
   )
@@ -54,47 +59,62 @@ object LabelWeighting {
     val output = "spark"
 
     // Read labels and melt the date into the instance id to generate a 1D matrix.
-    val labels = ctx.loadText(
+    val labels = ctx
+      .loadText(
         s"${path}/exampleLabels.txt",
-        Cell.parse2DWithSchema(Content.parser(DoubleCodec, ContinuousSchema[Double]()))
+        Cell.shortStringParser(
+          StringCodec :: StringCodec :: HNil,
+          Content.decoder(DoubleCodec, ContinuousSchema[Double]()),
+          "|"
+        )
       )
       .data // Keep only the data (ignoring errors).
-      .melt(_2, _1, Value.concatenate(":"))
+      .melt(_1, _0, Value.concatenate[StringValue, StringValue](":"))
 
     // Compute histogram over the label values.
     val histogram = labels
-      .histogram(Along(_1))(Locate.AppendContentString(), false)
+      .histogram(Along(_0))(Locate.AppendContentString, false)
 
     // Compute the total number of labels and compact result into a Map.
     val sum = labels
-      .size(_1)
-      .compact(Over(_1))
+      .size(_0)
+      .compact(Over(_0))
 
     // Define extract object to get data out of sum/min map.
-    def extractor(key: Position[_1]) = ExtractWithKey[_1, Content](key).andThenPresent(_.value.asDouble)
+    def extractor[
+      P <: HList,
+      K <: Value[_]
+    ](
+      key: Position[K :: HNil]
+    ) = ExtractWithKey[P, K, Content](key).andThenPresent(_.value.asDouble)
 
     // Compute the ratio of (total number of labels) / (count for each label).
     val ratio = histogram
-      .transformWithValue(sum, Fraction(extractor(Nat.toInt[_1]), true))
+      .transformWithValue(sum, Fraction(extractor(0), true))
 
     // Find the minimum ratio, and compact the result into a Map.
     val min = ratio
-      .summarise(Along(_1))(Minimum().andThenRelocate(_.position.append("min").toOption))
-      .compact(Over(_1))
+      .summarise(Along(_0))(Minimum().andThenRelocate(_.position.append("min").toOption))
+      .compact(Over(_0))
 
     // Divide the ratio by the minimum ratio, and compact the result into a Map.
     val weights = ratio
       .transformWithValue(min, Fraction(extractor("min")))
-      .compact(Over(_1))
+      .compact(Over(_0))
 
     // Re-read labels and add the computed weight.
-    ctx.loadText(
+    ctx
+      .loadText(
         s"${path}/exampleLabels.txt",
-        Cell.parse2DWithSchema(Content.parser(DoubleCodec, ContinuousSchema[Double]()))
+        Cell.shortStringParser(
+          StringCodec :: StringCodec :: HNil,
+          Content.decoder(DoubleCodec, ContinuousSchema[Double]()),
+          "|"
+        )
       )
       .data // Keep only the data (ignoring errors).
       .transformWithValue(weights, AddWeight())
-      .saveAsText(ctx, s"./demo.${output}/weighted.out")
+      .saveAsText(ctx, s"./demo.${output}/weighted.out", Cell.toShortString(true, "|"))
       .toUnit
   }
 }

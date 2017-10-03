@@ -33,12 +33,13 @@ import org.apache.spark.{ SparkConf, SparkContext }
 
 import scala.io.Source
 
-import shapeless.nat.{ _1, _2, _3 }
+import shapeless.{ ::, HList, HNil }
+import shapeless.nat.{ _0, _1, _2 }
 
 // Simple bucketing implementation. For numerical values it generates categorical values that are the rounded up
 // value. All other values are passed through.
-case class CeilingBucketing() extends Transformer[_2, _2] {
-  def present(cell: Cell[_2]): TraversableOnce[Cell[_2]] = {
+case class CeilingBucketing[P <: HList]() extends Transformer[P, P] {
+  def present(cell: Cell[P]): TraversableOnce[Cell[P]] = {
     val con = (cell.content.schema.classification.isOfType(NumericType), cell.content.value.asDouble) match {
       case (true, Some(d)) => Content(NominalSchema[Long](), math.ceil(d).toLong)
       case _ => cell.content
@@ -68,49 +69,54 @@ object MutualInformation {
     // 4/ Bucket all continuous variables by rounding them.
     val data = ctx.loadText(
         s"${path}/exampleMutual.txt",
-        Cell.parse3DWithDictionary(dictionary, _2, third = DateCodec())
+        Cell.shortStringParser(StringCodec :: StringCodec :: DateCodec() :: HNil, dictionary, _1, "|")
       )
       .data
-      .squash(_3, PreservingMinimumPosition())
+      .squash(_2, PreservingMinimumPosition())
       .transform(CeilingBucketing())
 
     // Define extractor for extracting count from histogram count map.
-    val extractor = ExtractWithDimension[_2, Content](_1).andThenPresent(_.value.asDouble)
+    def extractor[
+      P <: HList,
+      V <: Value[_]
+    ](implicit
+      ev: Position.IndexConstraints[P, _0, V]
+    ) = ExtractWithDimension[P, _0, V, Content](_0).andThenPresent(_.value.asDouble)
 
     // Compute histogram on the data.
     val mhist = data
-      .histogram(Along(_1))(Locate.AppendContentString(), false)
+      .histogram(Along(_0))(Locate.AppendContentString, false)
 
     // Compute count of histogram elements.
     val mcount = mhist
-      .summarise(Over(_1))(Sums())
+      .summarise(Over(_0))(Sums())
       .compact()
 
     // Compute sum of marginal entropy
-    // 1/ Compute the marginal entropy over the features (second dimension).
+    // 1/ Compute the marginal entropy over the features.
     // 2/ Compute pairwise sum of marginal entropies for all upper triangular values.
     val marginal = mhist
-      .summariseWithValue(Over(_1))(mcount, Entropy(extractor).andThenRelocate(_.position.append("marginal").toOption))
-      .pairwise(Over(_1))(Upper, Plus(Locate.PrependPairwiseSelectedStringToRemainder(Over(_1), "%s,%s")))
+      .summariseWithValue(Over(_0))(mcount, Entropy(extractor).andThenRelocate(_.position.append("marginal").toOption))
+      .pairwise(Over(_0))(Upper, Plus(Locate.PrependPairwiseSelectedStringToRemainder(Over(_0), "%s,%s")))
 
     // Compute histogram on pairwise data.
     // 1/ Generate pairwise values for all upper triangular values.
     // 2/ Compute histogram on pairwise values.
     val jhist = data
-      .pairwise(Over(_2))(
+      .pairwise(Over(_1))(
         Upper,
-        Concatenate(Locate.PrependPairwiseSelectedStringToRemainder(Over(_2), "%s,%s"))
+        Concatenate(Locate.PrependPairwiseSelectedStringToRemainder(Over(_1), "%s,%s"))
       )
-      .histogram(Along(_2))(Locate.AppendContentString(), false)
+      .histogram(Along(_1))(Locate.AppendContentString(), false)
 
     // Compute count of histogram elements.
     val jcount = jhist
-      .summarise(Over(_1))(Sums())
+      .summarise(Over(_0))(Sums())
       .compact()
 
     // Compute joint entropy
     val joint = jhist
-      .summariseWithValue(Over(_1))(
+      .summariseWithValue(Over(_0))(
         jcount,
         Entropy(extractor, negate = true).andThenRelocate(_.position.append("joint").toOption)
       )
@@ -119,8 +125,8 @@ object MutualInformation {
     // 1/ Sum marginal and negated joint entropy
     // 2/ Persist mutual information.
     (marginal ++ joint)
-      .summarise(Over(_1))(Sums())
-      .saveAsText(ctx, s"./demo.${output}/mi.out")
+      .summarise(Over(_0))(Sums())
+      .saveAsText(ctx, s"./demo.${output}/mi.out", Cell.toShortString(true, "|"))
       .toUnit
   }
 }
