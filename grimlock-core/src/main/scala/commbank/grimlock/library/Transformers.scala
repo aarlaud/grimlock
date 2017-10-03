@@ -16,6 +16,7 @@ package commbank.grimlock.library.transform
 
 import commbank.grimlock.framework.{ Cell, Locate }
 import commbank.grimlock.framework.content.Content
+import commbank.grimlock.framework.encoding.Value
 import commbank.grimlock.framework.extract.Extract
 import commbank.grimlock.framework.metadata.{
   CategoricalType,
@@ -29,7 +30,7 @@ import commbank.grimlock.framework.metadata.{
 import commbank.grimlock.framework.position.Position
 import commbank.grimlock.framework.transform.{ Transformer, TransformerWithValue }
 
-import shapeless.HList
+import shapeless.{ ::, HList, HNil }
 
 private[transform] object Transform {
   def check[P <: HList](cell: Cell[P], t: Type): Boolean = cell.content.schema.classification.isOfType(t)
@@ -611,7 +612,14 @@ trait CutRules[E[_]] {
    *
    * @param range A map (holding for each key) the bins range of that feature.
    */
-  def breaks[K <: HList](range: Map[Position[K], List[Double]]): E[Map[Position[K], List[Double]]]
+  def breaks[T <% K, K <: Value[_]](range: Map[T, List[Double]]): E[Map[Position[K :: HNil], List[Double]]]
+
+  protected def breaksFromMap[
+    T <% K,
+    K <: Value[_]
+  ](
+    range: Map[T, List[Double]]
+  ): Map[Position[K :: HNil], List[Double]] = range.map { case (p, l) => (Position(implicitly[K](p)), l) }
 
   // TODO: Add 'right' and 'labels' options (analogous to R's)
   private def cut[

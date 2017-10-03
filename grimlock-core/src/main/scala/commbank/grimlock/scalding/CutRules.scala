@@ -14,6 +14,7 @@
 
 package commbank.grimlock.scalding.transform
 
+import commbank.grimlock.framework.encoding.Value
 import commbank.grimlock.framework.position.Position
 
 import commbank.grimlock.scalding.environment.Context
@@ -22,7 +23,7 @@ import commbank.grimlock.library.transform.{ CutRules => FwCutRules }
 
 import com.twitter.scalding.typed.LiteralValue
 
-import shapeless.HList
+import shapeless.{ ::, HList, HNil }
 
 /** Implement cut rules using Scalding. */
 object CutRules extends FwCutRules[Context.E] {
@@ -93,9 +94,10 @@ object CutRules extends FwCutRules[Context.E] {
     .map { case stats => scottsNormalReferenceRuleFromStats(stats, count, min, max, sd) }
 
   def breaks[
-    K <: HList
+    T <% K,
+    K <: Value[_]
   ](
-    range: Map[Position[K], List[Double]]
-  ): Context.E[Map[Position[K], List[Double]]] = new LiteralValue(range)
+    range: Map[T, List[Double]]
+  ): Context.E[Map[Position[K :: HNil], List[Double]]] = new LiteralValue(breaksFromMap(range))
 }
 

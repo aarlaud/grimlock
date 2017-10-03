@@ -76,12 +76,8 @@ object MutualInformation {
       .transform(CeilingBucketing())
 
     // Define extractor for extracting count from histogram count map.
-    def extractor[
-      P <: HList,
-      V <: Value[_]
-    ](implicit
-      ev: Position.IndexConstraints[P, _0, V]
-    ) = ExtractWithDimension[P, _0, V, Content](_0).andThenPresent(_.value.asDouble)
+    val extractor = ExtractWithDimension[StringValue :: StringValue :: HNil, _0, StringValue, Content](_0)
+      .andThenPresent(_.value.asDouble)
 
     // Compute histogram on the data.
     val mhist = data
@@ -107,7 +103,7 @@ object MutualInformation {
         Upper,
         Concatenate(Locate.PrependPairwiseSelectedStringToRemainder(Over(_1), "%s,%s"))
       )
-      .histogram(Along(_1))(Locate.AppendContentString(), false)
+      .histogram(Along(_1))(Locate.AppendContentString, false)
 
     // Compute count of histogram elements.
     val jcount = jhist

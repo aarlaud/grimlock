@@ -27,7 +27,7 @@ import commbank.grimlock.spark.environment._
 
 import org.apache.spark.{ SparkConf, SparkContext }
 
-import shapeless.{ HList, HNil }
+import shapeless.{ ::, HList, HNil }
 import shapeless.nat.{ _0, _1 }
 
 object Scoring {
@@ -56,14 +56,10 @@ object Scoring {
       .compact(Over(_0))
 
     // Define extract object to get data out of statistics map.
-    def extractStat[
-      P <: HList,
-      V <: Value[_]
-    ](
+    def extractStat(
       key: String
-    )(implicit
-      ev: Position.IndexConstraints[P, _1, V]
-    ) = ExtractWithDimensionAndKey[P, _1, V, StringValue, Content](_1, key).andThenPresent(_.value.asDouble)
+    ) = ExtractWithDimensionAndKey[StringValue :: StringValue :: HNil, _1, StringValue, StringValue, Content](_1, key)
+      .andThenPresent(_.value.asDouble)
 
     // Define extract object to get data out of weights map.
     def extractWeight[

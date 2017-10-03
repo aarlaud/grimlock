@@ -14,13 +14,14 @@
 
 package commbank.grimlock.spark.transform
 
+import commbank.grimlock.framework.encoding.Value
 import commbank.grimlock.framework.position.Position
 
 import commbank.grimlock.spark.environment.Context
 
 import commbank.grimlock.library.transform.{ CutRules => FwCutRules }
 
-import shapeless.HList
+import shapeless.{ ::, HList, HNil }
 
 /** Implement cut rules for Spark. */
 object CutRules extends FwCutRules[Context.E] {
@@ -87,9 +88,10 @@ object CutRules extends FwCutRules[Context.E] {
   ): Context.E[Map[Position[K], List[Double]]] = scottsNormalReferenceRuleFromStats(ext, count, min, max, sd)
 
   def breaks[
-    K <: HList
+    T <% K,
+    K <: Value[_]
   ](
-    range: Map[Position[K], List[Double]]
-  ): Context.E[Map[Position[K], List[Double]]] = range
+    range: Map[T, List[Double]]
+  ): Context.E[Map[Position[K :: HNil], List[Double]]] = breaksFromMap(range)
 }
 

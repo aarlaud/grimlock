@@ -77,12 +77,8 @@ class MutualInformation(args: Args) extends Job(args) {
     .transform(CeilingBucketing())
 
   // Define extractor for extracting count from histogram count map.
-  def extractor[
-    P <: HList,
-    V <: Value[_]
-  ](implicit
-    ev: Position.IndexConstraints[P, _0, V]
-  ) = ExtractWithDimension[P, _0, V, Content](_0).andThenPresent(_.value.asDouble)
+  val extractor = ExtractWithDimension[StringValue :: StringValue :: HNil, _0, StringValue, Content](_0)
+    .andThenPresent(_.value.asDouble)
 
   // Compute histogram on the data.
   val mhist = data

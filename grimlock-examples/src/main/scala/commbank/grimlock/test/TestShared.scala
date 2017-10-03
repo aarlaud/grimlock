@@ -15,7 +15,6 @@
 package commbank.grimlock.test
 
 import commbank.grimlock.framework._
-import commbank.grimlock.framework.aggregate._
 import commbank.grimlock.framework.content._
 import commbank.grimlock.framework.distance._
 import commbank.grimlock.framework.encoding._
@@ -27,7 +26,6 @@ import commbank.grimlock.framework.pairwise._
 import commbank.grimlock.framework.partition._
 import commbank.grimlock.framework.position._
 import commbank.grimlock.framework.sample._
-import commbank.grimlock.framework.transform._
 import commbank.grimlock.framework.window._
 
 import commbank.grimlock.library.aggregate._
@@ -40,8 +38,7 @@ import commbank.grimlock.library.window._
 import scala.io.Source
 
 import shapeless.{ ::, HList, HNil, Nat }
-import shapeless.nat.{ _0, _1, _2 }
-import shapeless.ops.nat.{ LTEq, ToInt }
+import shapeless.nat.{ _0, _1, _2, _3 }
 
 object Shared {
   def test1[
@@ -104,8 +101,12 @@ object Shared {
     import ctx.implicits.matrix._
     import ctx.implicits.position._
 
-    (data.names(Over(_0), Default()) ++ data.names(Over(_1), Default()) ++ data.names(Over(_2), Default()))
-      .saveAsText(ctx, s"./tmp.${tool}/nm0.out", (p) => List(p.toString), Default())
+    (
+      data.names(Over(_0), Default()).map(_.toString) ++
+      data.names(Over(_1), Default()).map(_.toString) ++
+      data.names(Over(_2), Default()).map(_.toString)
+    )
+      .saveAsText(ctx, s"./tmp.${tool}/nm0.out", Default())
       .toUnit
 
     data
@@ -353,8 +354,13 @@ object Shared {
 
     implicit val c = ctx
 
+    val pos = List(
+      Position("iid:1548763", "fid:Y", DateValue(DateCodec().decode("2014-04-26").get, DateCodec())),
+      Position("iid:1303823", "fid:A", DateValue(DateCodec().decode("2014-05-05").get, DateCodec()))
+    )
+
     data
-      .get(Position("iid:1548763", "fid:Y", DateValue(DateCodec().decode("2014-04-26").get, DateCodec())), Default())
+      .get(pos.head, Default())
       .saveAsText(ctx, s"./tmp.${tool}/get1.out", (c) => List(c.toString), Default())
       .toUnit
 
@@ -801,8 +807,14 @@ object Shared {
   ): Unit = {
     import ctx.implicits.matrix._
 
-    case class HashSample() extends Sampler[_2] {
-      def select(cell: Cell[_2]): Boolean = (cell.position(_0).toString.hashCode % 25) == 0
+    case class HashSample[
+      P <: HList,
+      V <: Value[_]
+    ](
+    )(implicit
+      ev: Position.IndexConstraints[P, _0, V]
+    ) extends Sampler[P] {
+      def select(cell: Cell[P]): Boolean = (cell.position(_0).toString.hashCode % 25) == 0
     }
 
     data
@@ -861,16 +873,20 @@ object Shared {
       )
       .compact(Over(_0), Default())
 
+    def extractor[
+      P <: HList,
+      V <: Value[_]
+    ](implicit
+      ev: Position.IndexConstraints[P, _1, V]
+    ) = ExtractWithDimensionAndKey[P, _1, V, StringValue, Content](_1, "max.abs").andThenPresent(_.value.asDouble)
+
     sliced
-      .transformWithValue(
-        stats,
-        Normalise(ExtractWithDimensionAndKey[_1, Content](_1, "max.abs").andThenPresent(_.value.asDouble))
-      )
+      .transformWithValue(stats, Normalise(extractor))
       .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/trn6.csv")
       .toUnit
 
-    case class Sample500() extends Sampler[_1] {
-      def select(cell: Cell[_1]): Boolean = cell.content.value gtr 500
+    case class Sample500[P <: HList]() extends Sampler[P] {
+      def select(cell: Cell[P]): Boolean = cell.content.value gtr 500
     }
 
     sliced
@@ -881,13 +897,13 @@ object Shared {
     case class RemoveGreaterThanMean[
       P <: HList,
       D <: Nat,
-      V <: Value[_]
+      K <: Value[_]
     ](
       dim: D
     )(implicit
-      ev: Position.IndexConstraints[P, D, V]
+      ev: Position.IndexConstraints[P, D, K]
     ) extends SamplerWithValue[P] {
-      type V = Map[Position[V :: HNil], Map[Position[StringValue :: HNil], Content]]
+      type V = Map[Position[K :: HNil], Map[Position[StringValue :: HNil], Content]]
 
       def selectWithValue(cell: Cell[P], ext: V): Boolean =
         if (cell.content.schema.classification.isOfType(NumericType))
@@ -953,7 +969,12 @@ object Shared {
       )
 
     val rem = stats
-      .whichByPosition(Over(_1), Default())(("count", (c: Cell[_1]) => c.content.value leq 2))
+      .whichByPosition(
+        Over(_1),
+        Default()
+      )(
+        ("count", (c: Cell[StringValue :: StringValue :: HNil]) => c.content.value leq 2)
+      )
       .names(Over(_0), Default())
 
     sliced
@@ -1003,17 +1024,19 @@ object Shared {
       .squash(_2, PreservingMaximumPosition(), Default())
 
     case class CustomPartition[
-      D <: Nat : ToInt
+      P <: HList,
+      D <: Nat,
+      V <: Value[_]
     ](
       dim: D,
       left: String,
       right: String
     )(implicit
-      ev: LTEq[D, _1]
-    ) extends Partitioner[_1, String] {
+      ev: Position.IndexConstraints[P, D, V]
+    ) extends Partitioner[P, String] {
       val bhs = BinaryHashSplit(dim, 7, left, right, base = 10)
 
-      def assign(cell: Cell[_1]): TraversableOnce[String] =
+      def assign(cell: Cell[P]): TraversableOnce[String] =
         if (cell.position(dim).toShortString == "iid:0364354")
           List(right)
         else
@@ -1037,17 +1060,24 @@ object Shared {
       .which(c => (c.position(_1) equ "count") && (c.content.value leq 2))
       .names(Over(_0), Default())
 
-    type W = Map[Position[_0], Map[Position[_0], Content]]
+    def extractor[
+      P <: HList,
+      V <: Value[_]
+    ](implicit
+      ev: Position.IndexConstraints[P, _1, V]
+    ) = ExtractWithDimensionAndKey[P, _1, V, StringValue, Content](_1, "max.abs").andThenPresent(_.value.asDouble)
 
-    val transforms: List[TransformerWithValue[_1, _1] { type V >: W }] = List(
-      Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")),
-      Binarise(Locate.RenameDimensionWithContent(_1)),
-      Normalise(ExtractWithDimensionAndKey[_1, Content](_1, "max.abs").andThenPresent(_.value.asDouble))
-    )
-
-    def cb(key: String, pipe: C#U[Cell[_1]]): C#U[Cell[_1]] = pipe
+    def cb(
+      key: String,
+      pipe: C#U[Cell[StringValue :: StringValue :: HNil]]
+    ): C#U[Cell[StringValue :: StringValue :: HNil]] = pipe
       .slice(Over(_1), Default())(false, rem)
-      .transformWithValue(stats.compact(Over(_0), Default()), transforms)
+      .transformWithValue(
+        stats.compact(Over(_0), Default()),
+        Indicator().andThenRelocate(Locate.RenameDimension(_1, "%1$s.ind")),
+        Binarise(Locate.RenameDimensionWithContent(_1)),
+        Normalise(extractor)
+      )
       .fillHomogeneous(Content(ContinuousSchema[Long](), 0), Default())
       .saveAsCSV(Over(_0), Default())(ctx, s"./tmp.${tool}/pln_" + key + ".csv")
 
@@ -1129,21 +1159,30 @@ object Shared {
     val (data, _) = ctx
       .loadText(path + "/numericInputfile.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
 
-    case class Diff() extends Window[_1, _0, _0, _1] {
+    case class Diff[
+      P <: HList,
+      S <: HList,
+      R <: HList,
+      Q <: HList
+    ](
+    )(implicit
+      ev1: Position.ListConstraints[R],
+      ev2: Position.AppendConstraints[S, StringValue, Q]
+    ) extends Window[P, S, R, Q] {
       type I = Option[Double]
-      type T = (Option[Double], Position[_0])
-      type O = (Double, Position[_0], Position[_0])
+      type T = (Option[Double], Position[R])
+      type O = (Double, Position[R], Position[R])
 
-      def prepare(cell: Cell[_1]): I = cell.content.value.asDouble
+      def prepare(cell: Cell[P]): I = cell.content.value.asDouble
 
-      def initialise(rem: Position[_0], in: I): (T, TraversableOnce[O]) = ((in, rem), List())
+      def initialise(rem: Position[R], in: I): (T, TraversableOnce[O]) = ((in, rem), List())
 
-      def update(rem: Position[_0], in: I, t: T): (T, TraversableOnce[O]) = ((in, rem), (in, t._1) match {
+      def update(rem: Position[R], in: I, t: T): (T, TraversableOnce[O]) = ((in, rem), (in, t._1) match {
         case (Some(c), Some(l)) => List((c - l, rem,  t._2))
         case _ => List()
       })
 
-      def present(pos: Position[_0], out: O): TraversableOnce[Cell[_1]] = List(
+      def present(pos: Position[S], out: O): TraversableOnce[Cell[Q]] = List(
         Cell(
           pos.append(out._2.toShortString("") + "-" + out._3.toShortString("")),
           Content(ContinuousSchema[Double](), out._1)
@@ -1178,8 +1217,20 @@ object Shared {
     val (data, _) = ctx
       .loadText(path + "/somePairwise.txt", Cell.shortStringParser(StringCodec :: StringCodec :: HNil, "|"))
 
-    case class DiffSquared() extends Operator[_1, _1] {
-      def compute(left: Cell[_1], right: Cell[_1]): TraversableOnce[Cell[_1]] = {
+    case class DiffSquared[
+      P <: HList,
+      V0 <: Value[_],
+      V1 <: Value[_],
+      X <: HList,
+      Q <: HList
+    ](
+    )(implicit
+      ev1: Position.IndexConstraints[P, _0, V0],
+      ev2: Position.IndexConstraints[P, _1, V1],
+      ev3: Position.RemoveConstraints[P, _1, X],
+      ev4: Position.AppendConstraints[X, StringValue, Q]
+    ) extends Operator[P, Q] {
+      def compute(left: Cell[P], right: Cell[P]): TraversableOnce[Cell[Q]] = {
         val xc = left.position(_1).toShortString
         val yc = right.position(_1).toShortString
 
@@ -1218,12 +1269,13 @@ object Shared {
 
     // see http://www.mathsisfun.com/data/correlation.html for data
 
-    val schema = List(
-      ("day", Content.parser(StringCodec, NominalSchema[String]())),
-      ("temperature", Content.parser(DoubleCodec, ContinuousSchema[Double]())),
-      ("sales", Content.parser(LongCodec, DiscreteSchema[Long]()))
+    val pkey = KeyDecoder(_0, StringCodec) // "day"
+    val columns = Set(
+      ColumnDecoder(_1, "temperature", Content.decoder(DoubleCodec, ContinuousSchema[Double]())),
+      ColumnDecoder(_2, "sales", Content.decoder(LongCodec, DiscreteSchema[Long]()))
     )
-    val (data, _) = ctx.loadText(path + "/somePairwise2.txt", Cell.parseTable(schema, separator = "|"))
+
+    val (data, _) = ctx.loadText(path + "/somePairwise2.txt", Cell.tableParser(pkey, columns, "|"))
 
     def locate[P <: Nat](implicit ev: Position.ListConstraints[P])  = (l: Position[P], r: Position[P]) => Option(
       Position(s"(${l.toShortString("|")}*${r.toShortString("|")})")
@@ -1234,13 +1286,9 @@ object Shared {
       .saveAsText(ctx, s"./tmp.${tool}/pws2.out", Cell.toShortString(true, "|"), Default())
       .toUnit
 
-    val schema2 = List(
-      ("day", Content.parser(StringCodec, NominalSchema[String]())),
-      ("temperature", Content.parser(DoubleCodec, ContinuousSchema[Double]())),
-      ("sales", Content.parser(LongCodec, DiscreteSchema[Long]())),
-      ("neg.sales", Content.parser(LongCodec, DiscreteSchema[Long]()))
-    )
-    val (data2, _) = ctx.loadText(path + "/somePairwise3.txt", Cell.parseTable(schema2, separator = "|"))
+    val columns2 = columns + ColumnDecoder(_3, "neg.sales", Content.decoder(LongCodec, DiscreteSchema[Long]()))
+
+    val (data2, _) = ctx.loadText(path + "/somePairwise3.txt", Cell.tableParser(pkey, columns2, "|"))
 
     data2
       .correlation(Over(_1), Default())(locate, true)
@@ -1414,7 +1462,10 @@ object Shared {
       )
       .compact(Over(_0), Default())
 
-    val extractor = ExtractWithDimension[_1, List[Double]](_1)
+    def extractor(implicit
+      ev1: Position.IndexConstraints[StringValue :: StringValue :: HNil, _1, StringValue],
+      ev2: Position.ListConstraints[StringValue :: StringValue :: HNil]
+    ) = ExtractWithDimension[StringValue :: StringValue :: HNil, _1, StringValue, List[Double]](_1)
 
     data
       .transformWithValue(rules.fixed(stats, "min", "max", 4), Cut(extractor))

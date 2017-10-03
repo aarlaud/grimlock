@@ -98,12 +98,8 @@ object PipelineDataPreparation {
       .compact()
 
     // Define extractor to extract counts from the map.
-    def extractCount[
-      P <: HList,
-      V <: Value[_]
-    ](implicit
-      ev: Position.IndexConstraints[P, _1, V]
-    ) = ExtractWithDimension[P, _1, V, Content](_1).andThenPresent(_.value.asDouble)
+    val extractCount = ExtractWithDimension[StringValue :: StringValue :: HNil, _1, StringValue, Content](_1)
+      .andThenPresent(_.value.asDouble)
 
     // Compute summary statisics on the histogram.
     val summary = histogram
@@ -140,14 +136,10 @@ object PipelineDataPreparation {
       .names(Over(_1))
 
     // Define extract object to get data out of statistics map.
-    def extractStat[
-      P <: HList,
-      V <: Value[_]
-    ](
+    def extractStat(
       key: String
-    )(implicit
-      ev: Position.IndexConstraints[P, _1, V]
-    ) = ExtractWithDimensionAndKey[P, _1, V, StringValue, Content](_1, key).andThenPresent(_.value.asDouble)
+    ) = ExtractWithDimensionAndKey[StringValue :: StringValue :: HNil, _1, StringValue, StringValue, Content](_1, key)
+      .andThenPresent(_.value.asDouble)
 
     // For each partition:
     //  1/  Remove sparse features;
